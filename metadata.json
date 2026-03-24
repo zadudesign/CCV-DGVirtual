@@ -1,0 +1,5 @@
+{
+  "name": "CCV - Gestión de Cursos",
+  "description": "Plataforma de gestión de construcción de cursos virtuales con roles de Decano, Coordinador, Docente y Par Evaluador.",
+  "requestFramePermissions": []
+}

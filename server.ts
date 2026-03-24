@@ -1,0 +1,98 @@
+import express from "express";
+import { createServer as createViteServer } from "vite";
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+// Initialize Supabase Admin Client (only to be used on the server)
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json());
+
+  // API Routes
+  app.post("/api/admin/users", async (req, res) => {
+    try {
+      const { email, password, role, name, documento, facultad, programa } = req.body;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        return res.status(500).json({ error: "Supabase Service Role Key no configurada en el servidor." });
+      }
+
+      // 1. Create user in auth.users
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (authError) {
+        return res.status(400).json({ error: authError.message });
+      }
+
+      if (!authData.user) {
+        return res.status(400).json({ error: "No se pudo crear el usuario." });
+      }
+
+      // 2. Create profile in public.profiles
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            email,
+            role,
+            name,
+            documento,
+            facultad,
+            programa
+          }
+        ]);
+
+      if (profileError) {
+        // Rollback user creation if profile fails
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        return res.status(400).json({ error: profileError.message });
+      }
+
+      res.json({ message: "Usuario creado exitosamente", user: authData.user });
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
