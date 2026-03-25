@@ -37,10 +37,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           if (isMounted) setLoading(false);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching session:', err);
         if (isMounted) {
-          setAuthError('Error de conexión. Verifica la configuración de Supabase.');
+          // Si el error es por un token de refresco inválido, simplemente cerramos la sesión
+          const errorMessage = err?.message?.toLowerCase() || '';
+          if (errorMessage.includes('refresh token') || errorMessage.includes('refresh_token')) {
+            await supabase.auth.signOut().catch(console.error);
+            setUser(null);
+            setAuthError(null);
+          } else {
+            setAuthError('Error de conexión. Verifica la configuración de Supabase.');
+          }
           setLoading(false);
         }
       }
@@ -91,9 +99,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           programa: data.programa
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Unexpected error fetching profile:', err);
-      setAuthError('Error inesperado al cargar el perfil.');
+      const errorMessage = err?.message?.toLowerCase() || '';
+      if (errorMessage.includes('refresh token') || errorMessage.includes('refresh_token')) {
+        await supabase.auth.signOut().catch(console.error);
+        setAuthError(null);
+      } else {
+        setAuthError('Error inesperado al cargar el perfil.');
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -101,9 +115,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setAuthError(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out:', err);
+    } finally {
+      setUser(null);
+      setAuthError(null);
+    }
   };
 
   return (
