@@ -17,7 +17,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check active sessions and sets the user
+    let isMounted = true;
+
+    // Failsafe timeout: si Supabase no responde en 8 segundos, forzamos el fin de la carga
+    const timeoutId = setTimeout(() => {
+      if (isMounted && loading) {
+        setLoading(false);
+        setAuthError('Tiempo de espera agotado. Verifica las variables de entorno en Vercel.');
+      }
+    }, 8000);
+
     const fetchSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -26,12 +35,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           await fetchProfile(session.user.id, session.user.email || '');
         } else {
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
       } catch (err) {
         console.error('Error fetching session:', err);
-        setAuthError('Error de conexión. Verifica la configuración de Supabase.');
-        setLoading(false);
+        if (isMounted) {
+          setAuthError('Error de conexión. Verifica la configuración de Supabase.');
+          setLoading(false);
+        }
       }
     };
 
@@ -41,12 +52,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         await fetchProfile(session.user.id, session.user.email || '');
       } else {
-        setUser(null);
-        setLoading(false);
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string, email: string) => {
