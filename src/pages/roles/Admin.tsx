@@ -306,7 +306,7 @@ export default function AdminDashboard() {
                   {/* Correo Institucional */}
                   <div>
                     <label htmlFor="correo" className="block text-sm font-medium text-slate-700">
-                      Correo Institucional (Usuario)
+                      Correo Institucional
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
                   {/* Número de Documento */}
                   <div>
                     <label htmlFor="documento" className="block text-sm font-medium text-slate-700">
-                      Número de Documento (Contraseña)
+                      Número de Documento
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
