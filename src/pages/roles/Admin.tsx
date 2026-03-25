@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2, Users } from 'lucide-react';
+import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { Facultad, Programa, User } from '../../types';
+import { Facultad, Programa } from '../../types';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'usuarios' | 'facultades'>('usuarios');
@@ -22,7 +22,6 @@ export default function AdminDashboard() {
   // Estado para Facultades y Programas
   const [facultades, setFacultades] = useState<Facultad[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
-  const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   
   const [newFacultadName, setNewFacultadName] = useState('');
@@ -39,19 +38,16 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      const [facultadesRes, programasRes, usuariosRes] = await Promise.all([
+      const [facultadesRes, programasRes] = await Promise.all([
         supabase.from('facultades').select('*').order('nombre'),
-        supabase.from('programas').select('*').order('nombre'),
-        supabase.from('profiles').select('*').order('name')
+        supabase.from('programas').select('*').order('nombre')
       ]);
 
       if (facultadesRes.error) throw facultadesRes.error;
       if (programasRes.error) throw programasRes.error;
-      if (usuariosRes.error) throw usuariosRes.error;
 
       setFacultades(facultadesRes.data || []);
       setProgramas(programasRes.data || []);
-      setUsuarios((usuariosRes.data as User[]) || []);
       
       // Select first facultad by default if available
       if (facultadesRes.data && facultadesRes.data.length > 0) {
@@ -173,9 +169,6 @@ export default function AdminDashboard() {
         facultad: '',
         programa: ''
       });
-
-      // Recargar la lista de usuarios
-      fetchData();
 
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err: any) {
@@ -437,97 +430,6 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-
-          {/* Lista de Usuarios */}
-          <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden mt-8">
-            <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-              <div>
-                <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-                  <Users className="mr-2 h-5 w-5 text-indigo-600" />
-                  Usuarios Registrados
-                </h3>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">
-                  Lista de todos los usuarios inscritos en la plataforma.
-                </p>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Usuario
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Rol
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Facultad / Programa
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Documento
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {loadingData ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
-                      </td>
-                    </tr>
-                  ) : usuarios.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
-                        No hay usuarios registrados.
-                      </td>
-                    </tr>
-                  ) : (
-                    usuarios.map((user) => (
-                      <tr key={user.id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                              {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-slate-900">{user.name || 'Sin nombre'}</div>
-                              <div className="text-sm text-slate-500">{user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                            user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
-                            user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
-                            user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-slate-100 text-slate-800'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          {user.facultad ? (
-                            <>
-                              <div className="text-slate-900">{user.facultad}</div>
-                              {user.programa && <div className="text-xs text-slate-500">{user.programa}</div>}
-                            </>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          {user.documento || '-'}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
         </>
