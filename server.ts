@@ -75,6 +75,35 @@ async function startServer() {
     }
   });
 
+  app.post("/api/auth/get-email", async (req, res) => {
+    try {
+      const { documento } = req.body;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        return res.status(500).json({ error: "Supabase Service Role Key no configurada en el servidor." });
+      }
+
+      if (!documento) {
+        return res.status(400).json({ error: "El documento es requerido" });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('documento', documento)
+        .single();
+
+      if (error || !data) {
+        return res.status(404).json({ error: "Usuario no encontrado con ese documento" });
+      }
+
+      res.json({ email: data.email });
+    } catch (error: any) {
+      console.error("Error fetching email:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

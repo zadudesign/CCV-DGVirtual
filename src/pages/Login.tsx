@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 export default function Login() {
   const { user, loading: authLoading, authError } = useAuth();
-  const [email, setEmail] = useState('');
+  const [documento, setDocumento] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,13 +31,28 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // 1. Obtener el email asociado al documento
+      const res = await fetch('/api/auth/get-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documento: documento.trim() })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Usuario no encontrado con ese documento');
+      }
+
+      const { email } = await res.json();
+
+      // 2. Iniciar sesión con el email obtenido y la contraseña
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        setError(error.message);
+      if (signInError) {
+        setError(signInError.message);
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
@@ -79,20 +94,19 @@ export default function Login() {
 
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="documento" className="block text-sm font-medium text-slate-700">
                 Usuario
               </label>
               <div className="mt-1">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="documento"
+                  name="documento"
+                  type="text"
+                  autoComplete="username"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={documento}
+                  onChange={(e) => setDocumento(e.target.value.replace(/[\s.]/g, ''))}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="usuario@universidad.edu"
                 />
               </div>
             </div>

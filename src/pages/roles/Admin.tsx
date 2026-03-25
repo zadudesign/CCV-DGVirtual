@@ -143,7 +143,7 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({
           email: formData.correo,
-          password: formData.documento, // Documento como contraseña
+          password: `${formData.documento.slice(-4)}*CCV`, // Últimos 4 dígitos + *CCV
           role: formData.role,
           name: formData.nombre,
           documento: formData.documento,
