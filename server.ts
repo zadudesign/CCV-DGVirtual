@@ -92,6 +92,7 @@ async function startServer() {
         .from('profiles')
         .select('email')
         .eq('documento', documento)
+        .limit(1)
         .single();
 
       if (error || !data) {

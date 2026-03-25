@@ -44,6 +44,7 @@ export default async function handler(req: any, res: any) {
       .from('profiles')
       .select('email')
       .eq('documento', documento)
+      .limit(1)
       .single();
 
     if (error || !data) {

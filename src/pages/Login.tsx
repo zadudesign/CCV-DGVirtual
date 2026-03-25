@@ -11,6 +11,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  React.useEffect(() => {
+    if (authError) {
+      setLoading(false);
+    }
+  }, [authError]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -53,10 +59,14 @@ export default function Login() {
 
       if (signInError) {
         setError(signInError.message);
+        setLoading(false);
+      } else {
+        // Forzamos la recarga de la página para evitar el retraso de Supabase
+        // con el evento onAuthStateChange cuando la pestaña no cambia de foco.
+        window.location.href = '/';
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
-    } finally {
       setLoading(false);
     }
   };
