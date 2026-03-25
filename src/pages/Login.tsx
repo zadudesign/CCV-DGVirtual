@@ -46,11 +46,9 @@ export default function Login() {
       if (signInError) {
         setError(signInError.message);
         setLoading(false);
-      } else {
-        // Forzamos la recarga de la página para evitar el retraso de Supabase
-        // con el evento onAuthStateChange cuando la pestaña no cambia de foco.
-        window.location.href = '/';
       }
+      // Si no hay error, el onAuthStateChange en AuthContext 
+      // actualizará el usuario y el componente hará el <Navigate> automáticamente.
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
       setLoading(false);
