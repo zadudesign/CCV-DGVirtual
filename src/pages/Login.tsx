@@ -5,7 +5,7 @@ import { BookOpen, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Login() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,8 @@ export default function Login() {
   if (user) {
     return <Navigate to="/" replace />;
   }
+
+  const displayError = error || authError;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,14 +64,14 @@ export default function Login() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
+          {displayError && (
             <div className="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800">{error}</p>
+                  <p className="text-sm font-medium text-red-800">{displayError}</p>
                 </div>
               </div>
             </div>
@@ -78,7 +80,7 @@ export default function Login() {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                Correo Electrónico
+                Usuario
               </label>
               <div className="mt-1">
                 <input
@@ -97,7 +99,7 @@ export default function Login() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                Contraseña (Número de Documento)
+                Contraseña
               </label>
               <div className="mt-1">
                 <input

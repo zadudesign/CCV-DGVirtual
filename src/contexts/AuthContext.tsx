@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  authError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string, email: string) => {
     try {
+      setAuthError(null);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -49,6 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setAuthError('No se encontró un perfil asignado a este usuario. Contacte al administrador.');
+        await supabase.auth.signOut();
         setUser(null);
       } else if (data) {
         setUser({
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);
+      setAuthError('Error inesperado al cargar el perfil.');
       setUser(null);
     } finally {
       setLoading(false);
@@ -72,10 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setAuthError(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signOut, authError }}>
       {children}
     </AuthContext.Provider>
   );

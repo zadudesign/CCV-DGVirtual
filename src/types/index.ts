@@ -10,6 +10,17 @@ export interface User {
   programa?: string;
 }
 
+export interface Facultad {
+  id: string;
+  nombre: string;
+}
+
+export interface Programa {
+  id: string;
+  nombre: string;
+  facultad_id: string;
+}
+
 export interface Course {
   id: string;
   title: string;
