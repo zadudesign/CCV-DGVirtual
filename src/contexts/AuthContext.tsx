@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timeoutId = setTimeout(() => {
       if (isMounted && loading) {
         setLoading(false);
-        setAuthError('Tiempo de espera agotado. Verifica las variables de entorno en Vercel.');
       }
     }, 8000);
 
