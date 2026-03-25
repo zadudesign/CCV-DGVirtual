@@ -19,10 +19,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and sets the user
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchProfile(session.user.id, session.user.email || '');
-      } else {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id, session.user.email || '');
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error fetching session:', err);
+        setAuthError('Error de conexión. Verifica la configuración de Supabase.');
         setLoading(false);
       }
     };
