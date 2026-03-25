@@ -6,6 +6,7 @@ export interface User {
   role: Role;
   name: string;
   documento?: string;
+  telefono?: string;
   facultad?: string;
   programa?: string;
 }

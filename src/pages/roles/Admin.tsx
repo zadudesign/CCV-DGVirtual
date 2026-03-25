@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2 } from 'lucide-react';
+import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2, Phone } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Facultad, Programa } from '../../types';
 
@@ -12,6 +12,7 @@ export default function AdminDashboard() {
     nombre: '',
     correo: '',
     documento: '',
+    telefono: '',
     facultad: '',
     programa: ''
   });
@@ -147,6 +148,7 @@ export default function AdminDashboard() {
           role: formData.role,
           name: formData.nombre,
           documento: formData.documento,
+          telefono: formData.telefono,
           facultad: formData.facultad,
           programa: formData.programa
         }),
@@ -166,6 +168,7 @@ export default function AdminDashboard() {
         nombre: '',
         correo: '',
         documento: '',
+        telefono: '',
         facultad: '',
         programa: ''
       });
@@ -343,6 +346,28 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <p className="mt-1 text-xs text-slate-500">Este número será usado como contraseña inicial.</p>
+                  </div>
+
+                  {/* Número de Contacto / Teléfono */}
+                  <div>
+                    <label htmlFor="telefono" className="block text-sm font-medium text-slate-700">
+                      Número de Contacto
+                    </label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        type="tel"
+                        name="telefono"
+                        id="telefono"
+                        required
+                        value={formData.telefono}
+                        onChange={handleChange}
+                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border"
+                        placeholder="Ej. 3001234567"
+                      />
+                    </div>
                   </div>
 
                   {/* Facultad */}

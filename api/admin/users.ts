@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
   });
 
   try {
-    const { email, password, role, name, documento, facultad, programa } = req.body;
+    const { email, password, role, name, documento, facultad, programa, telefono } = req.body;
 
     // 1. Create user in auth.users
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -61,6 +61,7 @@ export default async function handler(req: any, res: any) {
           role,
           name,
           documento,
+          telefono,
           facultad,
           programa
         }

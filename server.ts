@@ -26,7 +26,7 @@ async function startServer() {
   // API Routes
   app.post("/api/admin/users", async (req, res) => {
     try {
-      const { email, password, role, name, documento, facultad, programa } = req.body;
+      const { email, password, role, name, documento, facultad, programa, telefono } = req.body;
 
       if (!supabaseUrl || !supabaseServiceKey) {
         return res.status(500).json({ error: "Supabase Service Role Key no configurada en el servidor." });
@@ -57,6 +57,7 @@ async function startServer() {
             role,
             name,
             documento,
+            telefono,
             facultad,
             programa
           }
