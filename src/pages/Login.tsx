@@ -5,7 +5,7 @@ import { BookOpen, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Login() {
-  const { user, loading: authLoading, authError } = useAuth();
+  const { user, loading: authLoading, authError, refreshSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,9 +47,9 @@ export default function Login() {
         setError(signInError.message);
         setLoading(false);
       } else {
-        // Restauramos la recarga forzada. Supabase tiene un bug conocido en iframes
-        // donde onAuthStateChange no se dispara hasta que la pestaña cambia de foco.
-        window.location.href = '/';
+        // En lugar de recargar la página (lo cual falla en algunos iframes),
+        // forzamos al AuthContext a leer la sesión recién creada.
+        await refreshSession();
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
