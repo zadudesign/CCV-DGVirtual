@@ -56,7 +56,7 @@ export default function Usuarios() {
                   Rol
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Facultad / Programa
+                  Facultad / Área
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Documento
@@ -96,13 +96,16 @@ export default function Usuarios() {
                         user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
                         user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
                         user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
+                        user.role === 'team' ? 'bg-orange-100 text-orange-800' :
                         'bg-slate-100 text-slate-800'
                       }`}>
                         {user.role}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {user.facultad ? (
+                      {user.role === 'team' && user.team_area ? (
+                        <div className="text-slate-900 font-medium">Equipo: {user.team_area}</div>
+                      ) : user.facultad ? (
                         <>
                           <div className="text-slate-900">{user.facultad}</div>
                           {user.programa && <div className="text-xs text-slate-500">{user.programa}</div>}

@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'decano' | 'coordinador' | 'docente' | 'evaluador';
+export type Role = 'admin' | 'decano' | 'coordinador' | 'docente' | 'evaluador' | 'team';
 
 export interface User {
   id: string;
@@ -9,6 +9,7 @@ export interface User {
   telefono?: string;
   facultad?: string;
   programa?: string;
+  team_area?: string;
 }
 
 export interface Facultad {

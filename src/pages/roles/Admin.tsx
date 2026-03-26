@@ -14,7 +14,8 @@ export default function AdminDashboard() {
     documento: '',
     telefono: '',
     facultad: '',
-    programa: ''
+    programa: '',
+    team_area: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -126,7 +127,11 @@ export default function AdminDashboard() {
       ...prev,
       [name]: value,
       // Si cambia a decano, limpiamos el programa
-      ...(name === 'role' && value === 'decano' ? { programa: '' } : {})
+      ...(name === 'role' && value === 'decano' ? { programa: '' } : {}),
+      // Si cambia a team, limpiamos facultad y programa
+      ...(name === 'role' && value === 'team' ? { facultad: '', programa: '' } : {}),
+      // Si cambia a otro rol, limpiamos team_area
+      ...(name === 'role' && value !== 'team' ? { team_area: '' } : {})
     }));
   };
 
@@ -150,7 +155,8 @@ export default function AdminDashboard() {
           documento: formData.documento,
           telefono: formData.telefono,
           facultad: formData.facultad,
-          programa: formData.programa
+          programa: formData.programa,
+          team_area: formData.team_area
         }),
       });
 
@@ -160,7 +166,8 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Error al crear el usuario');
       }
       
-      setSuccessMessage(`¡${formData.role === 'decano' ? 'Decano' : 'Coordinador'} registrado con éxito!`);
+      const roleName = formData.role === 'team' ? 'Miembro del equipo' : formData.role.charAt(0).toUpperCase() + formData.role.slice(1);
+      setSuccessMessage(`¡${roleName} registrado con éxito!`);
       
       // Limpiamos el formulario
       setFormData({
@@ -170,7 +177,8 @@ export default function AdminDashboard() {
         documento: '',
         telefono: '',
         facultad: '',
-        programa: ''
+        programa: '',
+        team_area: ''
       });
 
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -254,7 +262,7 @@ export default function AdminDashboard() {
                 Inscribir Nuevo Usuario
               </h3>
               <p className="mt-1 max-w-2xl text-sm text-slate-500">
-                Complete los datos para dar acceso a un nuevo Decano o Coordinador.
+                Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.
               </p>
             </div>
             
@@ -280,6 +288,7 @@ export default function AdminDashboard() {
                       >
                         <option value="decano">Decano</option>
                         <option value="coordinador">Coordinador</option>
+                        <option value="team">Equipo de Trabajo (Team)</option>
                       </select>
                     </div>
                   </div>
@@ -370,36 +379,38 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Facultad */}
-                  <div className={formData.role === 'decano' ? 'sm:col-span-2' : 'sm:col-span-1'}>
-                    <label htmlFor="facultad" className="block text-sm font-medium text-slate-700">
-                      Facultad
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building2 className="h-5 w-5 text-slate-400" />
-                      </div>
-                      {loadingData ? (
-                        <div className="pl-10 py-2 text-sm text-slate-500 flex items-center border border-slate-300 rounded-md">
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cargando...
+                  {/* Facultad (No aplica para Team) */}
+                  {formData.role !== 'team' && (
+                    <div className={formData.role === 'decano' ? 'sm:col-span-2' : 'sm:col-span-1'}>
+                      <label htmlFor="facultad" className="block text-sm font-medium text-slate-700">
+                        Facultad
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Building2 className="h-5 w-5 text-slate-400" />
                         </div>
-                      ) : (
-                        <select
-                          name="facultad"
-                          id="facultad"
-                          required
-                          value={formData.facultad}
-                          onChange={handleChange}
-                          className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
-                        >
-                          <option value="">Seleccione una facultad</option>
-                          {facultades.map(fac => (
-                            <option key={fac.id} value={fac.nombre}>{fac.nombre}</option>
-                          ))}
-                        </select>
-                      )}
+                        {loadingData ? (
+                          <div className="pl-10 py-2 text-sm text-slate-500 flex items-center border border-slate-300 rounded-md">
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cargando...
+                          </div>
+                        ) : (
+                          <select
+                            name="facultad"
+                            id="facultad"
+                            required
+                            value={formData.facultad}
+                            onChange={handleChange}
+                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
+                          >
+                            <option value="">Seleccione una facultad</option>
+                            {facultades.map(fac => (
+                              <option key={fac.id} value={fac.nombre}>{fac.nombre}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Programa (Solo Coordinador) */}
                   {formData.role === 'coordinador' && (
@@ -433,6 +444,34 @@ export default function AdminDashboard() {
                             ))}
                           </select>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Área del Equipo (Solo Team) */}
+                  {formData.role === 'team' && (
+                    <div className="sm:col-span-2">
+                      <label htmlFor="team_area" className="block text-sm font-medium text-slate-700">
+                        Área del Equipo
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Shield className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <select
+                          name="team_area"
+                          id="team_area"
+                          required
+                          value={formData.team_area}
+                          onChange={handleChange}
+                          className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
+                        >
+                          <option value="">Seleccione un área</option>
+                          <option value="Soporte">Soporte</option>
+                          <option value="Multimedia">Multimedia</option>
+                          <option value="Diseño">Diseño</option>
+                          <option value="Desarrollo">Desarrollo</option>
+                        </select>
                       </div>
                     </div>
                   )}

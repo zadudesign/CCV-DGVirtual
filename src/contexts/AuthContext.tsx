@@ -51,7 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name: meta.name || '',
       documento: meta.documento || '',
       facultad: meta.facultad || '',
-      programa: meta.programa || ''
+      programa: meta.programa || '',
+      team_area: meta.team_area || ''
     });
     setAuthError(null);
     setLoading(false);
