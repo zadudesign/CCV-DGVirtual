@@ -50,6 +50,7 @@ export default function Login() {
         // En lugar de recargar la página (lo cual falla en algunos iframes),
         // forzamos al AuthContext a leer la sesión recién creada.
         await refreshSession();
+        setLoading(false); // Detener el spinner local para que se muestren los errores si falla el perfil
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
