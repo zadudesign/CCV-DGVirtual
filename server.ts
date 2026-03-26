@@ -37,6 +37,16 @@ async function startServer() {
         email,
         password,
         email_confirm: true,
+        user_metadata: {
+          name,
+          documento,
+          telefono,
+          facultad,
+          programa
+        },
+        app_metadata: {
+          role
+        }
       });
 
       if (authError) {
