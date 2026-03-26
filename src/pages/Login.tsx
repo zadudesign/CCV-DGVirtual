@@ -46,9 +46,11 @@ export default function Login() {
       if (signInError) {
         setError(signInError.message);
         setLoading(false);
+      } else {
+        // Restauramos la recarga forzada. Supabase tiene un bug conocido en iframes
+        // donde onAuthStateChange no se dispara hasta que la pestaña cambia de foco.
+        window.location.href = '/';
       }
-      // Si no hay error, el onAuthStateChange en AuthContext 
-      // actualizará el usuario y el componente hará el <Navigate> automáticamente.
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
       setLoading(false);
