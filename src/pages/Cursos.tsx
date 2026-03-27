@@ -16,6 +16,10 @@ export default function Cursos() {
   const [programa, setPrograma] = useState('');
   const [docenteId, setDocenteId] = useState('');
   const [evaluadorId, setEvaluadorId] = useState('');
+  const [tipoSolicitud, setTipoSolicitud] = useState<'Creación Completa' | 'Actualización'>('Creación Completa');
+  const [semestre, setSemestre] = useState<number>(1);
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
 
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
@@ -115,7 +119,11 @@ export default function Cursos() {
           evaluador_id: evaluadorId || null,
           creador_id: user?.id,
           estado: 'Planificación',
-          progreso: 0
+          progreso: 0,
+          tipo_solicitud: tipoSolicitud,
+          semestre: Number(semestre),
+          fecha_inicio: fechaInicio,
+          tipo_contrato: tipoContrato
         }]);
 
       if (error) throw error;
@@ -124,6 +132,10 @@ export default function Cursos() {
       setNombre('');
       setDocenteId('');
       setEvaluadorId('');
+      setTipoSolicitud('Creación Completa');
+      setSemestre(1);
+      setFechaInicio('');
+      setTipoContrato('Carga Académica - 5 Horas Semanales');
       fetchCursos();
     } catch (err) {
       console.error('Error creating curso:', err);
@@ -236,6 +248,19 @@ export default function Cursos() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
+                  <select
+                    required
+                    value={tipoSolicitud}
+                    onChange={(e) => setTipoSolicitud(e.target.value as any)}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    <option value="Creación Completa">Creación Completa</option>
+                    <option value="Actualización">Actualización</option>
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-slate-700">Nombre del Curso</label>
                   <input
                     type="text"
@@ -244,6 +269,19 @@ export default function Cursos() {
                     onChange={(e) => setNombre(e.target.value)}
                     className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                     placeholder="Ej. Introducción a la Programación"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Semestre</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    required
+                    value={semestre}
+                    onChange={(e) => setSemestre(parseInt(e.target.value))}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>
 
@@ -276,6 +314,30 @@ export default function Cursos() {
                     {docentes.map((d) => (
                       <option key={d.id} value={d.id}>{d.name || d.email}</option>
                     ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Fecha de Inicio</label>
+                  <input
+                    type="date"
+                    required
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Tipo de Contrato</label>
+                  <select
+                    required
+                    value={tipoContrato}
+                    onChange={(e) => setTipoContrato(e.target.value as any)}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    <option value="Carga Académica - 5 Horas Semanales">Carga Académica - 5 Horas Semanales</option>
+                    <option value="Prestación de Servicios - 1 o 2 Meses">Prestación de Servicios - 1 o 2 Meses</option>
                   </select>
                 </div>
 
