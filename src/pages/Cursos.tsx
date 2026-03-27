@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -10,6 +10,7 @@ export default function Cursos() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [previewClickup, setPreviewClickup] = useState<string | null>(null);
 
   // Form state
   const [nombre, setNombre] = useState('');
@@ -20,6 +21,7 @@ export default function Cursos() {
   const [semestre, setSemestre] = useState<number>(1);
   const [fechaInicio, setFechaInicio] = useState('');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
+  const [clickupUrl, setClickupUrl] = useState('');
 
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
@@ -123,7 +125,8 @@ export default function Cursos() {
           tipo_solicitud: tipoSolicitud,
           semestre: Number(semestre),
           fecha_inicio: fechaInicio,
-          tipo_contrato: tipoContrato
+          tipo_contrato: tipoContrato,
+          clickup_url: clickupUrl || null
         }]);
 
       if (error) throw error;
@@ -136,6 +139,7 @@ export default function Cursos() {
       setSemestre(1);
       setFechaInicio('');
       setTipoContrato('Carga Académica - 5 Horas Semanales');
+      setClickupUrl('');
       fetchCursos();
     } catch (err) {
       console.error('Error creating curso:', err);
@@ -198,6 +202,26 @@ export default function Cursos() {
                   <tr key={curso.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-slate-900">{curso.nombre}</div>
+                      {curso.clickup_url && (
+                        <div className="flex items-center space-x-3 mt-1">
+                          <button 
+                            onClick={() => setPreviewClickup(curso.clickup_url!)}
+                            className="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800"
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Previsualizar
+                          </button>
+                          <a 
+                            href={curso.clickup_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700"
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Abrir
+                          </a>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {curso.programa}
@@ -355,6 +379,17 @@ export default function Cursos() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">URL de Tareas en ClickUp (Opcional)</label>
+                  <input
+                    type="url"
+                    value={clickupUrl}
+                    onChange={(e) => setClickupUrl(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="https://app.clickup.com/t/..."
+                  />
+                </div>
+
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
                     type="button"
@@ -373,6 +408,46 @@ export default function Cursos() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Preview Modal */}
+      {previewClickup && (
+        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
+          <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setPreviewClickup(null)} />
+          
+          <div className="relative w-full max-w-6xl h-[85vh] m-4 bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-medium text-slate-900 flex items-center">
+                <Eye className="h-5 w-5 mr-2 text-indigo-600" />
+                Previsualización de ClickUp
+              </h3>
+              <div className="flex items-center space-x-4">
+                <a 
+                  href={previewClickup} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Abrir en nueva pestaña
+                </a>
+                <button onClick={() => setPreviewClickup(null)} className="text-slate-400 hover:text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-full p-1 transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 w-full bg-slate-100 p-0">
+              {/* Note: ClickUp standard URLs (app.clickup.com) block iframes. 
+                  Users must use the "Public Sharing" embed link (sharing.clickup.com) for this to work. */}
+              <iframe 
+                src={previewClickup} 
+                className="w-full h-full border-0"
+                title="ClickUp Preview"
+                allow="clipboard-write"
+              />
             </div>
           </div>
         </div>
