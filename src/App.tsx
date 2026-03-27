@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Cursos from './pages/Cursos';
+import Configuracion from './pages/Configuracion';
 
 export default function App() {
   return (
@@ -22,7 +23,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="cursos" element={<Cursos />} />
             <Route path="usuarios" element={<Usuarios />} />
-            <Route path="configuracion" element={<div className="p-4">Configuración (En construcción)</div>} />
+            <Route path="configuracion" element={<Configuracion />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
