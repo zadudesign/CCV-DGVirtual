@@ -288,6 +288,8 @@ export default function AdminDashboard() {
                       >
                         <option value="decano">Decano</option>
                         <option value="coordinador">Coordinador</option>
+                        <option value="docente">Docente</option>
+                        <option value="evaluador">Par Evaluador</option>
                         <option value="team">Equipo de Trabajo (Team)</option>
                       </select>
                     </div>
@@ -412,8 +414,8 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* Programa (Solo Coordinador) */}
-                  {formData.role === 'coordinador' && (
+                  {/* Programa (Coordinador, Docente, Evaluador) */}
+                  {(formData.role === 'coordinador' || formData.role === 'docente' || formData.role === 'evaluador') && (
                     <div className="sm:col-span-1">
                       <label htmlFor="programa" className="block text-sm font-medium text-slate-700">
                         Programa
@@ -490,7 +492,7 @@ export default function AdminDashboard() {
                     disabled={loading}
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
-                    {loading ? 'Inscribiendo...' : `Inscribir ${formData.role === 'decano' ? 'Decano' : 'Coordinador'}`}
+                    {loading ? 'Inscribiendo...' : `Inscribir Usuario`}
                   </button>
                 </div>
               </form>
