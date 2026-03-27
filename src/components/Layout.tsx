@@ -22,8 +22,7 @@ export default function Layout() {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    // Cursos is not for admin
-    ...(user.role !== 'admin' ? [{ name: 'Cursos', href: '/cursos', icon: BookOpen }] : []),
+    { name: 'Cursos', href: '/cursos', icon: BookOpen },
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 

@@ -7,17 +7,21 @@ import { User } from '../types';
 export default function Usuarios() {
   const { user } = useAuth();
   const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtroFacultad, setFiltroFacultad] = useState<string>('');
 
   useEffect(() => {
     if (user) {
-      fetchUsuarios();
+      fetchData();
     }
   }, [user]);
 
-  const fetchUsuarios = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
+      
+      // Fetch usuarios
       let query = supabase.from('profiles').select('*').order('name');
       
       // Filtro automático según el rol del usuario actual
@@ -27,16 +31,27 @@ export default function Usuarios() {
         query = query.eq('programa', user.programa);
       }
       
-      const { data, error } = await query;
+      const { data: usersData, error: usersError } = await query;
+      if (usersError) throw usersError;
       
-      if (error) throw error;
-      setUsuarios((data as User[]) || []);
+      // Fetch cursos to map them to docentes and evaluadores
+      const { data: cursosData, error: cursosError } = await supabase
+        .from('cursos')
+        .select('id, nombre, docente_id, evaluador_id');
+        
+      if (cursosError) throw cursosError;
+      
+      setUsuarios((usersData as User[]) || []);
+      setCursos(cursosData || []);
     } catch (err) {
-      console.error('Error fetching usuarios:', err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  const facultadesUnicas = Array.from(new Set(usuarios.map(u => u.facultad).filter(Boolean))).sort() as string[];
+  const usuariosFiltrados = usuarios.filter(u => filtroFacultad ? u.facultad === filtroFacultad : true);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -48,11 +63,30 @@ export default function Usuarios() {
       </div>
 
       <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
             <UsersIcon className="mr-2 h-5 w-5 text-indigo-600" />
             Usuarios Registrados
           </h3>
+          
+          {facultadesUnicas.length > 1 && (
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <label htmlFor="facultad-filter" className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                Facultad:
+              </label>
+              <select
+                id="facultad-filter"
+                value={filtroFacultad}
+                onChange={(e) => setFiltroFacultad(e.target.value)}
+                className="block w-full sm:w-64 rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Todas las facultades</option>
+                {facultadesUnicas.map(facultad => (
+                  <option key={facultad} value={facultad}>{facultad}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         
         <div className="overflow-x-auto">
@@ -80,14 +114,14 @@ export default function Usuarios() {
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
                   </td>
                 </tr>
-              ) : usuarios.length === 0 ? (
+              ) : usuariosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
-                    No hay usuarios registrados.
+                    No hay usuarios registrados{filtroFacultad ? ' en esta facultad' : ''}.
                   </td>
                 </tr>
               ) : (
-                usuarios.map((user) => (
+                usuariosFiltrados.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -119,6 +153,21 @@ export default function Usuarios() {
                         <>
                           <div className="text-slate-900">{user.facultad}</div>
                           {user.programa && <div className="text-xs text-slate-500">{user.programa}</div>}
+                          
+                          {/* Mostrar curso asignado para docentes y evaluadores */}
+                          {(user.role === 'docente' || user.role === 'evaluador') && (
+                            <div className="mt-2">
+                              {cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).length > 0 ? (
+                                cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).map(curso => (
+                                  <div key={curso.id} className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded inline-block mt-1 mr-1">
+                                    {curso.nombre} {curso.docente_id === user.id ? '(Docente)' : '(Evaluador)'}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-xs text-slate-400 italic mt-1">Sin curso asignado</div>
+                              )}
+                            </div>
+                          )}
                         </>
                       ) : (
                         <span className="text-slate-400">-</span>
