@@ -5,6 +5,7 @@ import DecanoDashboard from './roles/Decano';
 import CoordinadorDashboard from './roles/Coordinador';
 import DocenteDashboard from './roles/Docente';
 import EvaluadorDashboard from './roles/Evaluador';
+import TeamDashboard from './roles/Team';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -22,6 +23,8 @@ export default function Dashboard() {
       return <DocenteDashboard />;
     case 'evaluador':
       return <EvaluadorDashboard />;
+    case 'team':
+      return <TeamDashboard />;
     default:
       return <div>Rol no reconocido</div>;
   }

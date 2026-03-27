@@ -31,8 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err: any) {
       console.error('Error refreshing session:', err);
+      const errorMessage = err?.message?.toLowerCase() || '';
+      if (errorMessage.includes('refresh token') || errorMessage.includes('session')) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+        await supabase.auth.signOut().catch(() => {});
+        setAuthError(null);
+      } else {
+        setAuthError('Error al actualizar la sesión.');
+      }
       setUser(null);
-      setAuthError('Error al actualizar la sesión.');
       setLoading(false);
     }
   };
@@ -80,8 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching session:', err);
         if (isMounted) {
           const errorMessage = err?.message?.toLowerCase() || '';
-          if (errorMessage.includes('refresh token')) {
-            await supabase.auth.signOut().catch(console.error);
+          if (errorMessage.includes('refresh token') || errorMessage.includes('session')) {
+            // Force clear local storage just in case
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('sb-')) {
+                localStorage.removeItem(key);
+              }
+            });
+            await supabase.auth.signOut().catch(() => {});
             setUser(null);
             setAuthError(null);
           } else {
@@ -114,6 +131,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
       await supabase.auth.signOut();
     } catch (err) {
       console.error('Error signing out:', err);

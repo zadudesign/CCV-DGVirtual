@@ -10,6 +10,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
+import Cursos from './pages/Cursos';
 
 export default function App() {
   return (
@@ -19,7 +20,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
-            <Route path="cursos" element={<div className="p-4">Vista de Cursos (En construcción)</div>} />
+            <Route path="cursos" element={<Cursos />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="configuracion" element={<div className="p-4">Configuración (En construcción)</div>} />
           </Route>
