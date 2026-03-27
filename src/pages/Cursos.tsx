@@ -68,9 +68,28 @@ export default function Cursos() {
       if (eData) setEvaluadores(eData as User[]);
 
       // Fetch programas
-      let query = supabase.from('programas').select('id, nombre');
-      const { data: pData } = await query;
-      if (pData) setProgramas(pData);
+      let pData = [];
+      if (user?.role === 'decano' && user.facultad) {
+        // Fetch the facultad ID first
+        const { data: fData } = await supabase
+          .from('facultades')
+          .select('id')
+          .eq('nombre', user.facultad)
+          .single();
+          
+        if (fData) {
+          const { data } = await supabase
+            .from('programas')
+            .select('id, nombre')
+            .eq('facultad_id', fData.id);
+          pData = data || [];
+        }
+      } else {
+        const { data } = await supabase.from('programas').select('id, nombre');
+        pData = data || [];
+      }
+      
+      setProgramas(pData);
       
       if (user?.role === 'coordinador' && user.programa) {
         setPrograma(user.programa);
