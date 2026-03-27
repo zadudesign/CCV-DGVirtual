@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Cursos from './pages/Cursos';
+import CursoDetalle from './pages/CursoDetalle';
 import Configuracion from './pages/Configuracion';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="cursos" element={<Cursos />} />
+            <Route path="cursos/:id" element={<CursoDetalle />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>

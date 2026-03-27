@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
 
+import { Link } from 'react-router-dom';
+
 export default function Cursos() {
   const { user } = useAuth();
   const [cursos, setCursos] = useState<Curso[]>([]);
@@ -201,7 +203,7 @@ export default function Cursos() {
                 cursos.map((curso) => (
                   <tr key={curso.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-slate-900">{curso.nombre}</div>
+                      <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">{curso.nombre}</Link>
                       {curso.clickup_url && (
                         <div className="flex items-center space-x-3 mt-1">
                           <button 
