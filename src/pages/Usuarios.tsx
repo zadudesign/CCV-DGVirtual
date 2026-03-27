@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Users as UsersIcon, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
 
 export default function Usuarios() {
+  const { user } = useAuth();
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsuarios();
-  }, []);
+    if (user) {
+      fetchUsuarios();
+    }
+  }, [user]);
 
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('name');
+      let query = supabase.from('profiles').select('*').order('name');
+      
+      // Filtro automático según el rol del usuario actual
+      if (user?.role === 'decano' && user.facultad) {
+        query = query.eq('facultad', user.facultad);
+      } else if (user?.role === 'coordinador' && user.programa) {
+        query = query.eq('programa', user.programa);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       setUsuarios((data as User[]) || []);
