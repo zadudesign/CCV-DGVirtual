@@ -10,6 +10,7 @@ export interface User {
   facultad?: string;
   programa?: string;
   team_area?: string;
+  firma_digital?: string;
 }
 
 export interface Facultad {

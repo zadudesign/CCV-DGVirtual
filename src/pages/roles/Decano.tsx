@@ -1,12 +1,83 @@
-import React from 'react';
-import { BarChart3, TrendingUp, Users, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, Users, BookOpen, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { Curso } from '../../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function DecanoDashboard() {
+  const { user } = useAuth();
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [docentesCount, setDocentesCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.facultad) {
+      fetchData();
+    }
+  }, [user]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch cursos de la facultad
+      const { data: cursosData, error: cursosError } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('facultad', user?.facultad);
+        
+      if (cursosError) throw cursosError;
+      setCursos(cursosData as Curso[] || []);
+
+      // Fetch docentes de la facultad
+      const { count, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('facultad', user?.facultad)
+        .eq('role', 'docente');
+        
+      if (!countError && count !== null) {
+        setDocentesCount(count);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const totalCursos = cursos.length;
+  const cursosRevision = cursos.filter(c => c.estado === 'Revisión').length;
+  const cursosPublicados = cursos.filter(c => c.estado === 'Publicado').length;
+  
   const stats = [
-    { name: 'Total Cursos', value: '124', icon: BookOpen, change: '+12%', changeType: 'positive' },
-    { name: 'Docentes Activos', value: '45', icon: Users, change: '+4%', changeType: 'positive' },
-    { name: 'Cursos en Revisión', value: '12', icon: TrendingUp, change: '-2%', changeType: 'negative' },
-    { name: 'Tasa de Aprobación', value: '94%', icon: BarChart3, change: '+1%', changeType: 'positive' },
+    { name: 'Total Cursos', value: totalCursos.toString(), icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { name: 'Docentes Activos', value: docentesCount.toString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { name: 'Cursos en Revisión', value: cursosRevision.toString(), icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { name: 'Cursos Publicados', value: cursosPublicados.toString(), icon: BarChart3, color: 'text-green-600', bg: 'bg-green-100' },
+  ];
+
+  // Prepare data for chart
+  const statusCounts = cursos.reduce((acc, curso) => {
+    acc[curso.estado] = (acc[curso.estado] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const chartData = [
+    { name: 'Planificación', cantidad: statusCounts['Planificación'] || 0, color: '#94a3b8' },
+    { name: 'En Desarrollo', cantidad: statusCounts['En Desarrollo'] || 0, color: '#3b82f6' },
+    { name: 'Revisión', cantidad: statusCounts['Revisión'] || 0, color: '#f59e0b' },
+    { name: 'Publicado', cantidad: statusCounts['Publicado'] || 0, color: '#10b981' },
   ];
 
   return (
@@ -14,7 +85,7 @@ export default function DecanoDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Panel del Decano</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Vista general del progreso de construcción de cursos virtuales en la facultad.
+          Vista general del progreso de construcción de cursos virtuales en la facultad de {user?.facultad}.
         </p>
       </div>
 
@@ -23,35 +94,79 @@ export default function DecanoDashboard() {
           <div key={item.name} className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <item.icon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                <div className={`flex-shrink-0 p-3 rounded-lg ${item.bg}`}>
+                  <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-slate-500 truncate">{item.name}</dt>
                     <dd>
-                      <div className="text-lg font-medium text-slate-900">{item.value}</div>
+                      <div className="text-2xl font-bold text-slate-900">{item.value}</div>
                     </dd>
                   </dl>
                 </div>
-              </div>
-            </div>
-            <div className="bg-slate-50 px-5 py-3">
-              <div className="text-sm">
-                <span className={item.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}>
-                  {item.change}
-                </span>
-                <span className="text-slate-500 ml-2">desde el mes pasado</span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Métricas de Integración (ClickUp / Tally)</h2>
-        <div className="h-64 bg-slate-50 rounded-lg border border-dashed border-slate-300 flex items-center justify-center">
-          <p className="text-slate-500 text-sm">Gráfico de progreso de cursos (D3.js / Recharts placeholder)</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-6">
+          <h2 className="text-lg font-medium text-slate-900 mb-6">Estado de los Cursos</h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+          <div className="px-6 py-5 border-b border-slate-200">
+            <h2 className="text-lg font-medium text-slate-900">Cursos Recientes</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-0">
+            {cursos.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 text-sm">No hay cursos registrados en esta facultad.</div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {cursos.slice(0, 5).map((curso) => (
+                  <li key={curso.id} className="p-6 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{curso.nombre}</p>
+                        <p className="text-xs text-slate-500 mt-1">{curso.programa}</p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
+                          curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
+                          curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
+                          'bg-slate-100 text-slate-800'
+                        }`}>
+                          {curso.estado}
+                        </span>
+                        <span className="text-xs font-medium text-slate-500 mt-2">{curso.progreso}% completado</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>

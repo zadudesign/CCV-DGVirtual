@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2, Phone } from 'lucide-react';
+import { UserPlus, Shield, Building2, GraduationCap, Mail, CreditCard, CheckCircle2, Plus, Loader2, Phone, FileSignature } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Facultad, Programa } from '../../types';
 
@@ -15,7 +15,8 @@ export default function AdminDashboard() {
     telefono: '',
     facultad: '',
     programa: '',
-    team_area: ''
+    team_area: '',
+    firma_digital: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -135,6 +136,20 @@ export default function AdminDashboard() {
     }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          firma_digital: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -156,7 +171,8 @@ export default function AdminDashboard() {
           telefono: formData.telefono,
           facultad: formData.facultad,
           programa: formData.programa,
-          team_area: formData.team_area
+          team_area: formData.team_area,
+          firma_digital: formData.firma_digital
         }),
       });
 
@@ -178,8 +194,12 @@ export default function AdminDashboard() {
         telefono: '',
         facultad: '',
         programa: '',
-        team_area: ''
+        team_area: '',
+        firma_digital: ''
       });
+      // Reset file input
+      const fileInput = document.getElementById('firma_digital') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
 
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err: any) {
@@ -475,6 +495,41 @@ export default function AdminDashboard() {
                           <option value="Desarrollo">Desarrollo</option>
                         </select>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Firma Digital (No aplica para Team) */}
+                  {formData.role !== 'team' && (
+                    <div className="sm:col-span-2">
+                      <label htmlFor="firma_digital" className="block text-sm font-medium text-slate-700">
+                        Firma Digital (Opcional)
+                      </label>
+                      <div className="mt-1 flex items-center">
+                        <div className="relative rounded-md shadow-sm w-full">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <FileSignature className="h-5 w-5 text-slate-400" />
+                          </div>
+                          <input
+                            type="file"
+                            id="firma_digital"
+                            name="firma_digital"
+                            accept="image/png, image/jpeg, image/svg+xml"
+                            onChange={handleFileChange}
+                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                          />
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Sube una imagen con la firma digital del usuario (PNG, JPG o SVG).
+                      </p>
+                      {formData.firma_digital && (
+                        <div className="mt-3">
+                          <p className="text-xs font-medium text-slate-700 mb-1">Vista previa:</p>
+                          <div className="border border-slate-200 rounded-md p-2 bg-slate-50 inline-block">
+                            <img src={formData.firma_digital} alt="Firma" className="h-16 object-contain" />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
