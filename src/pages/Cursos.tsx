@@ -53,18 +53,20 @@ export default function Cursos() {
 
   const fetchOptions = async () => {
     try {
-      // Fetch docentes
+      // Fetch posibles docentes (pueden ser docentes, coordinadores o decanos)
       const { data: dData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'docente');
+        .in('role', ['docente', 'coordinador', 'decano'])
+        .order('name');
       if (dData) setDocentes(dData as User[]);
 
-      // Fetch evaluadores
+      // Fetch posibles evaluadores (pueden ser evaluadores, docentes, coordinadores o decanos)
       const { data: eData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'evaluador');
+        .in('role', ['evaluador', 'docente', 'coordinador', 'decano'])
+        .order('name');
       if (eData) setEvaluadores(eData as User[]);
 
       // Fetch programas
