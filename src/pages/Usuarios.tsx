@@ -23,13 +23,25 @@ export default function Usuarios() {
     if (!userToDelete) return;
     try {
       setIsDeleting(true);
-      const { error } = await supabase.from('profiles').delete().eq('id', userToDelete);
-      if (error) throw error;
+      
+      // Call our backend API to delete from both auth.users and public.profiles
+      const response = await fetch(`/api/admin/users/${userToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar el usuario');
+      }
       
       setUsuarios(usuarios.filter(u => u.id !== userToDelete));
       setUserToDelete(null);
     } catch (err) {
       console.error('Error deleting user:', err);
+      alert('Hubo un error al eliminar el usuario. Por favor intenta de nuevo.');
     } finally {
       setIsDeleting(false);
     }

@@ -89,6 +89,39 @@ async function startServer() {
     }
   });
 
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        return res.status(500).json({ error: "Supabase Service Role Key no configurada en el servidor." });
+      }
+
+      // 1. Delete from public.profiles (optional if ON DELETE CASCADE is set, but good practice)
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (profileError) {
+        console.error("Error deleting profile:", profileError);
+        // Continue anyway to try deleting the auth user
+      }
+
+      // 2. Delete from auth.users
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+
+      if (authError) {
+        return res.status(400).json({ error: authError.message });
+      }
+
+      res.json({ message: "Usuario eliminado exitosamente" });
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
   app.post("/api/auth/get-email", async (req, res) => {
     try {
       const { documento } = req.body;
