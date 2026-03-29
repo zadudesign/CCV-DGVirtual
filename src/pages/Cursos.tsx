@@ -28,37 +28,14 @@ export default function Cursos() {
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
   const [evaluadores, setEvaluadores] = useState<User[]>([]);
-  const [programas, setProgramas] = useState<{id: string, nombre: string}[]>([]);
+  const [programas, setProgramas] = useState<{id: string, nombre: string, facultad?: string}[]>([]);
 
   useEffect(() => {
     fetchCursos();
     if (user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador') {
       fetchOptions();
     }
-
-    // Load Tally embed script
-    const script = document.createElement('script');
-    script.src = 'https://tally.so/widgets/embed.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
   }, [user]);
-
-  // Ensure Tally initializes when modal opens
-  useEffect(() => {
-    if (showModal && (user?.role === 'decano' || user?.role === 'coordinador')) {
-      // @ts-ignore
-      if (typeof window !== 'undefined' && window.Tally) {
-        // @ts-ignore
-        window.Tally.loadEmbeds();
-      }
-    }
-  }, [showModal, user]);
 
   const fetchCursos = async () => {
     try {
@@ -118,8 +95,12 @@ export default function Cursos() {
           pData = data || [];
         }
       } else {
-        const { data } = await supabase.from('programas').select('id, nombre');
-        pData = data || [];
+        const { data } = await supabase.from('programas').select('id, nombre, facultades(nombre)');
+        pData = data?.map((p: any) => ({
+          id: p.id,
+          nombre: p.nombre,
+          facultad: p.facultades?.nombre
+        })) || [];
       }
       
       setProgramas(pData);
@@ -136,11 +117,19 @@ export default function Cursos() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      let cursoFacultad = user?.facultad || 'General';
+      if (user?.role === 'admin' && programa) {
+        const selectedProg = programas.find(p => p.nombre === programa);
+        if (selectedProg && selectedProg.facultad) {
+          cursoFacultad = selectedProg.facultad;
+        }
+      }
+
       const { error } = await supabase
         .from('cursos')
         .insert([{
           nombre,
-          facultad: user?.facultad || 'General', // Fallback
+          facultad: cursoFacultad,
           programa: programa || user?.programa || 'General',
           docente_id: docenteId,
           evaluador_id: evaluadorId || null,
@@ -287,7 +276,7 @@ export default function Cursos() {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowModal(false)} />
 
-            <div className={`relative inline-block w-full ${(user?.role === 'decano' || user?.role === 'coordinador') ? 'max-w-4xl' : 'max-w-md'} p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl`}>
+            <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-lg font-medium leading-6 text-slate-900">
                   {user?.role === 'admin' ? 'Cargar Nuevo Curso' : 'Solicitar Nuevo Curso'}
@@ -297,24 +286,9 @@ export default function Cursos() {
                 </button>
               </div>
 
-              {(user?.role === 'decano' || user?.role === 'coordinador') ? (
-                <div className="w-full h-[600px] overflow-y-auto">
-                  <iframe 
-                    src={`https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&email=${user.email}&nombre=${user.name}`}
-                    loading="lazy" 
-                    width="100%" 
-                    height="100%" 
-                    frameBorder="0" 
-                    marginHeight={0} 
-                    marginWidth={0} 
-                    title="Solicitar Curso"
-                    className="w-full border-none"
-                  ></iframe>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
                   <select
                     required
                     value={tipoSolicitud}
@@ -446,11 +420,10 @@ export default function Cursos() {
                     className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Cargar Curso
+                    {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
                   </button>
                 </div>
               </form>
-              )}
             </div>
           </div>
         </div>
