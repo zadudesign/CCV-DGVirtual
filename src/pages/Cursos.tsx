@@ -49,6 +49,17 @@ export default function Cursos() {
     };
   }, [user]);
 
+  // Ensure Tally initializes when modal opens
+  useEffect(() => {
+    if (showModal && (user?.role === 'decano' || user?.role === 'coordinador')) {
+      // @ts-ignore
+      if (typeof window !== 'undefined' && window.Tally) {
+        // @ts-ignore
+        window.Tally.loadEmbeds();
+      }
+    }
+  }, [showModal, user]);
+
   const fetchCursos = async () => {
     try {
       setLoading(true);
@@ -289,7 +300,7 @@ export default function Cursos() {
               {(user?.role === 'decano' || user?.role === 'coordinador') ? (
                 <div className="w-full h-[600px] overflow-y-auto">
                   <iframe 
-                    data-tally-src={`https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&email=${user.email}&nombre=${user.name}`}
+                    src={`https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&email=${user.email}&nombre=${user.name}`}
                     loading="lazy" 
                     width="100%" 
                     height="100%" 
