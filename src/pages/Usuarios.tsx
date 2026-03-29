@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users as UsersIcon, Loader2, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Users as UsersIcon, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
@@ -10,42 +10,12 @@ export default function Usuarios() {
   const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroFacultad, setFiltroFacultad] = useState<string>('');
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchData();
     }
   }, [user]);
-
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    try {
-      setIsDeleting(true);
-      
-      // Call our backend API to delete from both auth.users and public.profiles
-      const response = await fetch(`/api/admin/users/${userToDelete}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar el usuario');
-      }
-      
-      setUsuarios(usuarios.filter(u => u.id !== userToDelete));
-      setUserToDelete(null);
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      alert('Hubo un error al eliminar el usuario. Por favor intenta de nuevo.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   const fetchData = async () => {
     try {
@@ -135,21 +105,18 @@ export default function Usuarios() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Contacto
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Acciones
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
                   </td>
                 </tr>
               ) : usuariosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
                     No hay usuarios registrados{filtroFacultad ? ' en esta facultad' : ''}.
                   </td>
                 </tr>
@@ -209,15 +176,6 @@ export default function Usuarios() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {user.telefono || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => setUserToDelete(user.id)}
-                        className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
                   </tr>
                 ))
               )}
@@ -225,39 +183,6 @@ export default function Usuarios() {
           </table>
         </div>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-medium text-center text-slate-900 mb-2">¿Eliminar usuario?</h3>
-              <p className="text-sm text-center text-slate-500 mb-6">
-                ¿Estás seguro de que deseas eliminar este usuario? Esta acción lo eliminará de la base de datos y no se puede deshacer.
-              </p>
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setUserToDelete(null)}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleDeleteUser}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors flex justify-center items-center"
-                >
-                  {isDeleting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Eliminar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
