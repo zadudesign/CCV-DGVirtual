@@ -10,6 +10,8 @@ export default function Usuarios() {
   const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroFacultad, setFiltroFacultad] = useState<string>('');
+  const [filtroPrograma, setFiltroPrograma] = useState<string>('');
+  const [filtroRol, setFiltroRol] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -51,7 +53,15 @@ export default function Usuarios() {
   };
 
   const facultadesUnicas = Array.from(new Set(usuarios.map(u => u.facultad).filter(Boolean))).sort() as string[];
-  const usuariosFiltrados = usuarios.filter(u => filtroFacultad ? u.facultad === filtroFacultad : true);
+  const programasUnicos = Array.from(new Set(usuarios.map(u => u.programa).filter(Boolean))).sort() as string[];
+  const rolesUnicos = Array.from(new Set(usuarios.map(u => u.role).filter(Boolean))).sort() as string[];
+  
+  const usuariosFiltrados = usuarios.filter(u => {
+    const matchFacultad = filtroFacultad ? u.facultad === filtroFacultad : true;
+    const matchPrograma = filtroPrograma ? u.programa === filtroPrograma : true;
+    const matchRol = filtroRol ? u.role === filtroRol : true;
+    return matchFacultad && matchPrograma && matchRol;
+  });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -63,30 +73,72 @@ export default function Usuarios() {
       </div>
 
       <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-            <UsersIcon className="mr-2 h-5 w-5 text-indigo-600" />
-            Usuarios Registrados
-          </h3>
+        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
+              <UsersIcon className="mr-2 h-5 w-5 text-indigo-600" />
+              Usuarios Registrados
+            </h3>
+          </div>
           
-          {facultadesUnicas.length > 1 && (
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <label htmlFor="facultad-filter" className="text-sm font-medium text-slate-700 whitespace-nowrap">
-                Facultad:
-              </label>
-              <select
-                id="facultad-filter"
-                value={filtroFacultad}
-                onChange={(e) => setFiltroFacultad(e.target.value)}
-                className="block w-full sm:w-64 rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">Todas las facultades</option>
-                {facultadesUnicas.map(facultad => (
-                  <option key={facultad} value={facultad}>{facultad}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            {facultadesUnicas.length > 1 && (
+              <div className="flex-1">
+                <label htmlFor="facultad-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                  Facultad:
+                </label>
+                <select
+                  id="facultad-filter"
+                  value={filtroFacultad}
+                  onChange={(e) => setFiltroFacultad(e.target.value)}
+                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">Todas las facultades</option>
+                  {facultadesUnicas.map(facultad => (
+                    <option key={facultad} value={facultad}>{facultad}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {programasUnicos.length > 1 && (
+              <div className="flex-1">
+                <label htmlFor="programa-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                  Programa:
+                </label>
+                <select
+                  id="programa-filter"
+                  value={filtroPrograma}
+                  onChange={(e) => setFiltroPrograma(e.target.value)}
+                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">Todos los programas</option>
+                  {programasUnicos.map(programa => (
+                    <option key={programa} value={programa}>{programa}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {rolesUnicos.length > 1 && (
+              <div className="flex-1">
+                <label htmlFor="rol-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                  Rol:
+                </label>
+                <select
+                  id="rol-filter"
+                  value={filtroRol}
+                  onChange={(e) => setFiltroRol(e.target.value)}
+                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">Todos los roles</option>
+                  {rolesUnicos.map(rol => (
+                    <option key={rol} value={rol}>{rol}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -117,7 +169,7 @@ export default function Usuarios() {
               ) : usuariosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
-                    No hay usuarios registrados{filtroFacultad ? ' en esta facultad' : ''}.
+                    No hay usuarios registrados que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
               ) : (
