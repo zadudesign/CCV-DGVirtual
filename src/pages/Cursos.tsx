@@ -35,6 +35,18 @@ export default function Cursos() {
     if (user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador') {
       fetchOptions();
     }
+
+    // Load Tally embed script
+    const script = document.createElement('script');
+    script.src = 'https://tally.so/widgets/embed.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, [user]);
 
   const fetchCursos = async () => {
@@ -168,7 +180,7 @@ export default function Cursos() {
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Solicitar Curso
+            {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
           </button>
         )}
       </div>
@@ -264,17 +276,34 @@ export default function Cursos() {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowModal(false)} />
 
-            <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+            <div className={`relative inline-block w-full ${(user?.role === 'decano' || user?.role === 'coordinador') ? 'max-w-4xl' : 'max-w-md'} p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl`}>
               <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-medium leading-6 text-slate-900">Solicitar Nuevo Curso</h3>
+                <h3 className="text-lg font-medium leading-6 text-slate-900">
+                  {user?.role === 'admin' ? 'Cargar Nuevo Curso' : 'Solicitar Nuevo Curso'}
+                </h3>
                 <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-500">
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
+              {(user?.role === 'decano' || user?.role === 'coordinador') ? (
+                <div className="w-full h-[600px] overflow-y-auto">
+                  <iframe 
+                    data-tally-src={`https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&email=${user.email}&nombre=${user.name}`}
+                    loading="lazy" 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    marginHeight={0} 
+                    marginWidth={0} 
+                    title="Solicitar Curso"
+                    className="w-full border-none"
+                  ></iframe>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
                   <select
                     required
                     value={tipoSolicitud}
@@ -406,10 +435,11 @@ export default function Cursos() {
                     className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Solicitar Curso
+                    Cargar Curso
                   </button>
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>
