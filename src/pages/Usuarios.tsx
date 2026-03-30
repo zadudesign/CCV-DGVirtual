@@ -6,6 +6,7 @@ import { User } from '../types';
 
 export default function Usuarios() {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +149,11 @@ export default function Usuarios() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Usuario
                 </th>
+                {isAdmin && (
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Documento
+                  </th>
+                )}
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Rol
                 </th>
@@ -162,13 +168,13 @@ export default function Usuarios() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-slate-500">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
                   </td>
                 </tr>
               ) : usuariosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-slate-500">
                     No hay usuarios registrados que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
@@ -186,6 +192,11 @@ export default function Usuarios() {
                         </div>
                       </div>
                     </td>
+                    {isAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                        {user.documento || '-'}
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
