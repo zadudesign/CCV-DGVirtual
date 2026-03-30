@@ -321,7 +321,7 @@ export default function Cursos() {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowModal(false)} />
 
-            <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+            <div className={`relative inline-block w-full ${user?.role === 'admin' ? 'max-w-md' : 'max-w-2xl'} p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl`}>
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-lg font-medium leading-6 text-slate-900">
                   {user?.role === 'admin' ? 'Cargar Nuevo Curso' : 'Solicitar Nuevo Curso'}
@@ -331,157 +331,171 @@ export default function Cursos() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
-                  <select
-                    required
-                    value={tipoSolicitud}
-                    onChange={(e) => setTipoSolicitud(e.target.value as any)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    <option value="Creación Completa">Creación Completa</option>
-                    <option value="Actualización">Actualización</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Nombre del Curso</label>
-                  <input
-                    type="text"
-                    required
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Ej. Introducción a la Programación"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Semestre</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    required
-                    value={semestre}
-                    onChange={(e) => setSemestre(parseInt(e.target.value))}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                {user?.role !== 'coordinador' && (
+              {user?.role === 'admin' ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Programa</label>
+                    <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
                     <select
                       required
-                      value={programa}
-                      onChange={(e) => setPrograma(e.target.value)}
+                      value={tipoSolicitud}
+                      onChange={(e) => setTipoSolicitud(e.target.value as any)}
                       className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                     >
-                      <option value="">Seleccione un programa</option>
-                      {programas.map((p) => (
-                        <option key={p.id} value={p.nombre}>{p.nombre}</option>
+                      <option value="Creación Completa">Creación Completa</option>
+                      <option value="Actualización">Actualización</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Nombre del Curso</label>
+                    <input
+                      type="text"
+                      required
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      placeholder="Ej. Introducción a la Programación"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Semestre</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      required
+                      value={semestre}
+                      onChange={(e) => setSemestre(parseInt(e.target.value))}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
+
+                  {user?.role !== 'coordinador' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Programa</label>
+                      <select
+                        required
+                        value={programa}
+                        onChange={(e) => setPrograma(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        <option value="">Seleccione un programa</option>
+                        {programas.map((p) => (
+                          <option key={p.id} value={p.nombre}>{p.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Docente Asignado</label>
+                    <select
+                      required
+                      value={docenteId}
+                      onChange={(e) => setDocenteId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Seleccione un docente</option>
+                      {docentes.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name || d.email}</option>
                       ))}
                     </select>
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Docente Asignado</label>
-                  <select
-                    required
-                    value={docenteId}
-                    onChange={(e) => setDocenteId(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Seleccione un docente</option>
-                    {docentes.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name || d.email}</option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Fecha de Inicio</label>
+                    <input
+                      type="date"
+                      required
+                      value={fechaInicio}
+                      onChange={(e) => setFechaInicio(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Fecha de Inicio</label>
-                  <input
-                    type="date"
-                    required
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Tipo de Contrato</label>
+                    <select
+                      required
+                      value={tipoContrato}
+                      onChange={(e) => setTipoContrato(e.target.value as any)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="Carga Académica - 5 Horas Semanales">Carga Académica - 5 Horas Semanales</option>
+                      <option value="Prestación de Servicios - 1 o 2 Meses">Prestación de Servicios - 1 o 2 Meses</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Tipo de Contrato</label>
-                  <select
-                    required
-                    value={tipoContrato}
-                    onChange={(e) => setTipoContrato(e.target.value as any)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    <option value="Carga Académica - 5 Horas Semanales">Carga Académica - 5 Horas Semanales</option>
-                    <option value="Prestación de Servicios - 1 o 2 Meses">Prestación de Servicios - 1 o 2 Meses</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Par Evaluador (Opcional)</label>
+                    <select
+                      value={evaluadorId}
+                      onChange={(e) => setEvaluadorId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Seleccione un evaluador</option>
+                      {evaluadores.map((e) => (
+                        <option key={e.id} value={e.id}>{e.name || e.email}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Par Evaluador (Opcional)</label>
-                  <select
-                    value={evaluadorId}
-                    onChange={(e) => setEvaluadorId(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Seleccione un evaluador</option>
-                    {evaluadores.map((e) => (
-                      <option key={e.id} value={e.id}>{e.name || e.email}</option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">URL Pública de ClickUp (Embed)</label>
+                    <input
+                      type="url"
+                      value={clickupUrl}
+                      onChange={(e) => setClickupUrl(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      placeholder="https://sharing.clickup.com/..."
+                    />
+                    <p className="mt-1 text-xs text-slate-500">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">URL Pública de ClickUp (Embed)</label>
-                  <input
-                    type="url"
-                    value={clickupUrl}
-                    onChange={(e) => setClickupUrl(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="https://sharing.clickup.com/..."
-                  />
-                  <p className="mt-1 text-xs text-slate-500">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">ID de la Lista en ClickUp (Para estadísticas)</label>
+                    <input
+                      type="text"
+                      value={clickupListId}
+                      onChange={(e) => setClickupListId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      placeholder="Ej. 90110234567"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">El número que aparece en la URL de la lista después de /l/ o /li/.</p>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">ID de la Lista en ClickUp (Para estadísticas)</label>
-                  <input
-                    type="text"
-                    value={clickupListId}
-                    onChange={(e) => setClickupListId(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Ej. 90110234567"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">El número que aparece en la URL de la lista después de /l/ o /li/.</p>
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="w-full h-[600px] bg-slate-50 rounded-lg overflow-hidden">
+                  <iframe 
+                    src="https://tally.so/r/tu-formulario?transparentBackground=1" 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    marginHeight={0} 
+                    marginWidth={0} 
+                    title="Solicitar Curso"
+                  ></iframe>
                 </div>
-
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
           </div>
         </div>
