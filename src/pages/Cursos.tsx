@@ -19,12 +19,11 @@ export default function Cursos() {
   const [programa, setPrograma] = useState('');
   const [docenteId, setDocenteId] = useState('');
   const [evaluadorId, setEvaluadorId] = useState('');
-  const [tipoSolicitud, setTipoSolicitud] = useState<'Creación Completa' | 'Actualización'>('Creación Completa');
+  const [tipoSolicitud, setTipoSolicitud] = useState<'Creación Completa' | 'Actualización' | 'Visita MEN'>('Creación Completa');
   const [semestre, setSemestre] = useState<number>(1);
   const [fechaInicio, setFechaInicio] = useState('');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
   const [clickupUrl, setClickupUrl] = useState('');
-  const [clickupListId, setClickupListId] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   // Filters
@@ -147,8 +146,7 @@ export default function Cursos() {
           semestre: Number(semestre),
           fecha_inicio: fechaInicio,
           tipo_contrato: tipoContrato,
-          clickup_url: clickupUrl || null,
-          clickup_list_id: clickupListId || null
+          clickup_url: clickupUrl || null
         }]);
 
       if (error) throw error;
@@ -397,6 +395,7 @@ export default function Cursos() {
                     >
                       <option value="Creación Completa">Creación Completa</option>
                       <option value="Actualización">Actualización</option>
+                      <option value="Visita MEN">Visita MEN</option>
                     </select>
                   </div>
 
@@ -505,18 +504,6 @@ export default function Cursos() {
                       placeholder="https://sharing.clickup.com/..."
                     />
                     <p className="mt-1 text-xs text-slate-500">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700">ID de la Lista en ClickUp (Para estadísticas)</label>
-                    <input
-                      type="text"
-                      value={clickupListId}
-                      onChange={(e) => setClickupListId(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="Ej. 90110234567"
-                    />
-                    <p className="mt-1 text-xs text-slate-500">El número que aparece en la URL de la lista después de /l/ o /li/.</p>
                   </div>
 
                   <div className="mt-6 flex justify-end space-x-3">

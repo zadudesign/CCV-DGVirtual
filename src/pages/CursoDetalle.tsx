@@ -9,7 +9,7 @@ export default function CursoDetalle() {
   const navigate = useNavigate();
   const [curso, setCurso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'documentacion' | 'creacion' | 'novedades'>('creacion');
+  const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
   
   useEffect(() => {
@@ -144,15 +144,15 @@ export default function CursoDetalle() {
             Documentación
           </button>
           <button
-            onClick={() => setActiveTab('creacion')}
+            onClick={() => setActiveTab('construccion')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-              activeTab === 'creacion'
+              activeTab === 'construccion'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             <PenTool className="h-4 w-4 mr-2" />
-            Creación
+            Construcción
           </button>
           <button
             onClick={() => setActiveTab('novedades')}
@@ -171,12 +171,38 @@ export default function CursoDetalle() {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === 'documentacion' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center flex flex-col items-center">
             <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900">Documentación del Curso</h3>
-            <p className="text-slate-500 mt-2 max-w-md mx-auto">
+            <p className="text-slate-500 mt-2 max-w-md mx-auto mb-6">
               Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
             </p>
+            {curso.drive_url ? (
+              <a 
+                href={curso.drive_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm font-medium"
+              >
+                <svg className="w-5 h-5 mr-3" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                  <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
+                  <path d="M43.65 25.25v26.7L20.5 65.3V38.6l23.15-13.35z" fill="#FFC107"/>
+                  <path d="M43.65 25.25v26.7L66.8 65.3V38.6L43.65 25.25z" fill="#1976D2"/>
+                  <path d="M20.5 12.7l23.15 13.35L66.8 12.7 43.65-.65 20.5 12.7z" fill="#4CAF50"/>
+                </svg>
+                Abrir Carpeta en Google Drive
+              </a>
+            ) : (
+              <div className="inline-flex items-center px-6 py-3 bg-slate-50 border border-slate-200 text-slate-400 rounded-lg cursor-not-allowed font-medium">
+                <svg className="w-5 h-5 mr-3 opacity-50 grayscale" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                  <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
+                  <path d="M43.65 25.25v26.7L20.5 65.3V38.6l23.15-13.35z" fill="#FFC107"/>
+                  <path d="M43.65 25.25v26.7L66.8 65.3V38.6L43.65 25.25z" fill="#1976D2"/>
+                  <path d="M20.5 12.7l23.15 13.35L66.8 12.7 43.65-.65 20.5 12.7z" fill="#4CAF50"/>
+                </svg>
+                Carpeta de Drive no configurada
+              </div>
+            )}
           </div>
         )}
 
@@ -190,7 +216,7 @@ export default function CursoDetalle() {
           </div>
         )}
 
-        {activeTab === 'creacion' && (
+        {activeTab === 'construccion' && (
           <div className="space-y-8">
             <div className="bg-[#222631] rounded-2xl shadow-lg border border-slate-800 p-8 max-w-5xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
