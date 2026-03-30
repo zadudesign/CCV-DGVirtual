@@ -138,6 +138,7 @@ export default function Cursos() {
           creador_id: user?.id,
           estado: 'Planificación',
           progreso: 0,
+          progreso_general: 0,
           tipo_solicitud: tipoSolicitud,
           semestre: Number(semestre),
           fecha_inicio: fechaInicio,
@@ -288,9 +289,9 @@ export default function Cursos() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1">
                           <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${curso.progreso}%` }}></div>
+                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
                           </div>
-                          <span className="text-xs text-slate-500">{curso.progreso}%</span>
+                          <span className="text-xs text-slate-500">{curso.progreso_general || 0}%</span>
                         </div>
                         {curso.clickup_list_id && (
                           <button
