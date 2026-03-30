@@ -492,7 +492,7 @@ export default function AdminDashboard() {
                           <option value="Soporte">Soporte</option>
                           <option value="Multimedia">Multimedia</option>
                           <option value="Diseño">Diseño</option>
-                          <option value="Desarrollo">Desarrollo</option>
+                          <option value="Pedagogía">Pedagogía</option>
                         </select>
                       </div>
                     </div>
