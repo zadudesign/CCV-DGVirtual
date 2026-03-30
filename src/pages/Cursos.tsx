@@ -27,6 +27,10 @@ export default function Cursos() {
   const [clickupListId, setClickupListId] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
+  // Filters
+  const [filtroSemestre, setFiltroSemestre] = useState<string>('');
+  const [filtroPrograma, setFiltroPrograma] = useState<string>('');
+
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
   const [evaluadores, setEvaluadores] = useState<User[]>([]);
@@ -196,6 +200,15 @@ export default function Cursos() {
     }
   };
 
+  const semestresUnicos = Array.from(new Set(cursos.map(c => c.semestre?.toString()).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
+  const programasUnicos = Array.from(new Set(cursos.map(c => c.programa).filter(Boolean))).sort();
+
+  const cursosFiltrados = cursos.filter(curso => {
+    const matchSemestre = filtroSemestre ? curso.semestre?.toString() === filtroSemestre : true;
+    const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
+    return matchSemestre && matchPrograma;
+  });
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center">
@@ -216,6 +229,42 @@ export default function Cursos() {
         )}
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex-1">
+          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-slate-700 mb-1">
+            Filtrar por Programa
+          </label>
+          <select
+            id="filtroPrograma"
+            value={filtroPrograma}
+            onChange={(e) => setFiltroPrograma(e.target.value)}
+            className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+          >
+            <option value="">Todos los programas</option>
+            {programasUnicos.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1">
+          <label htmlFor="filtroSemestre" className="block text-sm font-medium text-slate-700 mb-1">
+            Filtrar por Semestre
+          </label>
+          <select
+            id="filtroSemestre"
+            value={filtroSemestre}
+            onChange={(e) => setFiltroSemestre(e.target.value)}
+            className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+          >
+            <option value="">Todos los semestres</option>
+            {semestresUnicos.map(s => (
+              <option key={s} value={s}>Semestre {s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -224,6 +273,7 @@ export default function Cursos() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Curso</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Programa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Semestre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Docente</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Progreso</th>
@@ -232,18 +282,18 @@ export default function Cursos() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center">
+                  <td colSpan={6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
                   </td>
                 </tr>
-              ) : cursos.length === 0 ? (
+              ) : cursosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-slate-500">
                     No hay cursos registrados.
                   </td>
                 </tr>
               ) : (
-                cursos.map((curso) => (
+                cursosFiltrados.map((curso) => (
                   <tr key={curso.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">{curso.nombre}</Link>
@@ -270,6 +320,9 @@ export default function Cursos() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {curso.programa}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-slate-900">{curso.docente?.name || 'Sin asignar'}</div>
