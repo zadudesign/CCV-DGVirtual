@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, RefreshCw, Link as LinkIcon, X } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 
 export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +10,13 @@ export default function CursoDetalle() {
   const [curso, setCurso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'documentacion' | 'creacion' | 'novedades'>('creacion');
+  
+  // ClickUp states
+  const [syncing, setSyncing] = useState(false);
+  const [showClickupModal, setShowClickupModal] = useState(false);
+  const [clickupListId, setClickupListId] = useState('');
+  const [clickupUrl, setClickupUrl] = useState('');
+  const [savingClickup, setSavingClickup] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -32,10 +39,85 @@ export default function CursoDetalle() {
 
       if (error) throw error;
       setCurso(data);
+      if (data.clickup_list_id) {
+        setClickupListId(data.clickup_list_id);
+      }
+      if (data.clickup_url) {
+        setClickupUrl(data.clickup_url);
+      }
     } catch (err) {
       console.error('Error fetching curso:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncClickUp = async () => {
+    if (!curso?.clickup_list_id) return;
+    
+    try {
+      setSyncing(true);
+      const response = await fetch('/api/clickup/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ curso_id: curso.id, list_id: curso.clickup_list_id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al sincronizar con ClickUp');
+      }
+
+      const data = await response.json();
+      // Refetch course to get updated stats
+      await fetchCurso();
+    } catch (error) {
+      console.error('Error syncing:', error);
+      alert('Error al sincronizar con ClickUp. Verifica que el ID de la lista sea correcto y que la API Key esté configurada.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleConnectClickUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+
+    try {
+      setSavingClickup(true);
+      const { error } = await supabase
+        .from('cursos')
+        .update({
+          clickup_list_id: clickupListId || null,
+          clickup_url: clickupUrl || null
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setShowClickupModal(false);
+      await fetchCurso(); // Reload to get new data
+      
+      // If we just added a list ID, sync it immediately
+      if (clickupListId) {
+        // We need to use the new list ID directly since state might not be updated yet
+        setSyncing(true);
+        const response = await fetch('/api/clickup/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ curso_id: id, list_id: clickupListId })
+        });
+        if (response.ok) {
+          await fetchCurso();
+        }
+        setSyncing(false);
+      }
+      
+    } catch (err) {
+      console.error('Error updating ClickUp connection:', err);
+      alert('Error al guardar la configuración de ClickUp');
+      setSavingClickup(false);
     }
   };
 
@@ -58,26 +140,35 @@ export default function CursoDetalle() {
     );
   }
 
-  // Mock data for the charts based on the image provided
-  const generalProgress = curso.progreso || 43.1;
+  // Data for the charts
+  const generalProgress = curso.progreso || 0;
   const generalData = [
     { name: 'Completado', value: generalProgress },
     { name: 'Restante', value: 100 - generalProgress }
   ];
 
-  const procesosData = [
-    { name: 'Documentación', value: 26.1, color: '#3b82f6' }, // blue-500
-    { name: 'Grabación', value: 100, color: '#f97316' }, // orange-500
-    { name: 'Edición', value: 37.4, color: '#8b5cf6' }, // violet-500
+  const procesosColors: Record<string, string> = {
+    'Documentación': '#00bfff', // Cyan
+    'Grabación': '#ff3333',     // Red
+    'Edición': '#99cc00',       // Green
+    'Soporte': '#ffcc00',       // Yellow
+  };
+
+  const defaultProcesos = [
+    { name: 'Soporte', value: 0, fill: '#ffcc00' },
+    { name: 'Edición', value: 0, fill: '#99cc00' },
+    { name: 'Grabación', value: 0, fill: '#ff3333' },
+    { name: 'Documentación', value: 0, fill: '#00bfff' },
   ];
 
-  const unidadesData = [
-    { name: 'Unidad 1', data: [{ name: 'A', value: 45, color: '#f97316' }, { name: 'B', value: 27, color: '#3b82f6' }, { name: 'C', value: 27, color: '#8b5cf6' }], total: 31.4 },
-    { name: 'Unidad 2', data: [{ name: 'A', value: 62, color: '#f97316' }, { name: 'B', value: 38, color: '#3b82f6' }], total: 22.9 },
-    { name: 'Unidad 3', data: [{ name: 'A', value: 62, color: '#f97316' }, { name: 'B', value: 38, color: '#3b82f6' }], total: 22.9 },
-    { name: 'Unidad 4', data: [{ name: 'A', value: 62, color: '#f97316' }, { name: 'B', value: 38, color: '#3b82f6' }], total: 22.9 },
-    { name: 'Unidad 5', data: [{ name: 'A', value: 14, color: '#f97316' }, { name: 'B', value: 43, color: '#3b82f6' }, { name: 'C', value: 43, color: '#8b5cf6' }], total: 100.0 },
-  ];
+  const procesosData = defaultProcesos.map(dp => {
+    const found = curso.clickup_stats?.procesos?.find((p: any) => p.name === dp.name);
+    return {
+      name: dp.name,
+      value: found ? found.value : dp.value,
+      fill: dp.fill
+    };
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -160,145 +251,192 @@ export default function CursoDetalle() {
 
         {activeTab === 'creacion' && (
           <div className="space-y-8">
-            <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600 border border-slate-200">
-              En la sección <strong>CREACIÓN</strong> encontrará el promedio de progreso, tanto general como específico, de los distintos procesos involucrados en la creación de un curso virtual, tales como la documentación, la grabación y la edición.
+            <div className="flex justify-between items-center max-w-5xl mx-auto">
+              <h2 className="text-xl font-bold text-slate-900">Progreso de Creación</h2>
+              <div className="flex space-x-3">
+                {curso.clickup_list_id ? (
+                  <button
+                    onClick={handleSyncClickUp}
+                    disabled={syncing}
+                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                  >
+                    {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    {syncing ? 'Sincronizando...' : 'Sincronizar ClickUp'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowClickupModal(true)}
+                    className="flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Conectar Tablero ClickUp
+                  </button>
+                )}
+                {curso.clickup_list_id && (
+                  <button
+                    onClick={() => setShowClickupModal(true)}
+                    className="flex items-center px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
+                    title="Configurar conexión"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column: Promedio General */}
-              <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute top-4 left-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    PROMEDIO GENERAL
-                  </span>
-                </div>
-                
-                <div className="relative w-64 h-64 mt-8 flex items-center justify-center">
-                  {/* Lightbulb background shape (simplified) */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                    <Lightbulb className="w-full h-full text-yellow-500" />
-                  </div>
-                  
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={generalData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={100}
-                        startAngle={90}
-                        endAngle={-270}
-                        dataKey="value"
-                        stroke="none"
+            <div className="bg-[#222631] rounded-2xl shadow-lg border border-slate-800 p-8 max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Left Column: Promedio General */}
+                <div className="flex flex-col items-center justify-center relative">
+                  <div className="relative w-64 h-64 flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadialBarChart 
+                        cx="50%" cy="50%" 
+                        innerRadius="80%" outerRadius="100%" 
+                        barSize={15} 
+                        data={[{ name: 'General', value: generalProgress, fill: '#00bfff' }]} 
+                        startAngle={90} endAngle={-270}
                       >
-                        <Cell fill="#dc2626" /> {/* red-600 */}
-                        <Cell fill="#e2e8f0" /> {/* slate-200 */}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  
-                  <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className="text-3xl font-bold text-slate-700">{generalProgress.toFixed(1)}%</span>
+                        <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                        <RadialBar background={{ fill: '#334155' }} dataKey="value" cornerRadius={10} />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <span className="text-5xl font-bold text-white">{generalProgress.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 text-2xl font-bold text-slate-300 tracking-wider">
+                    PROMEDIO GENERAL
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column: Promedios específicos */}
-              <div className="lg:col-span-2 space-y-8">
-                
-                {/* Promedio por proceso */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                  <div className="flex justify-center mb-6">
-                    <span className="inline-flex items-center px-4 py-1 rounded-full text-sm font-bold bg-green-700 text-white border-2 border-green-200">
-                      PROMEDIO POR PROCESO
-                    </span>
+                {/* Right Column: Promedios específicos */}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="text-slate-400 text-sm mb-2 font-medium tracking-widest uppercase">Promedios por Proceso</div>
+                  <div className="w-full h-64 relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadialBarChart 
+                        cx="50%" cy="50%" 
+                        innerRadius="30%" outerRadius="100%" 
+                        barSize={12} 
+                        data={procesosData} 
+                        startAngle={90} endAngle={-270}
+                      >
+                        <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                        <RadialBar background={{ fill: '#334155' }} dataKey="value" cornerRadius={10} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1e222d', borderColor: '#334155', color: '#fff', borderRadius: '8px' }}
+                          itemStyle={{ color: '#fff' }}
+                          formatter={(value: number) => [`${value.toFixed(1)}%`, 'Progreso']}
+                        />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {procesosData.map((proceso, idx) => (
+                  {/* Legend */}
+                  <div className="flex justify-center gap-8 mt-6 flex-wrap">
+                    {[...procesosData].reverse().map((proceso, idx) => (
                       <div key={idx} className="flex flex-col items-center">
-                        <div className="w-full h-32 relative">
+                        <div className="relative w-20 h-20 flex items-center justify-center mb-3">
                           <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Done', value: proceso.value },
-                                  { name: 'Left', value: 100 - proceso.value }
-                                ]}
-                                cx="50%"
-                                cy="100%"
-                                startAngle={180}
-                                endAngle={0}
-                                innerRadius={60}
-                                outerRadius={80}
-                                dataKey="value"
-                                stroke="none"
-                              >
-                                <Cell fill={proceso.color} />
-                                <Cell fill="#f1f5f9" />
-                              </Pie>
-                            </PieChart>
+                            <RadialBarChart 
+                              cx="50%" cy="50%" 
+                              innerRadius="70%" outerRadius="100%" 
+                              barSize={6} 
+                              data={[{ name: proceso.name, value: proceso.value, fill: proceso.fill }]} 
+                              startAngle={90} endAngle={-270}
+                            >
+                              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                              <RadialBar background={{ fill: '#334155' }} dataKey="value" cornerRadius={10} />
+                            </RadialBarChart>
                           </ResponsiveContainer>
-                          <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-                            <span className="text-2xl font-bold text-slate-700">{proceso.value.toFixed(1)}%</span>
-                          </div>
+                          <span className="absolute text-sm font-bold text-white">{proceso.value.toFixed(0)}%</span>
                         </div>
-                        <div className="mt-4 flex items-center">
-                          <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: proceso.color }}></div>
-                          <span className="text-sm font-medium text-slate-600 uppercase tracking-wider">{proceso.name}</span>
-                        </div>
+                        <span className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">{proceso.name}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                {/* Promedio por unidad */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                  <div className="flex justify-center mb-6">
-                    <span className="inline-flex items-center px-4 py-1 rounded-full text-sm font-bold bg-green-700 text-white border-2 border-green-200">
-                      PROMEDIO POR UNIDAD
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {unidadesData.map((unidad, idx) => (
-                      <div key={idx} className="flex flex-col items-center">
-                        <div className="w-24 h-24 relative">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={unidad.data}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={25}
-                                outerRadius={45}
-                                dataKey="value"
-                                stroke="none"
-                              >
-                                {unidad.data.map((entry, i) => (
-                                  <Cell key={`cell-${i}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-bold text-slate-700">{unidad.total.toFixed(1)}%</span>
-                          </div>
-                        </div>
-                        <div className="mt-2 bg-slate-100 px-3 py-1 rounded-full w-full text-center">
-                          <span className="text-xs font-medium text-slate-600 uppercase">{unidad.name}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
               </div>
             </div>
+
+            {/* Embedded ClickUp Board */}
+            {curso.clickup_url && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden max-w-5xl mx-auto h-[600px]">
+                <iframe 
+                  src={curso.clickup_url} 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }}
+                  title="Tablero de ClickUp"
+                  allow="clipboard-write"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
+      {/* ClickUp Connection Modal */}
+      {showClickupModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Conectar con ClickUp</h3>
+              <button onClick={() => setShowClickupModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleConnectClickUp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">List ID de ClickUp</label>
+                <input
+                  type="text"
+                  value={clickupListId}
+                  onChange={(e) => setClickupListId(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Ej. 90110123456"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  El ID numérico de la lista en ClickUp que contiene las tareas de este curso.
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">URL Pública (Embed) Opcional</label>
+                <input
+                  type="url"
+                  value={clickupUrl}
+                  onChange={(e) => setClickupUrl(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  placeholder="https://sharing.clickup.com/..."
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Enlace público para incrustar el tablero directamente en la plataforma.
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowClickupModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingClickup}
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50 flex items-center"
+                >
+                  {savingClickup && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Guardar y Conectar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

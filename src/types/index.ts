@@ -41,6 +41,7 @@ export interface Curso {
   created_at: string;
   clickup_url?: string;
   clickup_list_id?: string;
+  clickup_stats?: any;
   docente?: { name: string; email: string };
   evaluador?: { name: string; email: string };
   creador?: { name: string; email: string };

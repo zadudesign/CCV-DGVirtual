@@ -196,10 +196,76 @@ async function startServer() {
       if (progreso > 0 && progreso < 100) estado = 'En Desarrollo';
       if (progreso === 100) estado = 'Revisión'; // Or 'Publicado', depending on logic
 
+      // Calculate detailed stats for charts
+      // 1. Promedios por Proceso (based on tags or list names)
+      const procesosMap: Record<string, { total: number, completed: number }> = {
+        'Documentación': { total: 0, completed: 0 },
+        'Grabación': { total: 0, completed: 0 },
+        'Edición': { total: 0, completed: 0 },
+        'Soporte': { total: 0, completed: 0 }
+      };
+
+      // 2. Promedios por Unidad (based on task name containing "Unidad X" or tags)
+      const unidadesMap: Record<string, { total: number, completed: number }> = {};
+
+      tasks.forEach((t: any) => {
+        const isCompleted = t.status.type === 'done' || t.status.type === 'closed';
+        
+        // Check tags for procesos
+        const tags = t.tags?.map((tag: any) => tag.name.toLowerCase()) || [];
+        let matchedProceso = false;
+        
+        if (tags.includes('documentación') || tags.includes('documentacion') || t.name.toLowerCase().includes('doc')) {
+          procesosMap['Documentación'].total++;
+          if (isCompleted) procesosMap['Documentación'].completed++;
+          matchedProceso = true;
+        }
+        if (tags.includes('grabación') || tags.includes('grabacion') || t.name.toLowerCase().includes('grab')) {
+          procesosMap['Grabación'].total++;
+          if (isCompleted) procesosMap['Grabación'].completed++;
+          matchedProceso = true;
+        }
+        if (tags.includes('edición') || tags.includes('edicion') || t.name.toLowerCase().includes('edi')) {
+          procesosMap['Edición'].total++;
+          if (isCompleted) procesosMap['Edición'].completed++;
+          matchedProceso = true;
+        }
+        if (tags.includes('soporte') || t.name.toLowerCase().includes('soporte')) {
+          procesosMap['Soporte'].total++;
+          if (isCompleted) procesosMap['Soporte'].completed++;
+          matchedProceso = true;
+        }
+
+        // Check for Unidades (e.g., "Unidad 1", "U1")
+        const unidadMatch = t.name.match(/Unidad\s*(\d+)/i) || t.name.match(/U(\d+)/i);
+        if (unidadMatch) {
+          const unidadName = `Unidad ${unidadMatch[1]}`;
+          if (!unidadesMap[unidadName]) unidadesMap[unidadName] = { total: 0, completed: 0 };
+          unidadesMap[unidadName].total++;
+          if (isCompleted) unidadesMap[unidadName].completed++;
+        }
+      });
+
+      const clickup_stats = {
+        procesos: Object.entries(procesosMap).map(([name, stats]) => ({
+          name,
+          value: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+          total: stats.total
+        })).filter(p => p.total > 0), // Only include processes that have tasks
+        unidades: Object.entries(unidadesMap).map(([name, stats]) => ({
+          name,
+          total: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+          data: [
+            { name: 'Completado', value: stats.completed },
+            { name: 'Pendiente', value: stats.total - stats.completed }
+          ]
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      };
+
       // Update Supabase
       const { error: updateError } = await supabaseAdmin
         .from('cursos')
-        .update({ progreso, estado })
+        .update({ progreso, estado, clickup_stats })
         .eq('id', curso_id);
 
       if (updateError) {
