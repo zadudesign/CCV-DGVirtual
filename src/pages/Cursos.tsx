@@ -486,7 +486,7 @@ export default function Cursos() {
               ) : (
                 <div className="w-full h-[600px] bg-slate-50 rounded-lg overflow-hidden">
                   <iframe 
-                    src="https://tally.so/r/tu-formulario?transparentBackground=1" 
+                    src="https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" 
                     width="100%" 
                     height="100%" 
                     frameBorder="0" 
