@@ -152,6 +152,67 @@ async function startServer() {
     }
   });
 
+  app.post("/api/clickup/sync", async (req, res) => {
+    try {
+      const { list_id, curso_id } = req.body;
+      const clickupApiKey = process.env.CLICKUP_API_KEY;
+
+      if (!clickupApiKey) {
+        return res.status(500).json({ error: "CLICKUP_API_KEY no configurada en el servidor." });
+      }
+
+      if (!list_id || !curso_id) {
+        return res.status(400).json({ error: "list_id y curso_id son requeridos" });
+      }
+
+      // Fetch tasks from ClickUp
+      const response = await fetch(`https://api.clickup.com/api/v2/list/${list_id}/task?subtasks=true`, {
+        method: 'GET',
+        headers: {
+          'Authorization': clickupApiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("ClickUp API Error:", errorData);
+        return res.status(response.status).json({ error: "Error al obtener tareas de ClickUp" });
+      }
+
+      const data = await response.json();
+      const tasks = data.tasks || [];
+
+      if (tasks.length === 0) {
+        return res.json({ message: "No hay tareas en la lista", progreso: 0 });
+      }
+
+      // Calculate progress
+      const completedTasks = tasks.filter((t: any) => t.status.type === 'done' || t.status.type === 'closed').length;
+      const progreso = Math.round((completedTasks / tasks.length) * 100);
+
+      // Determine state based on progress
+      let estado = 'Planificación';
+      if (progreso > 0 && progreso < 100) estado = 'En Desarrollo';
+      if (progreso === 100) estado = 'Revisión'; // Or 'Publicado', depending on logic
+
+      // Update Supabase
+      const { error: updateError } = await supabaseAdmin
+        .from('cursos')
+        .update({ progreso, estado })
+        .eq('id', curso_id);
+
+      if (updateError) {
+        return res.status(500).json({ error: "Error al actualizar el progreso en la base de datos" });
+      }
+
+      res.json({ message: "Progreso sincronizado exitosamente", progreso, estado, total: tasks.length, completadas: completedTasks });
+    } catch (error: any) {
+      console.error("Error syncing with ClickUp:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

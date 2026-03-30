@@ -24,6 +24,8 @@ export default function Cursos() {
   const [fechaInicio, setFechaInicio] = useState('');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
   const [clickupUrl, setClickupUrl] = useState('');
+  const [clickupListId, setClickupListId] = useState('');
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
@@ -140,7 +142,8 @@ export default function Cursos() {
           semestre: Number(semestre),
           fecha_inicio: fechaInicio,
           tipo_contrato: tipoContrato,
-          clickup_url: clickupUrl || null
+          clickup_url: clickupUrl || null,
+          clickup_list_id: clickupListId || null
         }]);
 
       if (error) throw error;
@@ -154,6 +157,7 @@ export default function Cursos() {
       setFechaInicio('');
       setTipoContrato('Carga Académica - 5 Horas Semanales');
       setClickupUrl('');
+      setClickupListId('');
       fetchCursos();
     } catch (err) {
       console.error('Error creating curso:', err);
@@ -164,6 +168,32 @@ export default function Cursos() {
   };
 
   const canCreate = user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador';
+
+  const handleSyncClickUp = async (cursoId: string, listId: string) => {
+    try {
+      setSyncingId(cursoId);
+      const response = await fetch('/api/clickup/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ curso_id: cursoId, list_id: listId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al sincronizar con ClickUp');
+      }
+
+      const data = await response.json();
+      alert(`Sincronización exitosa: ${data.progreso}% completado (${data.completadas}/${data.total} tareas)`);
+      fetchCursos();
+    } catch (error) {
+      console.error('Error syncing:', error);
+      alert('Error al sincronizar con ClickUp. Verifica que el ID de la lista sea correcto y que la API Key esté configurada.');
+    } finally {
+      setSyncingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -255,11 +285,26 @@ export default function Cursos() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                          <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${curso.progreso}%` }}></div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center flex-1">
+                          <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
+                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${curso.progreso}%` }}></div>
+                          </div>
+                          <span className="text-xs text-slate-500">{curso.progreso}%</span>
                         </div>
-                        <span className="text-xs text-slate-500">{curso.progreso}%</span>
+                        {curso.clickup_list_id && (
+                          <button
+                            onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
+                            disabled={syncingId === curso.id}
+                            className="ml-2 text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                            title="Sincronizar progreso con ClickUp"
+                          >
+                            <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
+                            <svg className={`h-4 w-4 ${syncingId === curso.id ? 'hidden' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -396,14 +441,27 @@ export default function Cursos() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">URL de Tareas en ClickUp (Opcional)</label>
+                  <label className="block text-sm font-medium text-slate-700">URL Pública de ClickUp (Embed)</label>
                   <input
                     type="url"
                     value={clickupUrl}
                     onChange={(e) => setClickupUrl(e.target.value)}
                     className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="https://app.clickup.com/t/..."
+                    placeholder="https://sharing.clickup.com/..."
                   />
+                  <p className="mt-1 text-xs text-slate-500">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">ID de la Lista en ClickUp (Para estadísticas)</label>
+                  <input
+                    type="text"
+                    value={clickupListId}
+                    onChange={(e) => setClickupListId(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Ej. 90110234567"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">El número que aparece en la URL de la lista después de /l/ o /li/.</p>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">

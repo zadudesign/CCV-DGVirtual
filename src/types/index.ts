@@ -40,6 +40,7 @@ export interface Curso {
   tipo_contrato: 'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses';
   created_at: string;
   clickup_url?: string;
+  clickup_list_id?: string;
   docente?: { name: string; email: string };
   evaluador?: { name: string; email: string };
   creador?: { name: string; email: string };
