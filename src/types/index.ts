@@ -34,6 +34,11 @@ export interface Curso {
   creador_id: string;
   estado: 'Planificación' | 'En Desarrollo' | 'Revisión' | 'Publicado';
   progreso: number;
+  progreso_general?: number;
+  progreso_documentacion?: number;
+  progreso_grabacion?: number;
+  progreso_edicion?: number;
+  progreso_soporte?: number;
   tipo_solicitud: 'Creación Completa' | 'Actualización';
   semestre: number;
   fecha_inicio: string;
@@ -41,6 +46,7 @@ export interface Curso {
   created_at: string;
   clickup_url?: string;
   clickup_list_id?: string;
+  make_webhook_url?: string;
   clickup_stats?: any;
   docente?: { name: string; email: string };
   evaluador?: { name: string; email: string };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, RefreshCw, Link as LinkIcon, X } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 
 export default function CursoDetalle() {
@@ -10,23 +10,39 @@ export default function CursoDetalle() {
   const [curso, setCurso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'documentacion' | 'creacion' | 'novedades'>('creacion');
+  const [copiedId, setCopiedId] = useState(false);
   
-  // ClickUp states
-  const [syncing, setSyncing] = useState(false);
-  const [showClickupModal, setShowClickupModal] = useState(false);
-  const [clickupListId, setClickupListId] = useState('');
-  const [clickupUrl, setClickupUrl] = useState('');
-  const [savingClickup, setSavingClickup] = useState(false);
-
   useEffect(() => {
     if (id) {
       fetchCurso();
+
+      // Suscribirse a cambios en tiempo real en la tabla cursos para este curso específico
+      const channel = supabase
+        .channel(`curso_${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'cursos',
+            filter: `id=eq.${id}`
+          },
+          (payload) => {
+            console.log('Cambio detectado en Supabase (Make actualizó los datos):', payload);
+            fetchCurso(false); // Actualizar sin mostrar el loader
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [id]);
 
-  const fetchCurso = async () => {
+  const fetchCurso = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from('cursos')
         .select(`
@@ -39,86 +55,17 @@ export default function CursoDetalle() {
 
       if (error) throw error;
       setCurso(data);
-      if (data.clickup_list_id) {
-        setClickupListId(data.clickup_list_id);
-      }
-      if (data.clickup_url) {
-        setClickupUrl(data.clickup_url);
-      }
     } catch (err) {
       console.error('Error fetching curso:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
-  const handleSyncClickUp = async () => {
-    if (!curso?.clickup_list_id) return;
-    
-    try {
-      setSyncing(true);
-      const response = await fetch('/api/clickup/sync', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ curso_id: curso.id, list_id: curso.clickup_list_id })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al sincronizar con ClickUp');
-      }
-
-      const data = await response.json();
-      // Refetch course to get updated stats
-      await fetchCurso();
-    } catch (error) {
-      console.error('Error syncing:', error);
-      alert('Error al sincronizar con ClickUp. Verifica que el ID de la lista sea correcto y que la API Key esté configurada.');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleConnectClickUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-
-    try {
-      setSavingClickup(true);
-      const { error } = await supabase
-        .from('cursos')
-        .update({
-          clickup_list_id: clickupListId || null,
-          clickup_url: clickupUrl || null
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setShowClickupModal(false);
-      await fetchCurso(); // Reload to get new data
-      
-      // If we just added a list ID, sync it immediately
-      if (clickupListId) {
-        // We need to use the new list ID directly since state might not be updated yet
-        setSyncing(true);
-        const response = await fetch('/api/clickup/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ curso_id: id, list_id: clickupListId })
-        });
-        if (response.ok) {
-          await fetchCurso();
-        }
-        setSyncing(false);
-      }
-      
-    } catch (err) {
-      console.error('Error updating ClickUp connection:', err);
-      alert('Error al guardar la configuración de ClickUp');
-      setSavingClickup(false);
-    }
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(curso.id);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
   };
 
   if (loading) {
@@ -141,34 +88,18 @@ export default function CursoDetalle() {
   }
 
   // Data for the charts
-  const generalProgress = curso.progreso || 0;
+  const generalProgress = curso.progreso_general ?? curso.progreso ?? 0;
   const generalData = [
     { name: 'Completado', value: generalProgress },
     { name: 'Restante', value: 100 - generalProgress }
   ];
 
-  const procesosColors: Record<string, string> = {
-    'Documentación': '#00bfff', // Cyan
-    'Grabación': '#ff3333',     // Red
-    'Edición': '#99cc00',       // Green
-    'Soporte': '#ffcc00',       // Yellow
-  };
-
-  const defaultProcesos = [
-    { name: 'Soporte', value: 0, fill: '#ffcc00' },
-    { name: 'Edición', value: 0, fill: '#99cc00' },
-    { name: 'Grabación', value: 0, fill: '#ff3333' },
-    { name: 'Documentación', value: 0, fill: '#00bfff' },
+  const procesosData = [
+    { name: 'Soporte', value: curso.progreso_soporte ?? 0, fill: '#ffcc00' },
+    { name: 'Edición', value: curso.progreso_edicion ?? 0, fill: '#99cc00' },
+    { name: 'Grabación', value: curso.progreso_grabacion ?? 0, fill: '#ff3333' },
+    { name: 'Documentación', value: curso.progreso_documentacion ?? 0, fill: '#00bfff' },
   ];
-
-  const procesosData = defaultProcesos.map(dp => {
-    const found = curso.clickup_stats?.procesos?.find((p: any) => p.name === dp.name);
-    return {
-      name: dp.name,
-      value: found ? found.value : dp.value,
-      fill: dp.fill
-    };
-  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -181,8 +112,18 @@ export default function CursoDetalle() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{curso.nombre}</h1>
-          <p className="text-sm text-slate-500">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-slate-900">{curso.nombre}</h1>
+            <button
+              onClick={handleCopyId}
+              className="flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors"
+              title="Copiar ID de Supabase para Make"
+            >
+              {copiedId ? <Check className="h-3 w-3 mr-1 text-green-600" /> : <Copy className="h-3 w-3 mr-1" />}
+              {copiedId ? 'Copiado' : 'Copiar ID'}
+            </button>
+          </div>
+          <p className="text-sm text-slate-500 mt-1">
             {curso.programa} • Docente: {curso.docente?.name || 'No asignado'}
           </p>
         </div>
@@ -251,39 +192,6 @@ export default function CursoDetalle() {
 
         {activeTab === 'creacion' && (
           <div className="space-y-8">
-            <div className="flex justify-between items-center max-w-5xl mx-auto">
-              <h2 className="text-xl font-bold text-slate-900">Progreso de Creación</h2>
-              <div className="flex space-x-3">
-                {curso.clickup_list_id ? (
-                  <button
-                    onClick={handleSyncClickUp}
-                    disabled={syncing}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 text-sm font-medium"
-                  >
-                    {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                    {syncing ? 'Sincronizando...' : 'Sincronizar ClickUp'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setShowClickupModal(true)}
-                    className="flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
-                  >
-                    <LinkIcon className="h-4 w-4 mr-2" />
-                    Conectar Tablero ClickUp
-                  </button>
-                )}
-                {curso.clickup_list_id && (
-                  <button
-                    onClick={() => setShowClickupModal(true)}
-                    className="flex items-center px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
-                    title="Configurar conexión"
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
             <div className="bg-[#222631] rounded-2xl shadow-lg border border-slate-800 p-8 max-w-5xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Left Column: Promedio General */}
@@ -360,83 +268,9 @@ export default function CursoDetalle() {
               </div>
             </div>
 
-            {/* Embedded ClickUp Board */}
-            {curso.clickup_url && (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden max-w-5xl mx-auto h-[600px]">
-                <iframe 
-                  src={curso.clickup_url} 
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }}
-                  title="Tablero de ClickUp"
-                  allow="clipboard-write"
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
-      {/* ClickUp Connection Modal */}
-      {showClickupModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-slate-900">Conectar con ClickUp</h3>
-              <button onClick={() => setShowClickupModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleConnectClickUp} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">List ID de ClickUp</label>
-                <input
-                  type="text"
-                  value={clickupListId}
-                  onChange={(e) => setClickupListId(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                  placeholder="Ej. 90110123456"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  El ID numérico de la lista en ClickUp que contiene las tareas de este curso.
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL Pública (Embed) Opcional</label>
-                <input
-                  type="url"
-                  value={clickupUrl}
-                  onChange={(e) => setClickupUrl(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                  placeholder="https://sharing.clickup.com/..."
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Enlace público para incrustar el tablero directamente en la plataforma.
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowClickupModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingClickup}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50 flex items-center"
-                >
-                  {savingClickup && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Guardar y Conectar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
