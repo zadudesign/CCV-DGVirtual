@@ -14,7 +14,9 @@ import {
   isSameDay, 
   addMonths, 
   subMonths, 
-  parseISO 
+  parseISO,
+  differenceInDays,
+  startOfDay
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -106,12 +108,27 @@ export default function Calendario() {
     }
   };
 
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case 'Completado': return 'bg-green-100 text-green-800 border-green-200';
-      case 'En Progreso': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Atrasado': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+  const getTrafficLightStatus = (fecha: string) => {
+    const today = startOfDay(new Date());
+    const dueDate = startOfDay(parseISO(fecha));
+    const diffDays = differenceInDays(dueDate, today);
+
+    if (diffDays < 0) {
+      const daysLate = Math.abs(diffDays);
+      return {
+        color: 'bg-red-100 text-red-800 border-red-200',
+        label: `Vencido (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`
+      };
+    } else if (diffDays <= 3) {
+      return {
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        label: 'Pronto a vencer'
+      };
+    } else {
+      return {
+        color: 'bg-green-100 text-green-800 border-green-200',
+        label: 'A tiempo'
+      };
     }
   };
 
@@ -208,16 +225,20 @@ export default function Calendario() {
               </span>
             </div>
             <div className="mt-2 space-y-1.5">
-              {dayEvents.map((event, idx) => (
-                <div 
-                  key={event.id || idx} 
-                  className={`px-2 py-1 text-xs rounded-md border truncate ${getStatusColor(event.estado)}`}
-                  title={`${event.curso?.nombre} - ${event.titulo}`}
-                >
-                  <div className="font-semibold truncate">{event.titulo}</div>
-                  <div className="truncate opacity-80">{event.curso?.nombre}</div>
-                </div>
-              ))}
+              {dayEvents.map((event, idx) => {
+                const status = getTrafficLightStatus(event.fecha_entrega);
+                return (
+                  <div 
+                    key={event.id || idx} 
+                    className={`px-2 py-1.5 text-xs rounded-md border ${status.color}`}
+                    title={`${event.curso?.nombre} - ${event.titulo}\n${status.label}`}
+                  >
+                    <div className="font-semibold truncate">{event.titulo}</div>
+                    <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                    <div className="text-[10px] mt-1 font-medium italic opacity-90 truncate">{status.label}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
