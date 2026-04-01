@@ -76,28 +76,28 @@ export default function Calendario() {
       const events: any[] = [];
       
       (entregasData || []).forEach((row: any) => {
-        const addEvent = (titulo: string, fecha: string | null) => {
+        const addEvent = (titulo: string, fecha: string | null, estado: string | null) => {
           if (fecha) {
             events.push({
               id: `${row.id}-${titulo}`,
               curso_id: row.curso_id,
               titulo,
               fecha_entrega: fecha,
-              estado: 'Pendiente', // Default state since we removed it from DB
+              estado: estado || 'Pendiente',
               curso: row.curso
             });
           }
         };
 
-        addEvent('Solicitud de Creación', row.solicitud_creacion);
-        addEvent('Asesorías', row.asesorias);
-        addEvent('Sílabo Virtual', row.silabo_virtual);
-        addEvent('Unidad 1', row.unidad_1);
-        addEvent('Unidad 2', row.unidad_2);
-        addEvent('Unidad 3', row.unidad_3);
-        addEvent('Unidad 4', row.unidad_4);
-        addEvent('Unidad 5', row.unidad_5);
-        addEvent('Revisión y Entrega', row.revision_entrega);
+        addEvent('Solicitud de Creación', row.solicitud_creacion, row.estado_solicitud_creacion);
+        addEvent('Asesorías', row.asesorias, row.estado_asesorias);
+        addEvent('Sílabo Virtual', row.silabo_virtual, row.estado_silabo_virtual);
+        addEvent('Unidad 1', row.unidad_1, row.estado_unidad_1);
+        addEvent('Unidad 2', row.unidad_2, row.estado_unidad_2);
+        addEvent('Unidad 3', row.unidad_3, row.estado_unidad_3);
+        addEvent('Unidad 4', row.unidad_4, row.estado_unidad_4);
+        addEvent('Unidad 5', row.unidad_5, row.estado_unidad_5);
+        addEvent('Revisión y Entrega', row.revision_entrega, row.estado_revision_entrega);
       });
 
       setEntregas(events);
@@ -108,7 +108,14 @@ export default function Calendario() {
     }
   };
 
-  const getTrafficLightStatus = (fecha: string) => {
+  const getTrafficLightStatus = (fecha: string, estado: string) => {
+    if (estado === 'Completado') {
+      return {
+        color: 'bg-slate-100 text-slate-600 border-slate-300 opacity-75',
+        label: 'Completado'
+      };
+    }
+
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(fecha));
     const diffDays = differenceInDays(dueDate, today);
@@ -226,7 +233,7 @@ export default function Calendario() {
             </div>
             <div className="mt-2 space-y-1.5">
               {dayEvents.map((event, idx) => {
-                const status = getTrafficLightStatus(event.fecha_entrega);
+                const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
                 return (
                   <div 
                     key={event.id || idx} 
@@ -262,6 +269,12 @@ export default function Calendario() {
     const today = startOfDay(new Date());
 
     entregas.forEach(event => {
+      if (event.estado === 'Completado') {
+        // We can skip completed events from the sidebar, or put them in a separate list.
+        // For now, let's just skip them so the sidebar focuses on pending work.
+        return;
+      }
+
       const dueDate = startOfDay(parseISO(event.fecha_entrega));
       const diffDays = differenceInDays(dueDate, today);
 
@@ -293,7 +306,7 @@ export default function Calendario() {
             <p className="text-sm text-slate-500 italic">No hay tareas en esta sección</p>
           ) : (
             events.map((event, idx) => {
-              const status = getTrafficLightStatus(event.fecha_entrega);
+              const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
               return (
                 <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
                   <div className="font-semibold text-sm">{event.titulo}</div>

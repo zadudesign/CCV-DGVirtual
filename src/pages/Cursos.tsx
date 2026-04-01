@@ -16,6 +16,7 @@ export default function Cursos() {
   // Cronograma state
   const [cronogramaModal, setCronogramaModal] = useState<{isOpen: boolean, curso: Curso | null}>({isOpen: false, curso: null});
   const [fechasCronograma, setFechasCronograma] = useState<Record<string, string>>({});
+  const [estadosCronograma, setEstadosCronograma] = useState<Record<string, string>>({});
   const [loadingCronograma, setLoadingCronograma] = useState(false);
   const [savingCronograma, setSavingCronograma] = useState(false);
 
@@ -148,6 +149,7 @@ export default function Cursos() {
       if (error && error.code !== '42P01') throw error;
       
       const fechasMap: Record<string, string> = {};
+      const estadosMap: Record<string, string> = {};
       if (data) {
         if (data.solicitud_creacion) fechasMap['Solicitud de Creación'] = data.solicitud_creacion;
         if (data.asesorias) fechasMap['Asesorías'] = data.asesorias;
@@ -158,8 +160,19 @@ export default function Cursos() {
         if (data.unidad_4) fechasMap['Unidad 4'] = data.unidad_4;
         if (data.unidad_5) fechasMap['Unidad 5'] = data.unidad_5;
         if (data.revision_entrega) fechasMap['Revisión y Entrega'] = data.revision_entrega;
+
+        if (data.estado_solicitud_creacion) estadosMap['Solicitud de Creación'] = data.estado_solicitud_creacion;
+        if (data.estado_asesorias) estadosMap['Asesorías'] = data.estado_asesorias;
+        if (data.estado_silabo_virtual) estadosMap['Sílabo Virtual'] = data.estado_silabo_virtual;
+        if (data.estado_unidad_1) estadosMap['Unidad 1'] = data.estado_unidad_1;
+        if (data.estado_unidad_2) estadosMap['Unidad 2'] = data.estado_unidad_2;
+        if (data.estado_unidad_3) estadosMap['Unidad 3'] = data.estado_unidad_3;
+        if (data.estado_unidad_4) estadosMap['Unidad 4'] = data.estado_unidad_4;
+        if (data.estado_unidad_5) estadosMap['Unidad 5'] = data.estado_unidad_5;
+        if (data.estado_revision_entrega) estadosMap['Revisión y Entrega'] = data.estado_revision_entrega;
       }
       setFechasCronograma(fechasMap);
+      setEstadosCronograma(estadosMap);
     } catch (error) {
       console.error('Error fetching cronograma:', error);
     } finally {
@@ -184,6 +197,15 @@ export default function Cursos() {
         unidad_4: fechasCronograma['Unidad 4'] || null,
         unidad_5: fechasCronograma['Unidad 5'] || null,
         revision_entrega: fechasCronograma['Revisión y Entrega'] || null,
+        estado_solicitud_creacion: estadosCronograma['Solicitud de Creación'] || 'Pendiente',
+        estado_asesorias: estadosCronograma['Asesorías'] || 'Pendiente',
+        estado_silabo_virtual: estadosCronograma['Sílabo Virtual'] || 'Pendiente',
+        estado_unidad_1: estadosCronograma['Unidad 1'] || 'Pendiente',
+        estado_unidad_2: estadosCronograma['Unidad 2'] || 'Pendiente',
+        estado_unidad_3: estadosCronograma['Unidad 3'] || 'Pendiente',
+        estado_unidad_4: estadosCronograma['Unidad 4'] || 'Pendiente',
+        estado_unidad_5: estadosCronograma['Unidad 5'] || 'Pendiente',
+        estado_revision_entrega: estadosCronograma['Revisión y Entrega'] || 'Pendiente',
       };
 
       // Check if exists
@@ -660,19 +682,36 @@ export default function Cursos() {
                 </div>
               ) : (
                 <form onSubmit={saveCronograma} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {MILESTONES.map(milestone => (
-                      <div key={milestone.id}>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                      <div key={milestone.id} className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label className="block text-sm font-semibold text-slate-800 mb-2">
                           {milestone.label}
                         </label>
-                        <input
-                          type="date"
-                          required={milestone.required}
-                          value={fechasCronograma[milestone.id] || ''}
-                          onChange={(e) => setFechasCronograma({...fechasCronograma, [milestone.id]: e.target.value})}
-                          className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                        />
+                        <div className="space-y-2">
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Fecha de Entrega</span>
+                            <input
+                              type="date"
+                              required={milestone.required}
+                              value={fechasCronograma[milestone.id] || ''}
+                              onChange={(e) => setFechasCronograma({...fechasCronograma, [milestone.id]: e.target.value})}
+                              className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Estado</span>
+                            <select
+                              value={estadosCronograma[milestone.id] || 'Pendiente'}
+                              onChange={(e) => setEstadosCronograma({...estadosCronograma, [milestone.id]: e.target.value})}
+                              className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm bg-white"
+                            >
+                              <option value="Pendiente">Pendiente</option>
+                              <option value="En Progreso">En Progreso</option>
+                              <option value="Completado">Completado</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
