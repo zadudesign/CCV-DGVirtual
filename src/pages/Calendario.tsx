@@ -254,6 +254,71 @@ export default function Calendario() {
     return <div className="border-l border-t border-slate-200 rounded-b-xl overflow-hidden">{rows}</div>;
   };
 
+  const renderSidebar = () => {
+    const vencidas: any[] = [];
+    const pronto: any[] = [];
+    const aTiempo: any[] = [];
+
+    const today = startOfDay(new Date());
+
+    entregas.forEach(event => {
+      const dueDate = startOfDay(parseISO(event.fecha_entrega));
+      const diffDays = differenceInDays(dueDate, today);
+
+      if (diffDays < 0) {
+        vencidas.push(event);
+      } else if (diffDays <= 3) {
+        pronto.push(event);
+      } else {
+        aTiempo.push(event);
+      }
+    });
+
+    const sortByDate = (a: any, b: any) => {
+      return new Date(a.fecha_entrega).getTime() - new Date(b.fecha_entrega).getTime();
+    };
+
+    vencidas.sort(sortByDate);
+    pronto.sort(sortByDate);
+    aTiempo.sort(sortByDate);
+
+    const renderList = (title: string, events: any[], colorClass: string, bgClass: string) => (
+      <div className="mb-6 last:mb-0">
+        <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 flex items-center ${colorClass}`}>
+          <div className={`w-2 h-2 rounded-full mr-2 ${bgClass}`}></div>
+          {title} ({events.length})
+        </h3>
+        <div className="space-y-3">
+          {events.length === 0 ? (
+            <p className="text-sm text-slate-500 italic">No hay tareas en esta sección</p>
+          ) : (
+            events.map((event, idx) => {
+              const status = getTrafficLightStatus(event.fecha_entrega);
+              return (
+                <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
+                  <div className="font-semibold text-sm">{event.titulo}</div>
+                  <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
+                  <div className="text-xs font-medium mt-2 flex items-center justify-between">
+                    <span>{format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })}</span>
+                    <span className="italic opacity-90">{status.label}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-5 h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
+        {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
+        {renderList('Pronto a Vencer', pronto, 'text-yellow-700', 'bg-yellow-500')}
+        {renderList('A Tiempo', aTiempo, 'text-green-700', 'bg-green-500')}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -268,11 +333,19 @@ export default function Calendario() {
         <h1 className="text-2xl font-bold text-slate-900">Calendario de Trabajo</h1>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-6">
-        {renderHeader()}
-        <div className="rounded-xl overflow-hidden border border-slate-200">
-          {renderDays()}
-          {renderCells()}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Sidebar */}
+        <div className="w-full lg:w-80 flex-shrink-0">
+          {renderSidebar()}
+        </div>
+
+        {/* Calendar */}
+        <div className="flex-1 w-full bg-white shadow-sm rounded-xl border border-slate-200 p-6">
+          {renderHeader()}
+          <div className="rounded-xl overflow-hidden border border-slate-200">
+            {renderDays()}
+            {renderCells()}
+          </div>
         </div>
       </div>
     </div>
