@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Bell
+  Bell,
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -23,6 +24,7 @@ export default function Layout() {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Cursos', href: '/cursos', icon: BookOpen },
+    { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 

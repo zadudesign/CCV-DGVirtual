@@ -24,6 +24,19 @@ export interface Programa {
   facultad_id: string;
 }
 
+export interface EntregaCalendario {
+  id: string;
+  curso_id: string;
+  titulo: string;
+  descripcion?: string;
+  fecha_entrega: string;
+  estado: 'Pendiente' | 'En Progreso' | 'Completado' | 'Atrasado';
+  created_at: string;
+  curso?: {
+    nombre: string;
+  };
+}
+
 export interface Curso {
   id: string;
   nombre: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, Eye } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -12,7 +12,24 @@ export default function Cursos() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [previewClickup, setPreviewClickup] = useState<string | null>(null);
+  
+  // Cronograma state
+  const [cronogramaModal, setCronogramaModal] = useState<{isOpen: boolean, curso: Curso | null}>({isOpen: false, curso: null});
+  const [fechasCronograma, setFechasCronograma] = useState<Record<string, string>>({});
+  const [loadingCronograma, setLoadingCronograma] = useState(false);
+  const [savingCronograma, setSavingCronograma] = useState(false);
+
+  const MILESTONES = [
+    { id: 'Solicitud de Creación', label: 'Solicitud de Creación', required: true },
+    { id: 'Asesorías', label: 'Asesorías', required: true },
+    { id: 'Sílabo Virtual', label: 'Sílabo Virtual', required: true },
+    { id: 'Unidad 1', label: 'Unidad 1', required: true },
+    { id: 'Unidad 2', label: 'Unidad 2', required: true },
+    { id: 'Unidad 3', label: 'Unidad 3', required: true },
+    { id: 'Unidad 4', label: 'Unidad 4 (Opcional)', required: false },
+    { id: 'Unidad 5', label: 'Unidad 5 (Opcional)', required: false },
+    { id: 'Revisión y Entrega', label: 'Revisión y Entrega', required: true },
+  ];
 
   // Form state
   const [nombre, setNombre] = useState('');
@@ -115,6 +132,79 @@ export default function Cursos() {
       }
     } catch (err) {
       console.error('Error fetching options:', err);
+    }
+  };
+
+  const openCronograma = async (curso: Curso) => {
+    setCronogramaModal({ isOpen: true, curso });
+    setLoadingCronograma(true);
+    try {
+      const { data, error } = await supabase
+        .from('calendario_entregas')
+        .select('*')
+        .eq('curso_id', curso.id)
+        .maybeSingle();
+      
+      if (error && error.code !== '42P01') throw error;
+      
+      const fechasMap: Record<string, string> = {};
+      if (data) {
+        if (data.solicitud_creacion) fechasMap['Solicitud de Creación'] = data.solicitud_creacion;
+        if (data.asesorias) fechasMap['Asesorías'] = data.asesorias;
+        if (data.silabo_virtual) fechasMap['Sílabo Virtual'] = data.silabo_virtual;
+        if (data.unidad_1) fechasMap['Unidad 1'] = data.unidad_1;
+        if (data.unidad_2) fechasMap['Unidad 2'] = data.unidad_2;
+        if (data.unidad_3) fechasMap['Unidad 3'] = data.unidad_3;
+        if (data.unidad_4) fechasMap['Unidad 4'] = data.unidad_4;
+        if (data.unidad_5) fechasMap['Unidad 5'] = data.unidad_5;
+        if (data.revision_entrega) fechasMap['Revisión y Entrega'] = data.revision_entrega;
+      }
+      setFechasCronograma(fechasMap);
+    } catch (error) {
+      console.error('Error fetching cronograma:', error);
+    } finally {
+      setLoadingCronograma(false);
+    }
+  };
+
+  const saveCronograma = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cronogramaModal.curso) return;
+    
+    setSavingCronograma(true);
+    try {
+      const payload = {
+        curso_id: cronogramaModal.curso.id,
+        solicitud_creacion: fechasCronograma['Solicitud de Creación'] || null,
+        asesorias: fechasCronograma['Asesorías'] || null,
+        silabo_virtual: fechasCronograma['Sílabo Virtual'] || null,
+        unidad_1: fechasCronograma['Unidad 1'] || null,
+        unidad_2: fechasCronograma['Unidad 2'] || null,
+        unidad_3: fechasCronograma['Unidad 3'] || null,
+        unidad_4: fechasCronograma['Unidad 4'] || null,
+        unidad_5: fechasCronograma['Unidad 5'] || null,
+        revision_entrega: fechasCronograma['Revisión y Entrega'] || null,
+      };
+
+      // Check if exists
+      const { data: existing } = await supabase
+        .from('calendario_entregas')
+        .select('id')
+        .eq('curso_id', cronogramaModal.curso.id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('calendario_entregas').update(payload).eq('id', existing.id);
+      } else {
+        await supabase.from('calendario_entregas').insert([payload]);
+      }
+      
+      setCronogramaModal({ isOpen: false, curso: null });
+    } catch (error) {
+      console.error('Error saving cronograma:', error);
+      alert('Error al guardar el cronograma. Asegúrate de haber creado la tabla calendario_entregas con la nueva estructura.');
+    } finally {
+      setSavingCronograma(false);
     }
   };
 
@@ -294,27 +384,34 @@ export default function Cursos() {
                 cursosFiltrados.map((curso) => (
                   <tr key={curso.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">{curso.nombre}</Link>
-                      {curso.clickup_url && (
-                        <div className="flex items-center space-x-3 mt-1">
-                          <button 
-                            onClick={() => setPreviewClickup(curso.clickup_url!)}
-                            className="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800"
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Previsualizar
-                          </button>
+                      <Link 
+                        to={`/cursos/${curso.id}`} 
+                        className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors"
+                      >
+                        {curso.nombre}
+                      </Link>
+                      <div className="flex items-center mt-2 pl-1 space-x-3">
+                        {curso.clickup_url && (
                           <a 
                             href={curso.clickup_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700"
+                            className="inline-flex items-center text-xs text-slate-500 hover:text-indigo-600 transition-colors"
                           >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            Abrir
+                            <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
+                            Abrir Tablero ClickUp
                           </a>
-                        </div>
-                      )}
+                        )}
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => openCronograma(curso)}
+                            className="inline-flex items-center text-xs text-slate-500 hover:text-indigo-600 transition-colors"
+                          >
+                            <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                            Cronograma
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {curso.programa}
@@ -541,42 +638,63 @@ export default function Cursos() {
           </div>
         </div>
       )}
-      {/* Preview Modal */}
-      {previewClickup && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
-          <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setPreviewClickup(null)} />
-          
-          <div className="relative w-full max-w-6xl h-[85vh] m-4 bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg font-medium text-slate-900 flex items-center">
-                <Eye className="h-5 w-5 mr-2 text-indigo-600" />
-                Previsualización de ClickUp
-              </h3>
-              <div className="flex items-center space-x-4">
-                <a 
-                  href={previewClickup} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
-                >
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  Abrir en nueva pestaña
-                </a>
-                <button onClick={() => setPreviewClickup(null)} className="text-slate-400 hover:text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-full p-1 transition-colors">
+
+      {/* Cronograma Modal */}
+      {cronogramaModal.isOpen && cronogramaModal.curso && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setCronogramaModal({isOpen: false, curso: null})} />
+            <div className="relative inline-block w-full max-w-2xl p-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-900">
+                  Cronograma: {cronogramaModal.curso.nombre}
+                </h3>
+                <button onClick={() => setCronogramaModal({isOpen: false, curso: null})} className="text-slate-400 hover:text-slate-500">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-            </div>
-            
-            <div className="flex-1 w-full bg-slate-100 p-0">
-              {/* Note: ClickUp standard URLs (app.clickup.com) block iframes. 
-                  Users must use the "Public Sharing" embed link (sharing.clickup.com) for this to work. */}
-              <iframe 
-                src={previewClickup} 
-                className="w-full h-full border-0"
-                title="ClickUp Preview"
-                allow="clipboard-write"
-              />
+              
+              {loadingCronograma ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                </div>
+              ) : (
+                <form onSubmit={saveCronograma} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {MILESTONES.map(milestone => (
+                      <div key={milestone.id}>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          {milestone.label}
+                        </label>
+                        <input
+                          type="date"
+                          required={milestone.required}
+                          value={fechasCronograma[milestone.id] || ''}
+                          onChange={(e) => setFechasCronograma({...fechasCronograma, [milestone.id]: e.target.value})}
+                          className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setCronogramaModal({isOpen: false, curso: null})}
+                      className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingCronograma}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    >
+                      {savingCronograma && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Guardar Cronograma
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

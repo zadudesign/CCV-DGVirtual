@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Cursos from './pages/Cursos';
 import CursoDetalle from './pages/CursoDetalle';
+import Calendario from './pages/Calendario';
 import Configuracion from './pages/Configuracion';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="cursos" element={<Cursos />} />
             <Route path="cursos/:id" element={<CursoDetalle />} />
+            <Route path="calendario" element={<Calendario />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>
