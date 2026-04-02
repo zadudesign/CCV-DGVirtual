@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EntregaCalendario } from '../types';
@@ -76,7 +76,7 @@ export default function Calendario() {
       const events: any[] = [];
       
       (entregasData || []).forEach((row: any) => {
-        const addEvent = (titulo: string, fecha: string | null, estado: string | null) => {
+        const addEvent = (titulo: string, fecha: string | null, estado: string | null, detalle: string | null) => {
           if (fecha) {
             events.push({
               id: `${row.id}-${titulo}`,
@@ -84,20 +84,21 @@ export default function Calendario() {
               titulo,
               fecha_entrega: fecha,
               estado: estado || 'Pendiente',
+              detalle: detalle || '',
               curso: row.curso
             });
           }
         };
 
-        addEvent('Solicitud de Creación', row.solicitud_creacion, row.estado_solicitud_creacion);
-        addEvent('Asesorías', row.asesorias, row.estado_asesorias);
-        addEvent('Sílabo Virtual', row.silabo_virtual, row.estado_silabo_virtual);
-        addEvent('Unidad 1', row.unidad_1, row.estado_unidad_1);
-        addEvent('Unidad 2', row.unidad_2, row.estado_unidad_2);
-        addEvent('Unidad 3', row.unidad_3, row.estado_unidad_3);
-        addEvent('Unidad 4', row.unidad_4, row.estado_unidad_4);
-        addEvent('Unidad 5', row.unidad_5, row.estado_unidad_5);
-        addEvent('Revisión y Entrega', row.revision_entrega, row.estado_revision_entrega);
+        addEvent('Solicitud de Creación', row.solicitud_creacion, row.estado_solicitud_creacion, row.detalle_solicitud_creacion);
+        addEvent('Asesorías', row.asesorias, row.estado_asesorias, row.detalle_asesorias);
+        addEvent('Sílabo Virtual', row.silabo_virtual, row.estado_silabo_virtual, row.detalle_silabo_virtual);
+        addEvent('Unidad 1', row.unidad_1, row.estado_unidad_1, row.detalle_unidad_1);
+        addEvent('Unidad 2', row.unidad_2, row.estado_unidad_2, row.detalle_unidad_2);
+        addEvent('Unidad 3', row.unidad_3, row.estado_unidad_3, row.detalle_unidad_3);
+        addEvent('Unidad 4', row.unidad_4, row.estado_unidad_4, row.detalle_unidad_4);
+        addEvent('Unidad 5', row.unidad_5, row.estado_unidad_5, row.detalle_unidad_5);
+        addEvent('Revisión y Entrega', row.revision_entrega, row.estado_revision_entrega, row.detalle_revision_entrega);
       });
 
       setEntregas(events);
@@ -108,10 +109,45 @@ export default function Calendario() {
     }
   };
 
+  const handleStatusChange = async (curso_id: string, titulo: string, newStatus: string) => {
+    // Optimistic update
+    setEntregas(prev => prev.map(e => 
+      (e.curso_id === curso_id && e.titulo === titulo) ? { ...e, estado: newStatus } : e
+    ));
+
+    const columnMap: Record<string, string> = {
+      'Solicitud de Creación': 'estado_solicitud_creacion',
+      'Asesorías': 'estado_asesorias',
+      'Sílabo Virtual': 'estado_silabo_virtual',
+      'Unidad 1': 'estado_unidad_1',
+      'Unidad 2': 'estado_unidad_2',
+      'Unidad 3': 'estado_unidad_3',
+      'Unidad 4': 'estado_unidad_4',
+      'Unidad 5': 'estado_unidad_5',
+      'Revisión y Entrega': 'estado_revision_entrega',
+    };
+
+    const columnName = columnMap[titulo];
+    if (!columnName) return;
+
+    try {
+      const { error } = await supabase
+        .from('calendario_entregas')
+        .update({ [columnName]: newStatus })
+        .eq('curso_id', curso_id);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating status:', error);
+      fetchEntregas();
+    }
+  };
+
   const getTrafficLightStatus = (fecha: string, estado: string) => {
     if (estado === 'Completado') {
       return {
         color: 'bg-slate-100 text-slate-600 border-slate-300 opacity-75',
+        iconBg: 'bg-slate-400',
         label: 'Completado'
       };
     }
@@ -124,16 +160,19 @@ export default function Calendario() {
       const daysLate = Math.abs(diffDays);
       return {
         color: 'bg-red-100 text-red-800 border-red-200',
+        iconBg: 'bg-red-500',
         label: `Vencido (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`
       };
     } else if (diffDays <= 3) {
       return {
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        iconBg: 'bg-yellow-500',
         label: 'Pronto a vencer'
       };
     } else {
       return {
         color: 'bg-green-100 text-green-800 border-green-200',
+        iconBg: 'bg-green-500',
         label: 'A tiempo'
       };
     }
@@ -242,6 +281,14 @@ export default function Calendario() {
                   >
                     <div className="font-semibold truncate">{event.titulo}</div>
                     <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                    {event.detalle && (
+                      <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-slate-700 border border-black/5 flex items-start gap-1">
+                        <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
+                          <Bell className="w-2 h-2 text-white" />
+                        </div>
+                        <span className="truncate leading-tight">{event.detalle}</span>
+                      </div>
+                    )}
                     <div className="text-[10px] mt-1 font-medium italic opacity-90 truncate">{status.label}</div>
                   </div>
                 );
@@ -311,9 +358,28 @@ export default function Calendario() {
                 <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
                   <div className="font-semibold text-sm">{event.titulo}</div>
                   <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
+                  {event.detalle && (
+                    <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-slate-700 border border-black/5 flex items-start gap-1.5">
+                      <div className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${status.iconBg}`}>
+                        <Bell className="w-2.5 h-2.5 text-white" />
+                      </div>
+                      <span className="leading-tight">{event.detalle}</span>
+                    </div>
+                  )}
                   <div className="text-xs font-medium mt-2 flex items-center justify-between">
                     <span>{format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })}</span>
-                    <span className="italic opacity-90">{status.label}</span>
+                    <span className="italic opacity-90 text-[10px] text-right ml-2">{status.label}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-black/10">
+                    <select
+                      value={event.estado}
+                      onChange={(e) => handleStatusChange(event.curso_id, event.titulo, e.target.value)}
+                      className="w-full text-xs border-slate-300 rounded bg-white/50 text-slate-800 focus:ring-indigo-500 focus:border-indigo-500 py-1 px-2 cursor-pointer"
+                    >
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="En Progreso">En Progreso</option>
+                      <option value="Completado">Completado</option>
+                    </select>
                   </div>
                 </div>
               );

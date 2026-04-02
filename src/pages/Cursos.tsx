@@ -17,6 +17,7 @@ export default function Cursos() {
   const [cronogramaModal, setCronogramaModal] = useState<{isOpen: boolean, curso: Curso | null}>({isOpen: false, curso: null});
   const [fechasCronograma, setFechasCronograma] = useState<Record<string, string>>({});
   const [estadosCronograma, setEstadosCronograma] = useState<Record<string, string>>({});
+  const [detallesCronograma, setDetallesCronograma] = useState<Record<string, string>>({});
   const [loadingCronograma, setLoadingCronograma] = useState(false);
   const [savingCronograma, setSavingCronograma] = useState(false);
 
@@ -150,6 +151,7 @@ export default function Cursos() {
       
       const fechasMap: Record<string, string> = {};
       const estadosMap: Record<string, string> = {};
+      const detallesMap: Record<string, string> = {};
       if (data) {
         if (data.solicitud_creacion) fechasMap['Solicitud de Creación'] = data.solicitud_creacion;
         if (data.asesorias) fechasMap['Asesorías'] = data.asesorias;
@@ -170,9 +172,20 @@ export default function Cursos() {
         if (data.estado_unidad_4) estadosMap['Unidad 4'] = data.estado_unidad_4;
         if (data.estado_unidad_5) estadosMap['Unidad 5'] = data.estado_unidad_5;
         if (data.estado_revision_entrega) estadosMap['Revisión y Entrega'] = data.estado_revision_entrega;
+
+        if (data.detalle_solicitud_creacion) detallesMap['Solicitud de Creación'] = data.detalle_solicitud_creacion;
+        if (data.detalle_asesorias) detallesMap['Asesorías'] = data.detalle_asesorias;
+        if (data.detalle_silabo_virtual) detallesMap['Sílabo Virtual'] = data.detalle_silabo_virtual;
+        if (data.detalle_unidad_1) detallesMap['Unidad 1'] = data.detalle_unidad_1;
+        if (data.detalle_unidad_2) detallesMap['Unidad 2'] = data.detalle_unidad_2;
+        if (data.detalle_unidad_3) detallesMap['Unidad 3'] = data.detalle_unidad_3;
+        if (data.detalle_unidad_4) detallesMap['Unidad 4'] = data.detalle_unidad_4;
+        if (data.detalle_unidad_5) detallesMap['Unidad 5'] = data.detalle_unidad_5;
+        if (data.detalle_revision_entrega) detallesMap['Revisión y Entrega'] = data.detalle_revision_entrega;
       }
       setFechasCronograma(fechasMap);
       setEstadosCronograma(estadosMap);
+      setDetallesCronograma(detallesMap);
     } catch (error) {
       console.error('Error fetching cronograma:', error);
     } finally {
@@ -206,6 +219,15 @@ export default function Cursos() {
         estado_unidad_4: estadosCronograma['Unidad 4'] || 'Pendiente',
         estado_unidad_5: estadosCronograma['Unidad 5'] || 'Pendiente',
         estado_revision_entrega: estadosCronograma['Revisión y Entrega'] || 'Pendiente',
+        detalle_solicitud_creacion: detallesCronograma['Solicitud de Creación'] || null,
+        detalle_asesorias: detallesCronograma['Asesorías'] || null,
+        detalle_silabo_virtual: detallesCronograma['Sílabo Virtual'] || null,
+        detalle_unidad_1: detallesCronograma['Unidad 1'] || null,
+        detalle_unidad_2: detallesCronograma['Unidad 2'] || null,
+        detalle_unidad_3: detallesCronograma['Unidad 3'] || null,
+        detalle_unidad_4: detallesCronograma['Unidad 4'] || null,
+        detalle_unidad_5: detallesCronograma['Unidad 5'] || null,
+        detalle_revision_entrega: detallesCronograma['Revisión y Entrega'] || null,
       };
 
       // Check if exists
@@ -710,6 +732,16 @@ export default function Cursos() {
                               <option value="En Progreso">En Progreso</option>
                               <option value="Completado">Completado</option>
                             </select>
+                          </div>
+                          <div className="col-span-1 md:col-span-2 mt-2">
+                            <span className="block text-xs text-slate-500 mb-1">Detalle / Observación</span>
+                            <input
+                              type="text"
+                              value={detallesCronograma[milestone.id] || ''}
+                              onChange={(e) => setDetallesCronograma({...detallesCronograma, [milestone.id]: e.target.value})}
+                              className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                              placeholder="Ej. En espera de firma..."
+                            />
                           </div>
                         </div>
                       </div>
