@@ -20,7 +20,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function Calendario() {
+export default function Calendario({ cursoId }: { cursoId?: string }) {
   const { user } = useAuth();
   const [entregas, setEntregas] = useState<EntregaCalendario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ export default function Calendario() {
     if (user) {
       fetchEntregas();
     }
-  }, [user]);
+  }, [user, cursoId]);
 
   const fetchEntregas = async () => {
     try {
@@ -38,12 +38,16 @@ export default function Calendario() {
       
       let cursosQuery = supabase.from('cursos').select('id');
       
-      if (user?.role === 'docente') {
-        cursosQuery = cursosQuery.eq('docente_id', user.id);
-      } else if (user?.role === 'evaluador') {
-        cursosQuery = cursosQuery.eq('evaluador_id', user.id);
-      } else if (user?.role === 'creador') {
-        cursosQuery = cursosQuery.eq('creador_id', user.id);
+      if (cursoId) {
+        cursosQuery = cursosQuery.eq('id', cursoId);
+      } else {
+        if (user?.role === 'docente') {
+          cursosQuery = cursosQuery.eq('docente_id', user.id);
+        } else if (user?.role === 'evaluador') {
+          cursosQuery = cursosQuery.eq('evaluador_id', user.id);
+        } else if (user?.role === 'creador') {
+          cursosQuery = cursosQuery.eq('creador_id', user.id);
+        }
       }
       
       const { data: cursos, error: cursosError } = await cursosQuery;
@@ -390,7 +394,7 @@ export default function Calendario() {
     );
 
     return (
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-5 h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
+      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
         {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
         {renderList('Pronto a Vencer', pronto, 'text-yellow-700', 'bg-yellow-500')}
         {renderList('A Tiempo', aTiempo, 'text-green-700', 'bg-green-500')}
@@ -408,9 +412,11 @@ export default function Calendario() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Calendario de Trabajo</h1>
-      </div>
+      {!cursoId && (
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-slate-900">Calendario de Trabajo</h1>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Sidebar */}

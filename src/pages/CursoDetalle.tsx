@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
+import Calendario from './Calendario';
 
 export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [curso, setCurso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades'>('construccion');
+  const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
   
   useEffect(() => {
@@ -165,6 +166,17 @@ export default function CursoDetalle() {
             <Bell className="h-4 w-4 mr-2" />
             Novedades
           </button>
+          <button
+            onClick={() => setActiveTab('calendario')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+              activeTab === 'calendario'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <CalendarDays className="h-4 w-4 mr-2" />
+            Calendario de Trabajo
+          </button>
         </nav>
       </div>
 
@@ -213,6 +225,12 @@ export default function CursoDetalle() {
             <p className="text-slate-500 mt-2 max-w-md mx-auto">
               Historial de cambios, notificaciones y comentarios sobre el progreso del curso.
             </p>
+          </div>
+        )}
+
+        {activeTab === 'calendario' && (
+          <div className="bg-slate-50 rounded-xl shadow-sm border border-slate-200 p-6">
+            <Calendario cursoId={curso.id} />
           </div>
         )}
 
