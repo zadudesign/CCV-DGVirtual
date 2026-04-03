@@ -13,6 +13,7 @@ import Usuarios from './pages/Usuarios';
 import Cursos from './pages/Cursos';
 import CursoDetalle from './pages/CursoDetalle';
 import Calendario from './pages/Calendario';
+import MisTareas from './pages/MisTareas';
 import Configuracion from './pages/Configuracion';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="cursos" element={<Cursos />} />
             <Route path="cursos/:id" element={<CursoDetalle />} />
             <Route path="calendario" element={<Calendario />} />
+            <Route path="mis-tareas" element={<MisTareas />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>

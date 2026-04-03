@@ -37,6 +37,22 @@ export interface EntregaCalendario {
   };
 }
 
+export interface NotificacionTarea {
+  id: string;
+  created_at: string;
+  usuario_id: string;
+  curso_id?: string;
+  titulo: string;
+  descripcion?: string;
+  estado: string;
+  fecha_vencimiento?: string;
+  clickup_task_id?: string;
+  url_clickup?: string;
+  curso?: {
+    nombre: string;
+  };
+}
+
 export interface Curso {
   id: string;
   nombre: string;

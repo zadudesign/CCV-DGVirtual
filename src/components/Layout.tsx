@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -9,13 +10,54 @@ import {
   LogOut,
   Menu,
   Bell,
-  CalendarDays
+  CalendarDays,
+  CheckSquare
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { NotificacionTarea } from '../types';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const [pendingTasks, setPendingTasks] = useState<NotificacionTarea[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchPendingTasks();
+      
+      // Subscribe to changes
+      const subscription = supabase
+        .channel('notificaciones_cambios')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'notificaciones_tareas'
+        }, () => {
+          fetchPendingTasks();
+        })
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user]);
+
+  const fetchPendingTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notificaciones_tareas')
+        .select('*, curso:cursos(nombre)')
+        .neq('estado', 'Completada')
+        .order('fecha_vencimiento', { ascending: true });
+
+      if (error) throw error;
+      setPendingTasks(data || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -25,6 +67,7 @@ export default function Layout() {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Cursos', href: '/cursos', icon: BookOpen },
     { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+    { name: 'Mis Tareas', href: '/mis-tareas', icon: CheckSquare },
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 
@@ -90,10 +133,69 @@ export default function Layout() {
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
-            <button className="p-2 text-slate-400 hover:text-slate-500 relative">
-              <Bell className="h-6 w-6" />
-              <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 text-slate-400 hover:text-slate-500 relative focus:outline-none"
+              >
+                <Bell className="h-6 w-6" />
+                {pendingTasks.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 ring-2 ring-white"></span>
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <h3 className="text-sm font-semibold text-slate-800">Notificaciones</h3>
+                    <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                      {pendingTasks.length} pendientes
+                    </span>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {pendingTasks.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-sm text-slate-500">
+                        No tienes tareas pendientes. ¡Buen trabajo!
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {pendingTasks.slice(0, 5).map((task) => (
+                          <Link 
+                            key={task.id} 
+                            to="/mis-tareas"
+                            onClick={() => setShowNotifications(false)}
+                            className="block px-4 py-3 hover:bg-slate-50 transition-colors"
+                          >
+                            <p className="text-sm font-medium text-slate-800 truncate">{task.titulo}</p>
+                            {task.curso?.nombre && (
+                              <p className="text-xs text-slate-500 truncate mt-0.5">{task.curso.nombre}</p>
+                            )}
+                            {task.fecha_vencimiento && (
+                              <p className="text-xs text-indigo-600 mt-1 font-medium">
+                                Vence: {new Date(task.fecha_vencimiento).toLocaleDateString()}
+                              </p>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
+                    <Link 
+                      to="/mis-tareas" 
+                      onClick={() => setShowNotifications(false)}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-700 block text-center"
+                    >
+                      Ver todas mis tareas
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
