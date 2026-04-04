@@ -50,22 +50,6 @@ export default function MisTareas() {
     }
   };
 
-  const markAsCompleted = async (taskId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notificaciones_tareas')
-        .update({ estado: 'Completada' })
-        .eq('id', taskId);
-
-      if (error) throw error;
-      
-      // Optimistic update
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, estado: 'Completada' } : t));
-    } catch (error) {
-      console.error('Error updating task:', error);
-    }
-  };
-
   const getStatusBadge = (estado: string, fechaVencimiento?: string) => {
     if (estado === 'Completada') {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800"><CheckCircle2 className="w-3 h-3 mr-1" /> Completada</span>;
@@ -164,16 +148,6 @@ export default function MisTareas() {
                         </a>
                       )}
                     </div>
-                  </div>
-                  
-                  <div className="flex-shrink-0">
-                    <button
-                      onClick={() => markAsCompleted(task.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1.5 text-green-500" />
-                      Marcar Completada
-                    </button>
                   </div>
                 </div>
               </li>

@@ -40,7 +40,8 @@ export interface EntregaCalendario {
 export interface NotificacionTarea {
   id: string;
   created_at: string;
-  usuario_id: string;
+  usuario_id?: string;
+  rol_destino?: string;
   curso_id?: string;
   titulo: string;
   descripcion?: string;
