@@ -203,15 +203,15 @@ export default function Usuarios() {
                         user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
                         user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
                         user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
-                        user.role === 'team' ? 'bg-orange-100 text-orange-800' :
+                        ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? 'bg-orange-100 text-orange-800' :
                         'bg-slate-100 text-slate-800'
                       }`}>
                         {user.role}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {user.role === 'team' && user.team_area ? (
-                        <div className="text-slate-900 font-medium">Equipo: {user.team_area}</div>
+                      {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? (
+                        <div className="text-slate-900 font-medium">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
                       ) : user.facultad ? (
                         <>
                           <div className="text-slate-900">{user.facultad}</div>

@@ -24,6 +24,10 @@ export default function Dashboard() {
     case 'evaluador':
       return <EvaluadorDashboard />;
     case 'team':
+    case 'Soporte':
+    case 'Multimedia':
+    case 'Diseño':
+    case 'Pedagogía':
       return <TeamDashboard />;
     default:
       return <div>Rol no reconocido</div>;

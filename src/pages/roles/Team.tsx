@@ -53,7 +53,7 @@ export default function TeamDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Panel de Equipo</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Bienvenido al área de {user?.team_area || 'Trabajo'}.
+          Bienvenido al área de {user?.team_area || user?.role || 'Trabajo'}.
         </p>
       </div>
 
@@ -164,7 +164,7 @@ export default function TeamDashboard() {
               <h2 className="text-lg font-semibold text-slate-900">Mis Tareas</h2>
             </div>
             <p className="text-slate-600 text-sm">
-              Aquí podrás ver las tareas asignadas a tu área de {user?.team_area}.
+              Aquí podrás ver las tareas asignadas a tu área de {user?.team_area || user?.role}.
             </p>
           </div>
 
