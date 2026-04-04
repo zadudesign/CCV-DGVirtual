@@ -165,7 +165,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           email: formData.correo,
           password: formData.documento, // La contraseña es exactamente el documento de identidad
-          role: formData.role === 'team' ? formData.team_area : formData.role,
+          role: formData.role,
           name: formData.nombre,
           documento: formData.documento,
           telefono: formData.telefono,
