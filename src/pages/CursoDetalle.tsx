@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
 
@@ -123,6 +123,18 @@ export default function CursoDetalle() {
               {copiedId ? <Check className="h-3 w-3 mr-1 text-green-600" /> : <Copy className="h-3 w-3 mr-1" />}
               {copiedId ? 'Copiado' : 'Copiar ID'}
             </button>
+            {curso.clickup_url && (
+              <a 
+                href={curso.clickup_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center px-2 py-1 text-xs font-medium bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 transition-colors"
+                title="Abrir Tablero en ClickUp"
+              >
+                <LayoutDashboard className="h-3 w-3 mr-1" />
+                Abrir en ClickUp
+              </a>
+            )}
           </div>
           <p className="text-sm text-slate-500 mt-1">
             {curso.programa} • Docente: {curso.docente?.name || 'No asignado'}

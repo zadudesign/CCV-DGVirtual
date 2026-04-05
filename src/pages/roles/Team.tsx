@@ -133,8 +133,21 @@ export default function TeamDashboard() {
                   <li key={curso.id} className="p-6 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{curso.nombre}</p>
+                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">{curso.nombre}</Link>
                         <p className="text-xs text-slate-500 mt-1">{curso.programa}</p>
+                        {curso.clickup_url && (
+                          <a 
+                            href={curso.clickup_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center mt-2 text-xs text-slate-500 hover:text-indigo-600 transition-colors"
+                          >
+                            <svg className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                            Abrir Tablero ClickUp
+                          </a>
+                        )}
                       </div>
                       <div className="flex flex-col items-end">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
