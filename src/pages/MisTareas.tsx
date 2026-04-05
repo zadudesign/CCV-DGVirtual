@@ -5,6 +5,7 @@ import { NotificacionTarea } from '../types';
 import { Loader2, CheckSquare, Clock, AlertCircle, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Link } from 'react-router-dom';
 
 export default function MisTareas() {
   const { user } = useAuth();
@@ -128,10 +129,16 @@ export default function MisTareas() {
                       {getStatusBadge(task.estado, task.fecha_vencimiento)}
                     </div>
                     
-                    {task.curso?.nombre && (
-                      <p className="text-sm font-medium text-indigo-600 mb-2">
-                        Curso: {task.curso.nombre}
-                      </p>
+                    {task.curso?.nombre && task.curso_id && (
+                      <div className="mb-3">
+                        <Link 
+                          to={`/cursos/${task.curso_id}`}
+                          className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors"
+                          title="Ir al curso"
+                        >
+                          Curso: {task.curso.nombre}
+                        </Link>
+                      </div>
                     )}
                     
                     {task.descripcion && (
@@ -181,10 +188,16 @@ export default function MisTareas() {
                       <h3 className="text-base font-medium text-slate-700 line-through truncate">{task.titulo}</h3>
                       {getStatusBadge(task.estado)}
                     </div>
-                    {task.curso?.nombre && (
-                      <p className="text-sm text-slate-500 mb-2">
-                        Curso: {task.curso.nombre}
-                      </p>
+                    {task.curso?.nombre && task.curso_id && (
+                      <div className="mb-3">
+                        <Link 
+                          to={`/cursos/${task.curso_id}`}
+                          className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-md text-sm font-medium transition-colors"
+                          title="Ir al curso"
+                        >
+                          Curso: {task.curso.nombre}
+                        </Link>
+                      </div>
                     )}
                   </div>
                   {task.url_clickup && (
