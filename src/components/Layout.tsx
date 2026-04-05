@@ -46,11 +46,22 @@ export default function Layout() {
 
   const fetchPendingTasks = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('notificaciones_tareas')
         .select('*, curso:cursos(nombre)')
         .neq('estado', 'Completada')
         .order('fecha_vencimiento', { ascending: true });
+
+      if (user?.role !== 'admin') {
+        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
+          const area = user?.team_area || user?.role;
+          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area},curso_id.not.is.null`);
+        } else {
+          query = query.eq('usuario_id', user?.id);
+        }
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setPendingTasks(data || []);
