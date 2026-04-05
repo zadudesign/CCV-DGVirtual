@@ -44,9 +44,9 @@ export default function MisTareas() {
       if (user?.role !== 'admin') {
         if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
           const area = user?.team_area || user?.role;
-          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area},curso_id.not.is.null`);
+          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
         } else {
-          query = query.eq('usuario_id', user?.id);
+          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${user?.role}`);
         }
       }
 
