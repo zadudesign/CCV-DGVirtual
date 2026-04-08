@@ -16,7 +16,8 @@ import {
   subMonths, 
   parseISO,
   differenceInDays,
-  startOfDay
+  startOfDay,
+  endOfDay
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -36,73 +37,43 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     try {
       setLoading(true);
       
-      let cursosQuery = supabase.from('cursos').select('id');
-      
+      let notificacionesQuery = supabase
+        .from('notificaciones_tareas')
+        .select('*, curso:cursos(nombre)');
+
       if (cursoId) {
-        cursosQuery = cursosQuery.eq('id', cursoId);
-      } else {
-        if (user?.role === 'docente') {
-          cursosQuery = cursosQuery.eq('docente_id', user.id);
-        } else if (user?.role === 'evaluador') {
-          cursosQuery = cursosQuery.eq('evaluador_id', user.id);
-        } else if (user?.role === 'creador') {
-          cursosQuery = cursosQuery.eq('creador_id', user.id);
+        notificacionesQuery = notificacionesQuery.eq('curso_id', cursoId);
+      } else if (user?.role !== 'admin') {
+        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
+          const area = user?.team_area || user?.role;
+          notificacionesQuery = notificacionesQuery.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
+        } else {
+          notificacionesQuery = notificacionesQuery.or(`usuario_id.eq.${user?.id},rol_destino.eq.${user?.role}`);
         }
       }
+
+      const { data: notificacionesData, error: notificacionesError } = await notificacionesQuery;
       
-      const { data: cursos, error: cursosError } = await cursosQuery;
-      if (cursosError) throw cursosError;
-      
-      if (!cursos || cursos.length === 0) {
-        setEntregas([]);
-        return;
-      }
-
-      const cursoIds = cursos.map(c => c.id);
-
-      const { data: entregasData, error: entregasError } = await supabase
-        .from('calendario_entregas')
-        .select(`
-          *,
-          curso:cursos(nombre)
-        `)
-        .in('curso_id', cursoIds);
-
-      if (entregasError) {
-        if (entregasError.code === '42P01') {
-          console.log('La tabla calendario_entregas aún no existe.');
-          setEntregas([]);
-          return;
-        }
-        throw entregasError;
+      if (notificacionesError && notificacionesError.code !== '42P01') {
+        throw notificacionesError;
       }
       
       const events: any[] = [];
       
-      (entregasData || []).forEach((row: any) => {
-        const addEvent = (titulo: string, fecha: string | null, estado: string | null, detalle: string | null) => {
-          if (fecha) {
-            events.push({
-              id: `${row.id}-${titulo}`,
-              curso_id: row.curso_id,
-              titulo,
-              fecha_entrega: fecha,
-              estado: estado || 'Pendiente',
-              detalle: detalle || '',
-              curso: row.curso
-            });
-          }
-        };
-
-        addEvent('Solicitud de Creación', row.solicitud_creacion, row.estado_solicitud_creacion, row.detalle_solicitud_creacion);
-        addEvent('Asesorías', row.asesorias, row.estado_asesorias, row.detalle_asesorias);
-        addEvent('Sílabo Virtual', row.silabo_virtual, row.estado_silabo_virtual, row.detalle_silabo_virtual);
-        addEvent('Unidad 1', row.unidad_1, row.estado_unidad_1, row.detalle_unidad_1);
-        addEvent('Unidad 2', row.unidad_2, row.estado_unidad_2, row.detalle_unidad_2);
-        addEvent('Unidad 3', row.unidad_3, row.estado_unidad_3, row.detalle_unidad_3);
-        addEvent('Unidad 4', row.unidad_4, row.estado_unidad_4, row.detalle_unidad_4);
-        addEvent('Unidad 5', row.unidad_5, row.estado_unidad_5, row.detalle_unidad_5);
-        addEvent('Revisión y Entrega', row.revision_entrega, row.estado_revision_entrega, row.detalle_revision_entrega);
+      (notificacionesData || []).forEach((row: any) => {
+        if (row.fecha_vencimiento) {
+          events.push({
+            id: row.id,
+            curso_id: row.curso_id,
+            titulo: row.titulo,
+            fecha_entrega: row.fecha_vencimiento,
+            fecha_inicio: row.fecha_inicio, // If it exists in the future
+            estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
+            detalle: row.descripcion || '',
+            curso: row.curso,
+            isNotificacion: true
+          });
+        }
       });
 
       setEntregas(events);
@@ -113,34 +84,21 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     }
   };
 
-  const handleStatusChange = async (curso_id: string, titulo: string, newStatus: string) => {
+  const handleStatusChange = async (event: EntregaCalendario, newStatus: string) => {
     // Optimistic update
     setEntregas(prev => prev.map(e => 
-      (e.curso_id === curso_id && e.titulo === titulo) ? { ...e, estado: newStatus } : e
+      (e.id === event.id) ? { ...e, estado: newStatus as any } : e
     ));
 
-    const columnMap: Record<string, string> = {
-      'Solicitud de Creación': 'estado_solicitud_creacion',
-      'Asesorías': 'estado_asesorias',
-      'Sílabo Virtual': 'estado_silabo_virtual',
-      'Unidad 1': 'estado_unidad_1',
-      'Unidad 2': 'estado_unidad_2',
-      'Unidad 3': 'estado_unidad_3',
-      'Unidad 4': 'estado_unidad_4',
-      'Unidad 5': 'estado_unidad_5',
-      'Revisión y Entrega': 'estado_revision_entrega',
-    };
-
-    const columnName = columnMap[titulo];
-    if (!columnName) return;
-
     try {
-      const { error } = await supabase
-        .from('calendario_entregas')
-        .update({ [columnName]: newStatus })
-        .eq('curso_id', curso_id);
-        
-      if (error) throw error;
+      if (event.isNotificacion) {
+        const { error } = await supabase
+          .from('notificaciones_tareas')
+          .update({ estado: newStatus === 'Completado' ? 'Completada' : 'Pendiente' })
+          .eq('id', event.id);
+          
+        if (error) throw error;
+      }
     } catch (error) {
       console.error('Error updating status:', error);
       fetchEntregas();
@@ -250,11 +208,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         formattedDate = format(day, 'd');
         const cloneDay = day;
         
-        // Find events for this day
+        // Find events that span across this day
         const dayEvents = entregas.filter(entrega => {
-          // Parse the ISO date string (YYYY-MM-DD) and compare
-          const entregaDate = parseISO(entrega.fecha_entrega);
-          return isSameDay(entregaDate, cloneDay);
+          const eventEnd = parseISO(entrega.fecha_entrega);
+          const eventStart = entrega.fecha_inicio ? parseISO(entrega.fecha_inicio) : eventEnd;
+          
+          // Check if the current day falls within the start and end dates (inclusive)
+          return cloneDay >= startOfDay(eventStart) && cloneDay <= endOfDay(eventEnd);
         });
 
         const isCurrentMonth = isSameMonth(day, monthStart);
@@ -274,26 +234,45 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                 {formattedDate}
               </span>
             </div>
-            <div className="mt-2 space-y-1.5">
+            <div className="mt-2 space-y-1.5 relative">
               {dayEvents.map((event, idx) => {
                 const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
+                const eventStart = event.fecha_inicio ? parseISO(event.fecha_inicio) : parseISO(event.fecha_entrega);
+                const eventEnd = parseISO(event.fecha_entrega);
+                
+                const isStart = isSameDay(cloneDay, eventStart);
+                const isEnd = isSameDay(cloneDay, eventEnd);
+                
+                // Determine styling based on position in the span
+                let roundedClass = '';
+                if (isStart && isEnd) roundedClass = 'rounded-md';
+                else if (isStart) roundedClass = 'rounded-l-md border-r-0';
+                else if (isEnd) roundedClass = 'rounded-r-md border-l-0';
+                else roundedClass = 'rounded-none border-x-0';
+
                 return (
                   <div 
                     key={event.id || idx} 
-                    className={`px-2 py-1.5 text-xs rounded-md border ${status.color}`}
+                    className={`px-2 py-1.5 text-xs border ${status.color} ${roundedClass} ${!isStart ? 'pl-1' : ''}`}
                     title={`${event.curso?.nombre} - ${event.titulo}\n${status.label}`}
                   >
-                    <div className="font-semibold truncate">{event.titulo}</div>
-                    <div className="truncate opacity-80">{event.curso?.nombre}</div>
-                    {event.detalle && (
-                      <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-slate-700 border border-black/5 flex items-start gap-1">
-                        <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
-                          <Bell className="w-2 h-2 text-white" />
-                        </div>
-                        <span className="truncate leading-tight">{event.detalle}</span>
-                      </div>
+                    {isStart ? (
+                      <>
+                        <div className="font-semibold truncate">{event.titulo}</div>
+                        <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                        {isStart && isEnd && event.detalle && (
+                          <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-slate-700 border border-black/5 flex items-start gap-1">
+                            <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
+                              <Bell className="w-2 h-2 text-white" />
+                            </div>
+                            <span className="truncate leading-tight">{event.detalle}</span>
+                          </div>
+                        )}
+                        <div className="text-[10px] mt-1 font-medium italic opacity-90 truncate">{status.label}</div>
+                      </>
+                    ) : (
+                      <div className="h-4"></div> // Empty space for continuous bar
                     )}
-                    <div className="text-[10px] mt-1 font-medium italic opacity-90 truncate">{status.label}</div>
                   </div>
                 );
               })}
@@ -377,7 +356,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                   <div className="mt-2 pt-2 border-t border-black/10">
                     <select
                       value={event.estado}
-                      onChange={(e) => handleStatusChange(event.curso_id, event.titulo, e.target.value)}
+                      onChange={(e) => handleStatusChange(event, e.target.value)}
                       className="w-full text-xs border-slate-300 rounded bg-white/50 text-slate-800 focus:ring-indigo-500 focus:border-indigo-500 py-1 px-2 cursor-pointer"
                     >
                       <option value="Pendiente">Pendiente</option>

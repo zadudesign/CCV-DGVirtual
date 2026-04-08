@@ -29,12 +29,14 @@ export interface EntregaCalendario {
   curso_id: string;
   titulo: string;
   descripcion?: string;
+  fecha_inicio?: string;
   fecha_entrega: string;
   estado: 'Pendiente' | 'En Progreso' | 'Completado' | 'Atrasado';
   created_at: string;
   curso?: {
     nombre: string;
   };
+  isNotificacion?: boolean;
 }
 
 export interface NotificacionTarea {
