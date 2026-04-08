@@ -10,8 +10,7 @@ import {
   LogOut,
   Menu,
   Bell,
-  CalendarDays,
-  CheckSquare
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificacionTarea } from '../types';
@@ -78,7 +77,6 @@ export default function Layout() {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Cursos', href: '/cursos', icon: BookOpen },
     { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
-    { name: 'Mis Tareas', href: '/mis-tareas', icon: CheckSquare },
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 
@@ -177,7 +175,7 @@ export default function Layout() {
                         {pendingTasks.slice(0, 5).map((task) => (
                           <Link 
                             key={task.id} 
-                            to="/mis-tareas"
+                            to="/calendario"
                             onClick={() => setShowNotifications(false)}
                             className="block px-4 py-3 hover:bg-slate-50 transition-colors"
                           >
@@ -197,7 +195,7 @@ export default function Layout() {
                   </div>
                   <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
                     <Link 
-                      to="/mis-tareas" 
+                      to="/calendario" 
                       onClick={() => setShowNotifications(false)}
                       className="text-xs font-medium text-indigo-600 hover:text-indigo-700 block text-center"
                     >
