@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,11 +107,11 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   };
 
   const getTrafficLightStatus = (fecha: string, estado: string) => {
-    if (estado === 'Completado') {
+    if (estado === 'Completado' || estado === 'Completada') {
       return {
-        color: 'bg-slate-100 text-slate-600 border-slate-300 opacity-75',
-        iconBg: 'bg-slate-400',
-        label: 'Completado'
+        color: 'bg-green-100 text-green-800 border-green-200',
+        iconBg: 'bg-green-500',
+        label: 'Completada'
       };
     }
 
@@ -123,19 +124,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       return {
         color: 'bg-red-100 text-red-800 border-red-200',
         iconBg: 'bg-red-500',
-        label: `Vencido (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`
-      };
-    } else if (diffDays <= 3) {
-      return {
-        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        iconBg: 'bg-yellow-500',
-        label: 'Pronto a vencer'
+        label: `Vencida (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`
       };
     } else {
       return {
-        color: 'bg-green-100 text-green-800 border-green-200',
-        iconBg: 'bg-green-500',
-        label: 'A tiempo'
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        iconBg: 'bg-yellow-500',
+        label: 'En Progreso'
       };
     }
   };
@@ -259,7 +254,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     {isStart ? (
                       <>
                         <div className="font-semibold truncate">{event.titulo}</div>
-                        <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                        {event.curso_id ? (
+                          <Link to={`/cursos/${event.curso_id}`} className="truncate opacity-80 hover:underline hover:text-indigo-600 block">
+                            {event.curso?.nombre}
+                          </Link>
+                        ) : (
+                          <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                        )}
                         {isStart && isEnd && event.detalle && (
                           <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-slate-700 border border-black/5 flex items-start gap-1">
                             <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
@@ -293,15 +294,14 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   const renderSidebar = () => {
     const vencidas: any[] = [];
-    const pronto: any[] = [];
-    const aTiempo: any[] = [];
+    const enProgreso: any[] = [];
+    const completadas: any[] = [];
 
     const today = startOfDay(new Date());
 
     entregas.forEach(event => {
-      if (event.estado === 'Completado') {
-        // We can skip completed events from the sidebar, or put them in a separate list.
-        // For now, let's just skip them so the sidebar focuses on pending work.
+      if (event.estado === 'Completado' || event.estado === 'Completada') {
+        completadas.push(event);
         return;
       }
 
@@ -310,10 +310,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
       if (diffDays < 0) {
         vencidas.push(event);
-      } else if (diffDays <= 3) {
-        pronto.push(event);
       } else {
-        aTiempo.push(event);
+        enProgreso.push(event);
       }
     });
 
@@ -322,8 +320,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     };
 
     vencidas.sort(sortByDate);
-    pronto.sort(sortByDate);
-    aTiempo.sort(sortByDate);
+    enProgreso.sort(sortByDate);
+    completadas.sort(sortByDate);
 
     const renderList = (title: string, events: any[], colorClass: string, bgClass: string) => (
       <div className="mb-6 last:mb-0">
@@ -340,7 +338,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
               return (
                 <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
                   <div className="font-semibold text-sm">{event.titulo}</div>
-                  <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
+                  {event.curso_id ? (
+                    <Link to={`/cursos/${event.curso_id}`} className="text-xs opacity-80 mt-0.5 hover:underline hover:text-indigo-600 block">
+                      {event.curso?.nombre}
+                    </Link>
+                  ) : (
+                    <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
+                  )}
                   {event.detalle && (
                     <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-slate-700 border border-black/5 flex items-start gap-1.5">
                       <div className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${status.iconBg}`}>
@@ -353,17 +357,6 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     <span>{format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })}</span>
                     <span className="italic opacity-90 text-[10px] text-right ml-2">{status.label}</span>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-black/10">
-                    <select
-                      value={event.estado}
-                      onChange={(e) => handleStatusChange(event, e.target.value)}
-                      className="w-full text-xs border-slate-300 rounded bg-white/50 text-slate-800 focus:ring-indigo-500 focus:border-indigo-500 py-1 px-2 cursor-pointer"
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="En Progreso">En Progreso</option>
-                      <option value="Completado">Completado</option>
-                    </select>
-                  </div>
                 </div>
               );
             })
@@ -375,8 +368,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     return (
       <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
         {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
-        {renderList('Pronto a Vencer', pronto, 'text-yellow-700', 'bg-yellow-500')}
-        {renderList('A Tiempo', aTiempo, 'text-green-700', 'bg-green-500')}
+        {renderList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
+        {renderList('Tareas Completadas', completadas, 'text-green-700', 'bg-green-500')}
       </div>
     );
   };
