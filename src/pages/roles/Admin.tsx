@@ -216,21 +216,21 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Panel de Administración</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-text-main">Panel de Administración</h1>
+        <p className="mt-1 text-sm text-secondary">
           Gestión de usuarios, facultades y programas de la plataforma CCV.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-muted/30">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('usuarios')}
             className={`${
               activeTab === 'usuarios'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
           >
             <UserPlus className="mr-2 h-5 w-5" />
@@ -240,8 +240,8 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('facultades')}
             className={`${
               activeTab === 'facultades'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
           >
             <Building2 className="mr-2 h-5 w-5" />
@@ -275,13 +275,13 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-                <UserPlus className="mr-2 h-5 w-5 text-indigo-600" />
+          <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+            <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+              <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
+                <UserPlus className="mr-2 h-5 w-5 text-primary" />
                 Inscribir Nuevo Usuario
               </h3>
-              <p className="mt-1 max-w-2xl text-sm text-slate-500">
+              <p className="mt-1 max-w-2xl text-sm text-secondary">
                 Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.
               </p>
             </div>
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
                   
                   {/* Selección de Rol */}
                   <div className="sm:col-span-2">
-                    <label htmlFor="role" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="role" className="block text-sm font-medium text-text-main">
                       Rol a inscribir
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
                         name="role"
                         value={formData.role}
                         onChange={handleChange}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
+                        className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2.5 border bg-white"
                       >
                         <option value="decano">Decano</option>
                         <option value="coordinador">Coordinador</option>
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
 
                   {/* Nombre Completo */}
                   <div className="sm:col-span-2">
-                    <label htmlFor="nombre" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="nombre" className="block text-sm font-medium text-text-main">
                       Nombre Completo
                     </label>
                     <div className="mt-1">
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
                         required
                         value={formData.nombre}
                         onChange={handleChange}
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3 border"
+                        className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border"
                         placeholder="Ej. Juan Pérez"
                       />
                     </div>
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
 
                   {/* Correo Institucional */}
                   <div>
-                    <label htmlFor="correo" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="correo" className="block text-sm font-medium text-text-main">
                       Correo Institucional
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
                         required
                         value={formData.correo}
                         onChange={handleChange}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border"
+                        className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border"
                         placeholder="juan.perez@universidad.edu"
                       />
                     </div>
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
 
                   {/* Número de Documento */}
                   <div>
-                    <label htmlFor="documento" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="documento" className="block text-sm font-medium text-text-main">
                       Número de Documento
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
@@ -372,16 +372,16 @@ export default function AdminDashboard() {
                         required
                         value={formData.documento}
                         onChange={handleChange}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border"
+                        className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border"
                         placeholder="Ej. 1020304050"
                       />
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">Este número será usado como contraseña inicial.</p>
+                    <p className="mt-1 text-xs text-secondary">Este número será usado como contraseña inicial.</p>
                   </div>
 
                   {/* Número de Contacto / Teléfono */}
                   <div>
-                    <label htmlFor="telefono" className="block text-sm font-medium text-slate-700">
+                    <label htmlFor="telefono" className="block text-sm font-medium text-text-main">
                       Número de Contacto
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
@@ -395,7 +395,7 @@ export default function AdminDashboard() {
                         required
                         value={formData.telefono}
                         onChange={handleChange}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border"
+                        className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border"
                         placeholder="Ej. 3001234567"
                       />
                     </div>
@@ -404,7 +404,7 @@ export default function AdminDashboard() {
                   {/* Facultad (No aplica para Team) */}
                   {formData.role !== 'team' && (
                     <div className={formData.role === 'decano' ? 'sm:col-span-2' : 'sm:col-span-1'}>
-                      <label htmlFor="facultad" className="block text-sm font-medium text-slate-700">
+                      <label htmlFor="facultad" className="block text-sm font-medium text-text-main">
                         Facultad
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
                           <Building2 className="h-5 w-5 text-slate-400" />
                         </div>
                         {loadingData ? (
-                          <div className="pl-10 py-2 text-sm text-slate-500 flex items-center border border-slate-300 rounded-md">
+                          <div className="pl-10 py-2 text-sm text-secondary flex items-center border border-muted rounded-md">
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cargando...
                           </div>
                         ) : (
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
                             required
                             value={formData.facultad}
                             onChange={handleChange}
-                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
+                            className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2.5 border bg-white"
                           >
                             <option value="">Seleccione una facultad</option>
                             {facultades.map(fac => (
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
                   {/* Programa (Coordinador, Docente, Evaluador) */}
                   {(formData.role === 'coordinador' || formData.role === 'docente' || formData.role === 'evaluador') && (
                     <div className="sm:col-span-1">
-                      <label htmlFor="programa" className="block text-sm font-medium text-slate-700">
+                      <label htmlFor="programa" className="block text-sm font-medium text-text-main">
                         Programa
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
                           <GraduationCap className="h-5 w-5 text-slate-400" />
                         </div>
                         {loadingData ? (
-                          <div className="pl-10 py-2 text-sm text-slate-500 flex items-center border border-slate-300 rounded-md">
+                          <div className="pl-10 py-2 text-sm text-secondary flex items-center border border-muted rounded-md">
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cargando...
                           </div>
                         ) : (
@@ -456,7 +456,7 @@ export default function AdminDashboard() {
                             value={formData.programa}
                             onChange={handleChange}
                             disabled={!formData.facultad}
-                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                            className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2.5 border bg-white disabled:bg-slate-100 disabled:text-secondary"
                           >
                             <option value="">
                               {!formData.facultad ? 'Primero seleccione facultad' : 'Seleccione un programa'}
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                   {/* Área del Equipo (Solo Team) */}
                   {formData.role === 'team' && (
                     <div className="sm:col-span-2">
-                      <label htmlFor="team_area" className="block text-sm font-medium text-slate-700">
+                      <label htmlFor="team_area" className="block text-sm font-medium text-text-main">
                         Área del Equipo
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -486,7 +486,7 @@ export default function AdminDashboard() {
                           required
                           value={formData.team_area}
                           onChange={handleChange}
-                          className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 border bg-white"
+                          className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2.5 border bg-white"
                         >
                           <option value="">Seleccione un área</option>
                           <option value="Soporte">Soporte</option>
@@ -501,7 +501,7 @@ export default function AdminDashboard() {
                   {/* Firma Digital (No aplica para Team) */}
                   {formData.role !== 'team' && (
                     <div className="sm:col-span-2">
-                      <label htmlFor="firma_digital" className="block text-sm font-medium text-slate-700">
+                      <label htmlFor="firma_digital" className="block text-sm font-medium text-text-main">
                         Firma Digital (Opcional)
                       </label>
                       <div className="mt-1 flex items-center">
@@ -515,17 +515,17 @@ export default function AdminDashboard() {
                             name="firma_digital"
                             accept="image/png, image/jpeg, image/svg+xml"
                             onChange={handleFileChange}
-                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary-hover hover:file:bg-primary/20"
                           />
                         </div>
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-secondary">
                         Sube una imagen con la firma digital del usuario (PNG, JPG o SVG).
                       </p>
                       {formData.firma_digital && (
                         <div className="mt-3">
-                          <p className="text-xs font-medium text-slate-700 mb-1">Vista previa:</p>
-                          <div className="border border-slate-200 rounded-md p-2 bg-slate-50 inline-block">
+                          <p className="text-xs font-medium text-text-main mb-1">Vista previa:</p>
+                          <div className="border border-muted/30 rounded-md p-2 bg-background inline-block">
                             <img src={formData.firma_digital} alt="Firma" className="h-16 object-contain" />
                           </div>
                         </div>
@@ -534,18 +534,18 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                <div className="pt-5 border-t border-slate-200 flex justify-end">
+                <div className="pt-5 border-t border-muted/30 flex justify-end">
                   <button
                     type="button"
                     onClick={() => setFormData({ role: 'decano', nombre: '', correo: '', documento: '', facultad: '', programa: '' })}
-                    className="bg-white py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
+                    className="bg-white py-2 px-4 border border-muted rounded-md shadow-sm text-sm font-medium text-text-main hover:bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary mr-3"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
                   >
                     {loading ? 'Inscribiendo...' : `Inscribir Usuario`}
                   </button>
@@ -583,10 +583,10 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Panel Facultades */}
-            <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden flex flex-col">
-              <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-                  <Building2 className="mr-2 h-5 w-5 text-indigo-600" />
+            <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
+              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+                <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
+                  <Building2 className="mr-2 h-5 w-5 text-primary" />
                   Facultades
                 </h3>
               </div>
@@ -597,12 +597,12 @@ export default function AdminDashboard() {
                     value={newFacultadName}
                     onChange={(e) => setNewFacultadName(e.target.value)}
                     placeholder="Nueva facultad..."
-                    className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3 border"
+                    className="flex-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border"
                   />
                   <button
                     type="submit"
                     disabled={!newFacultadName.trim()}
-                    className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -612,13 +612,13 @@ export default function AdminDashboard() {
                 {loadingData ? (
                   <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 text-slate-400 animate-spin" /></div>
                 ) : facultades.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-4">No hay facultades registradas.</p>
+                  <p className="text-sm text-secondary text-center py-4">No hay facultades registradas.</p>
                 ) : (
                   <ul className="divide-y divide-slate-100">
                     {facultades.map(fac => (
                       <li key={fac.id} className="py-3 flex justify-between items-center">
-                        <span className="text-sm font-medium text-slate-900">{fac.nombre}</span>
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                        <span className="text-sm font-medium text-text-main">{fac.nombre}</span>
+                        <span className="text-xs text-secondary bg-slate-100 px-2 py-1 rounded-full">
                           {programas.filter(p => p.facultad_id === fac.id).length} programas
                         </span>
                       </li>
@@ -629,10 +629,10 @@ export default function AdminDashboard() {
             </div>
 
             {/* Panel Programas */}
-            <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden flex flex-col">
-              <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-                  <GraduationCap className="mr-2 h-5 w-5 text-indigo-600" />
+            <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
+              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+                <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
+                  <GraduationCap className="mr-2 h-5 w-5 text-primary" />
                   Programas
                 </h3>
               </div>
@@ -640,7 +640,7 @@ export default function AdminDashboard() {
                 <select
                   value={selectedFacultadForPrograma}
                   onChange={(e) => setSelectedFacultadForPrograma(e.target.value)}
-                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3 border bg-white"
+                  className="focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border bg-white"
                 >
                   <option value="" disabled>Seleccione una facultad</option>
                   {facultades.map(fac => (
@@ -653,12 +653,12 @@ export default function AdminDashboard() {
                     value={newProgramaName}
                     onChange={(e) => setNewProgramaName(e.target.value)}
                     placeholder="Nuevo programa..."
-                    className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3 border"
+                    className="flex-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border"
                   />
                   <button
                     type="submit"
                     disabled={!newProgramaName.trim() || !selectedFacultadForPrograma}
-                    className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -668,7 +668,7 @@ export default function AdminDashboard() {
                 {loadingData ? (
                   <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 text-slate-400 animate-spin" /></div>
                 ) : programas.filter(p => p.facultad_id === selectedFacultadForPrograma).length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-4">
+                  <p className="text-sm text-secondary text-center py-4">
                     {selectedFacultadForPrograma ? 'No hay programas en esta facultad.' : 'Seleccione una facultad.'}
                   </p>
                 ) : (
@@ -677,7 +677,7 @@ export default function AdminDashboard() {
                       .filter(p => p.facultad_id === selectedFacultadForPrograma)
                       .map(prog => (
                       <li key={prog.id} className="py-3">
-                        <span className="text-sm font-medium text-slate-900">{prog.nombre}</span>
+                        <span className="text-sm font-medium text-text-main">{prog.nombre}</span>
                       </li>
                     ))}
                   </ul>

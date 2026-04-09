@@ -209,15 +209,15 @@ export default function Cursos() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestión de Cursos</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-text-main">Gestión de Cursos</h1>
+          <p className="mt-1 text-sm text-secondary">
             Solicita y administra los cursos virtuales de la plataforma.
           </p>
         </div>
         {canCreate && (
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
           >
             <Plus className="h-5 w-5 mr-2" />
             {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
@@ -226,16 +226,16 @@ export default function Cursos() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
         <div className="flex-1">
-          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
             Filtrar por Programa
           </label>
           <select
             id="filtroPrograma"
             value={filtroPrograma}
             onChange={(e) => setFiltroPrograma(e.target.value)}
-            className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
           >
             <option value="">Todos los programas</option>
             {programasUnicos.map(p => (
@@ -244,14 +244,14 @@ export default function Cursos() {
           </select>
         </div>
         <div className="flex-1">
-          <label htmlFor="filtroSemestre" className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="filtroSemestre" className="block text-sm font-medium text-text-main mb-1">
             Filtrar por Semestre
           </label>
           <select
             id="filtroSemestre"
             value={filtroSemestre}
             onChange={(e) => setFiltroSemestre(e.target.value)}
-            className="block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
           >
             <option value="">Todos los semestres</option>
             {semestresUnicos.map(s => (
@@ -262,39 +262,39 @@ export default function Cursos() {
       </div>
 
       {/* Table */}
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Curso</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Programa</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Semestre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Docente</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Progreso</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Semestre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Docente</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Progreso</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-4 text-center">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : cursosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-secondary">
                     No hay cursos registrados.
                   </td>
                 </tr>
               ) : (
                 cursosFiltrados.map((curso) => (
-                  <tr key={curso.id} className="hover:bg-slate-50">
+                  <tr key={curso.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link 
                         to={`/cursos/${curso.id}`} 
-                        className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary-hover hover:bg-primary/20 rounded-md text-sm font-medium transition-colors"
                       >
                         {curso.nombre}
                       </Link>
@@ -304,7 +304,7 @@ export default function Cursos() {
                             href={curso.clickup_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-slate-500 hover:text-indigo-600 transition-colors"
+                            className="inline-flex items-center text-xs text-secondary hover:text-primary transition-colors"
                           >
                             <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
                             Abrir Tablero ClickUp
@@ -312,22 +312,22 @@ export default function Cursos() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {curso.programa}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-900">{curso.docente?.name || 'Sin asignar'}</div>
-                      <div className="text-xs text-slate-500">{curso.docente?.email}</div>
+                      <div className="text-sm text-text-main">{curso.docente?.name || 'Sin asignar'}</div>
+                      <div className="text-xs text-secondary">{curso.docente?.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
                         curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
                         curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                        'bg-slate-100 text-slate-800'
+                        'bg-slate-100 text-text-main'
                       }`}>
                         {curso.estado}
                       </span>
@@ -336,15 +336,15 @@ export default function Cursos() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1">
                           <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
+                            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
                           </div>
-                          <span className="text-xs text-slate-500">{curso.progreso_general || 0}%</span>
+                          <span className="text-xs text-secondary">{curso.progreso_general || 0}%</span>
                         </div>
                         {curso.clickup_list_id && (
                           <button
                             onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
                             disabled={syncingId === curso.id}
-                            className="ml-2 text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                            className="ml-2 text-primary hover:text-primary-hover disabled:opacity-50"
                             title="Sincronizar progreso con ClickUp"
                           >
                             <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
@@ -371,10 +371,10 @@ export default function Cursos() {
 
             <div className={`relative inline-block w-full ${user?.role === 'admin' ? 'max-w-md' : 'max-w-2xl'} p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl`}>
               <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-medium leading-6 text-slate-900">
+                <h3 className="text-lg font-medium leading-6 text-text-main">
                   {user?.role === 'admin' ? 'Cargar Nuevo Curso' : 'Solicitar Nuevo Curso'}
                 </h3>
-                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-500">
+                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-secondary">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -382,12 +382,12 @@ export default function Cursos() {
               {user?.role === 'admin' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Tipo de Solicitud</label>
+                    <label className="block text-sm font-medium text-text-main">Tipo de Solicitud</label>
                     <select
                       required
                       value={tipoSolicitud}
                       onChange={(e) => setTipoSolicitud(e.target.value as any)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     >
                       <option value="Creación Completa">Creación Completa</option>
                       <option value="Actualización">Actualización</option>
@@ -396,19 +396,19 @@ export default function Cursos() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Nombre del Curso</label>
+                    <label className="block text-sm font-medium text-text-main">Nombre del Curso</label>
                     <input
                       type="text"
                       required
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                       placeholder="Ej. Introducción a la Programación"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Semestre</label>
+                    <label className="block text-sm font-medium text-text-main">Semestre</label>
                     <input
                       type="number"
                       min="1"
@@ -416,18 +416,18 @@ export default function Cursos() {
                       required
                       value={semestre}
                       onChange={(e) => setSemestre(parseInt(e.target.value))}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     />
                   </div>
 
                   {user?.role !== 'coordinador' && (
                     <div>
-                      <label className="block text-sm font-medium text-slate-700">Programa</label>
+                      <label className="block text-sm font-medium text-text-main">Programa</label>
                       <select
                         required
                         value={programa}
                         onChange={(e) => setPrograma(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                       >
                         <option value="">Seleccione un programa</option>
                         {programas.map((p) => (
@@ -438,12 +438,12 @@ export default function Cursos() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Docente Asignado</label>
+                    <label className="block text-sm font-medium text-text-main">Docente Asignado</label>
                     <select
                       required
                       value={docenteId}
                       onChange={(e) => setDocenteId(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     >
                       <option value="">Seleccione un docente</option>
                       {docentes.map((d) => (
@@ -453,23 +453,23 @@ export default function Cursos() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Fecha de Inicio</label>
+                    <label className="block text-sm font-medium text-text-main">Fecha de Inicio</label>
                     <input
                       type="date"
                       required
                       value={fechaInicio}
                       onChange={(e) => setFechaInicio(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Tipo de Contrato</label>
+                    <label className="block text-sm font-medium text-text-main">Tipo de Contrato</label>
                     <select
                       required
                       value={tipoContrato}
                       onChange={(e) => setTipoContrato(e.target.value as any)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     >
                       <option value="Carga Académica - 5 Horas Semanales">Carga Académica - 5 Horas Semanales</option>
                       <option value="Prestación de Servicios - 1 o 2 Meses">Prestación de Servicios - 1 o 2 Meses</option>
@@ -477,11 +477,11 @@ export default function Cursos() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Par Evaluador (Opcional)</label>
+                    <label className="block text-sm font-medium text-text-main">Par Evaluador (Opcional)</label>
                     <select
                       value={evaluadorId}
                       onChange={(e) => setEvaluadorId(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     >
                       <option value="">Seleccione un evaluador</option>
                       {evaluadores.map((e) => (
@@ -491,29 +491,29 @@ export default function Cursos() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">URL Pública de ClickUp (Embed)</label>
+                    <label className="block text-sm font-medium text-text-main">URL Pública de ClickUp (Embed)</label>
                     <input
                       type="url"
                       value={clickupUrl}
                       onChange={(e) => setClickupUrl(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                       placeholder="https://sharing.clickup.com/..."
                     />
-                    <p className="mt-1 text-xs text-slate-500">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
+                    <p className="mt-1 text-xs text-secondary">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
                   </div>
 
                   <div className="mt-6 flex justify-end space-x-3">
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+                      className="px-4 py-2 text-sm font-medium text-text-main bg-white border border-muted rounded-lg hover:bg-background"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-lg hover:bg-primary-hover disabled:opacity-50"
                     >
                       {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
@@ -521,7 +521,7 @@ export default function Cursos() {
                   </div>
                 </form>
               ) : (
-                <div className="w-full h-[600px] bg-slate-50 rounded-lg overflow-hidden">
+                <div className="w-full h-[600px] bg-background rounded-lg overflow-hidden">
                   <iframe 
                     src="https://tally.so/embed/npvKQB?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" 
                     width="100%" 

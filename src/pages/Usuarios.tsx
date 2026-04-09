@@ -67,17 +67,17 @@ export default function Usuarios() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-text-main">Gestión de Usuarios</h1>
+        <p className="mt-1 text-sm text-secondary">
           Lista de todos los usuarios inscritos en la plataforma.
         </p>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50 flex flex-col space-y-4">
+      <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background flex flex-col space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-slate-900 flex items-center">
-              <UsersIcon className="mr-2 h-5 w-5 text-indigo-600" />
+            <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
+              <UsersIcon className="mr-2 h-5 w-5 text-primary" />
               Usuarios Registrados
             </h3>
           </div>
@@ -85,14 +85,14 @@ export default function Usuarios() {
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             {facultadesUnicas.length > 1 && (
               <div className="flex-1">
-                <label htmlFor="facultad-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="facultad-filter" className="block text-xs font-medium text-text-main mb-1">
                   Facultad:
                 </label>
                 <select
                   id="facultad-filter"
                   value={filtroFacultad}
                   onChange={(e) => setFiltroFacultad(e.target.value)}
-                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                 >
                   <option value="">Todas las facultades</option>
                   {facultadesUnicas.map(facultad => (
@@ -104,14 +104,14 @@ export default function Usuarios() {
 
             {programasUnicos.length > 1 && (
               <div className="flex-1">
-                <label htmlFor="programa-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="programa-filter" className="block text-xs font-medium text-text-main mb-1">
                   Programa:
                 </label>
                 <select
                   id="programa-filter"
                   value={filtroPrograma}
                   onChange={(e) => setFiltroPrograma(e.target.value)}
-                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                 >
                   <option value="">Todos los programas</option>
                   {programasUnicos.map(programa => (
@@ -123,14 +123,14 @@ export default function Usuarios() {
 
             {rolesUnicos.length > 1 && (
               <div className="flex-1">
-                <label htmlFor="rol-filter" className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="rol-filter" className="block text-xs font-medium text-text-main mb-1">
                   Rol:
                 </label>
                 <select
                   id="rol-filter"
                   value={filtroRol}
                   onChange={(e) => setFiltroRol(e.target.value)}
-                  className="block w-full rounded-md border border-slate-300 px-3 py-1.5 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                 >
                   <option value="">Todos los roles</option>
                   {rolesUnicos.map(rol => (
@@ -144,23 +144,23 @@ export default function Usuarios() {
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-background">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Usuario
                 </th>
                 {isAdmin && (
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                     Documento
                   </th>
                 )}
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Rol
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Facultad / Área
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Contacto
                 </th>
               </tr>
@@ -168,32 +168,32 @@ export default function Usuarios() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-slate-500">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
+                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-secondary">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : usuariosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-slate-500">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-secondary">
                     No hay usuarios registrados que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
               ) : (
                 usuariosFiltrados.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50">
+                  <tr key={user.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-hover font-bold">
                           {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-slate-900">{user.name || 'Sin nombre'}</div>
-                          <div className="text-sm text-slate-500">{user.email}</div>
+                          <div className="text-sm font-medium text-text-main">{user.name || 'Sin nombre'}</div>
+                          <div className="text-sm text-secondary">{user.email}</div>
                         </div>
                       </div>
                     </td>
                     {isAdmin && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                         {user.documento || '-'}
                       </td>
                     )}
@@ -204,25 +204,25 @@ export default function Usuarios() {
                         user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
                         user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
                         ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? 'bg-orange-100 text-orange-800' :
-                        'bg-slate-100 text-slate-800'
+                        'bg-slate-100 text-text-main'
                       }`}>
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? (
-                        <div className="text-slate-900 font-medium">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
+                        <div className="text-text-main font-medium">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
                       ) : user.facultad ? (
                         <>
-                          <div className="text-slate-900">{user.facultad}</div>
-                          {user.programa && <div className="text-xs text-slate-500">{user.programa}</div>}
+                          <div className="text-text-main">{user.facultad}</div>
+                          {user.programa && <div className="text-xs text-secondary">{user.programa}</div>}
                           
                           {/* Mostrar curso asignado para docentes y evaluadores */}
                           {(user.role === 'docente' || user.role === 'evaluador') && (
                             <div className="mt-2">
                               {cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).length > 0 ? (
                                 cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).map(curso => (
-                                  <div key={curso.id} className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded inline-block mt-1 mr-1">
+                                  <div key={curso.id} className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded inline-block mt-1 mr-1">
                                     {curso.nombre} {curso.docente_id === user.id ? '(Docente)' : '(Evaluador)'}
                                   </div>
                                 ))
@@ -236,7 +236,7 @@ export default function Usuarios() {
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {user.telefono || '-'}
                     </td>
                   </tr>

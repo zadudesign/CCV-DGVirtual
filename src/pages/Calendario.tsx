@@ -157,27 +157,27 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const renderHeader = () => {
     return (
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 capitalize">
+        <h2 className="text-lg font-semibold text-text-main capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: es })}
         </h2>
         <div className="flex items-center space-x-2">
           <button 
             onClick={goToToday}
-            className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
+            className="px-3 py-1.5 text-sm font-medium text-text-main bg-white border border-muted rounded-md hover:bg-background"
           >
             Hoy
           </button>
-          <div className="flex items-center bg-white border border-slate-300 rounded-md">
+          <div className="flex items-center bg-white border border-muted rounded-md">
             <button 
               onClick={prevMonth}
-              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-l-md"
+              className="p-1.5 text-secondary hover:text-text-main hover:bg-background rounded-l-md"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="w-px h-5 bg-slate-300"></div>
             <button 
               onClick={nextMonth}
-              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-r-md"
+              className="p-1.5 text-secondary hover:text-text-main hover:bg-background rounded-r-md"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -193,7 +193,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={i} className="py-2 text-center text-sm font-semibold text-slate-700 bg-slate-50 border-b border-slate-200 capitalize">
+        <div key={i} className="py-2 text-center text-sm font-semibold text-text-main bg-background border-b border-muted/30 capitalize">
           {format(addDays(startDate, i), 'EEEE', { locale: es })}
         </div>
       );
@@ -241,13 +241,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         days.push(
           <div
             key={day.toString()}
-            className={`min-h-[120px] p-2 border-b border-r border-slate-200 ${
-              !isCurrentMonth ? 'bg-slate-50/50 text-slate-400' : 'bg-white text-slate-900'
-            } ${isToday ? 'bg-indigo-50/30' : ''}`}
+            className={`min-h-[120px] p-2 border-b border-r border-muted/30 ${
+              !isCurrentMonth ? 'bg-background/50 text-slate-400' : 'bg-white text-text-main'
+            } ${isToday ? 'bg-primary/5' : ''}`}
           >
             <div className="flex justify-end">
               <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
-                isToday ? 'bg-indigo-600 text-white' : ''
+                isToday ? 'bg-primary text-white' : ''
               }`}>
                 {formattedDate}
               </span>
@@ -286,14 +286,14 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                       <>
                         <div className="font-semibold truncate">{event.titulo}</div>
                         {event.curso_id ? (
-                          <Link to={`/cursos/${event.curso_id}`} className="truncate opacity-80 hover:underline hover:text-indigo-600 block">
+                          <Link to={`/cursos/${event.curso_id}`} className="truncate opacity-80 hover:underline hover:text-primary block">
                             {event.curso?.nombre}
                           </Link>
                         ) : (
                           <div className="truncate opacity-80">{event.curso?.nombre}</div>
                         )}
                         {isStart && isEnd && event.detalle && (
-                          <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-slate-700 border border-black/5 flex items-start gap-1">
+                          <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-text-main border border-black/5 flex items-start gap-1">
                             <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
                               <Bell className="w-2 h-2 text-white" />
                             </div>
@@ -320,7 +320,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       );
       days = [];
     }
-    return <div className="border-l border-t border-slate-200 rounded-b-xl overflow-hidden">{rows}</div>;
+    return <div className="border-l border-t border-muted/30 rounded-b-xl overflow-hidden">{rows}</div>;
   };
 
   const renderSidebar = () => {
@@ -368,7 +368,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         </h3>
         <div className="space-y-3">
           {events.length === 0 ? (
-            <p className="text-sm text-slate-500 italic">No hay tareas en esta sección</p>
+            <p className="text-sm text-secondary italic">No hay tareas en esta sección</p>
           ) : (
             events.map((event, idx) => {
               const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
@@ -376,14 +376,14 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                 <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
                   <div className="font-semibold text-sm">{event.titulo}</div>
                   {event.curso_id ? (
-                    <Link to={`/cursos/${event.curso_id}`} className="text-xs opacity-80 mt-0.5 hover:underline hover:text-indigo-600 block">
+                    <Link to={`/cursos/${event.curso_id}`} className="text-xs opacity-80 mt-0.5 hover:underline hover:text-primary block">
                       {event.curso?.nombre}
                     </Link>
                   ) : (
                     <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
                   )}
                   {event.detalle && (
-                    <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-slate-700 border border-black/5 flex items-start gap-1.5">
+                    <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-text-main border border-black/5 flex items-start gap-1.5">
                       <div className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${status.iconBg}`}>
                         <Bell className="w-2.5 h-2.5 text-white" />
                       </div>
@@ -408,7 +408,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     );
 
     return (
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
+      <div className="bg-white shadow-sm rounded-xl border border-muted/30 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
         {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
         {renderList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
         {renderList('Tareas Completadas', completadas, 'text-green-700', 'bg-green-500')}
@@ -419,7 +419,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -428,7 +428,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     <div className="space-y-6">
       {!cursoId && (
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Calendario de Trabajo</h1>
+          <h1 className="text-2xl font-bold text-text-main">Calendario de Trabajo</h1>
         </div>
       )}
 
@@ -439,9 +439,9 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         </div>
 
         {/* Calendar */}
-        <div className="flex-1 w-full bg-white shadow-sm rounded-xl border border-slate-200 p-6">
+        <div className="flex-1 w-full bg-white shadow-sm rounded-xl border border-muted/30 p-6">
           {renderHeader()}
-          <div className="rounded-xl overflow-hidden border border-slate-200">
+          <div className="rounded-xl overflow-hidden border border-muted/30">
             {renderDays()}
             {renderCells()}
           </div>

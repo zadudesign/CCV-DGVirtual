@@ -72,7 +72,7 @@ export default function CursoDetalle() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -80,8 +80,8 @@ export default function CursoDetalle() {
   if (!curso) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-slate-900">Curso no encontrado</h3>
-        <button onClick={() => navigate('/cursos')} className="mt-4 text-indigo-600 hover:text-indigo-800">
+        <h3 className="text-lg font-medium text-text-main">Curso no encontrado</h3>
+        <button onClick={() => navigate('/cursos')} className="mt-4 text-primary hover:text-primary-hover">
           Volver a cursos
         </button>
       </div>
@@ -108,16 +108,16 @@ export default function CursoDetalle() {
       <div className="flex items-center space-x-4">
         <button 
           onClick={() => navigate('/cursos')}
-          className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
+          className="p-2 rounded-full hover:bg-slate-200 text-secondary transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-slate-900">{curso.nombre}</h1>
+            <h1 className="text-2xl font-bold text-text-main">{curso.nombre}</h1>
             <button
               onClick={handleCopyId}
-              className="flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors"
+              className="flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-secondary rounded hover:bg-slate-200 transition-colors"
               title="Copiar ID de Supabase para Make"
             >
               {copiedId ? <Check className="h-3 w-3 mr-1 text-green-600" /> : <Copy className="h-3 w-3 mr-1" />}
@@ -128,7 +128,7 @@ export default function CursoDetalle() {
                 href={curso.clickup_url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center px-2 py-1 text-xs font-medium bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 transition-colors"
+                className="flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
                 title="Abrir Tablero en ClickUp"
               >
                 <LayoutDashboard className="h-3 w-3 mr-1" />
@@ -136,21 +136,21 @@ export default function CursoDetalle() {
               </a>
             )}
           </div>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-secondary mt-1">
             {curso.programa} • Docente: {curso.docente?.name || 'No asignado'}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-muted/30">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('documentacion')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
               activeTab === 'documentacion'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             }`}
           >
             <FileText className="h-4 w-4 mr-2" />
@@ -160,8 +160,8 @@ export default function CursoDetalle() {
             onClick={() => setActiveTab('construccion')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
               activeTab === 'construccion'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             }`}
           >
             <PenTool className="h-4 w-4 mr-2" />
@@ -171,8 +171,8 @@ export default function CursoDetalle() {
             onClick={() => setActiveTab('novedades')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
               activeTab === 'novedades'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             }`}
           >
             <Bell className="h-4 w-4 mr-2" />
@@ -182,8 +182,8 @@ export default function CursoDetalle() {
             onClick={() => setActiveTab('calendario')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
               activeTab === 'calendario'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
             }`}
           >
             <CalendarDays className="h-4 w-4 mr-2" />
@@ -195,10 +195,10 @@ export default function CursoDetalle() {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === 'documentacion' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center flex flex-col items-center">
+          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
             <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">Documentación del Curso</h3>
-            <p className="text-slate-500 mt-2 max-w-md mx-auto mb-6">
+            <h3 className="text-lg font-medium text-text-main">Documentación del Curso</h3>
+            <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
               Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
             </p>
             {curso.drive_url ? (
@@ -206,7 +206,7 @@ export default function CursoDetalle() {
                 href={curso.drive_url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm font-medium"
+                className="inline-flex items-center px-6 py-3 bg-white border border-muted/30 text-text-main rounded-lg hover:bg-background hover:text-primary transition-colors shadow-sm font-medium"
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
                   <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
@@ -217,7 +217,7 @@ export default function CursoDetalle() {
                 Abrir Carpeta en Google Drive
               </a>
             ) : (
-              <div className="inline-flex items-center px-6 py-3 bg-slate-50 border border-slate-200 text-slate-400 rounded-lg cursor-not-allowed font-medium">
+              <div className="inline-flex items-center px-6 py-3 bg-background border border-muted/30 text-slate-400 rounded-lg cursor-not-allowed font-medium">
                 <svg className="w-5 h-5 mr-3 opacity-50 grayscale" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
                   <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
                   <path d="M43.65 25.25v26.7L20.5 65.3V38.6l23.15-13.35z" fill="#FFC107"/>
@@ -231,17 +231,17 @@ export default function CursoDetalle() {
         )}
 
         {activeTab === 'novedades' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center">
             <Bell className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">Novedades y Actualizaciones</h3>
-            <p className="text-slate-500 mt-2 max-w-md mx-auto">
+            <h3 className="text-lg font-medium text-text-main">Novedades y Actualizaciones</h3>
+            <p className="text-secondary mt-2 max-w-md mx-auto">
               Historial de cambios, notificaciones y comentarios sobre el progreso del curso.
             </p>
           </div>
         )}
 
         {activeTab === 'calendario' && (
-          <div className="bg-slate-50 rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="bg-background rounded-xl shadow-sm border border-muted/30 p-6">
             <Calendario cursoId={curso.id} />
           </div>
         )}

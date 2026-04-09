@@ -78,7 +78,7 @@ export default function Configuracion() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -86,8 +86,8 @@ export default function Configuracion() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configuración de Perfil</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-text-main">Configuración de Perfil</h1>
+        <p className="mt-1 text-sm text-secondary">
           Gestiona tu información personal y firma digital.
         </p>
       </div>
@@ -97,36 +97,36 @@ export default function Configuracion() {
           
           {/* Información del Usuario (Solo lectura) */}
           <div>
-            <h3 className="text-lg font-medium text-slate-900 mb-4">Información Personal</h3>
+            <h3 className="text-lg font-medium text-text-main mb-4">Información Personal</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-700">Nombre Completo</label>
-                <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-700">
+                <label className="block text-sm font-medium text-text-main">Nombre Completo</label>
+                <div className="mt-1 p-2 bg-background border border-muted/30 rounded-md text-text-main">
                   {user?.name}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Correo Electrónico</label>
-                <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-700">
+                <label className="block text-sm font-medium text-text-main">Correo Electrónico</label>
+                <div className="mt-1 p-2 bg-background border border-muted/30 rounded-md text-text-main">
                   {user?.email}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Rol</label>
-                <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-700 capitalize">
+                <label className="block text-sm font-medium text-text-main">Rol</label>
+                <div className="mt-1 p-2 bg-background border border-muted/30 rounded-md text-text-main capitalize">
                   {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '') ? `Miembro del Equipo (${user?.role === 'team' ? user?.team_area : user?.role})` : user?.role}
                 </div>
               </div>
             </div>
           </div>
 
-          <hr className="border-slate-200" />
+          <hr className="border-muted/30" />
 
           {/* Firma Digital */}
           {!['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '') && (
             <div>
-              <h3 className="text-lg font-medium text-slate-900 mb-4">Firma Digital</h3>
-              <p className="text-sm text-slate-500 mb-4">
+              <h3 className="text-lg font-medium text-text-main mb-4">Firma Digital</h3>
+              <p className="text-sm text-secondary mb-4">
                 Sube una imagen con tu firma digital (PNG, JPG o SVG). Esta firma se utilizará para firmar documentos oficiales dentro de la plataforma.
               </p>
 
@@ -161,15 +161,15 @@ export default function Configuracion() {
                       name="firma_digital"
                       accept="image/png, image/jpeg, image/svg+xml"
                       onChange={handleFileChange}
-                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary-hover hover:file:bg-primary/20"
                     />
                   </div>
                 </div>
                 
                 {firmaDigital && (
                   <div className="mt-6">
-                    <p className="text-sm font-medium text-slate-700 mb-2">Vista previa de tu firma actual:</p>
-                    <div className="border border-slate-200 rounded-md p-4 bg-slate-50 inline-block">
+                    <p className="text-sm font-medium text-text-main mb-2">Vista previa de tu firma actual:</p>
+                    <div className="border border-muted/30 rounded-md p-4 bg-background inline-block">
                       <img src={firmaDigital} alt="Firma Digital" className="h-20 object-contain" />
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export default function Configuracion() {
                   <button
                     onClick={handleSave}
                     disabled={saving || !firmaDigital}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (
                       <>

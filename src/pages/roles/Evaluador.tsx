@@ -44,7 +44,7 @@ export default function EvaluadorDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -61,24 +61,24 @@ export default function EvaluadorDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Panel del Par Evaluador</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-text-main">Panel del Par Evaluador</h1>
+        <p className="mt-1 text-sm text-secondary">
           Revisa cursos, evalúa la calidad del contenido y proporciona retroalimentación.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-indigo-100">
-                <BookOpen className="h-6 w-6 text-indigo-600" aria-hidden="true" />
+              <div className="flex-shrink-0 p-3 rounded-lg bg-primary/20">
+                <BookOpen className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">Cursos Asignados</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">Cursos Asignados</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{totalCursos}</div>
+                    <div className="text-2xl font-bold text-text-main">{totalCursos}</div>
                   </dd>
                 </dl>
               </div>
@@ -86,7 +86,7 @@ export default function EvaluadorDashboard() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 p-3 rounded-lg bg-amber-100">
@@ -94,9 +94,9 @@ export default function EvaluadorDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">Pendientes de Revisión</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">Pendientes de Revisión</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{cursosRevision}</div>
+                    <div className="text-2xl font-bold text-text-main">{cursosRevision}</div>
                   </dd>
                 </dl>
               </div>
@@ -104,7 +104,7 @@ export default function EvaluadorDashboard() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 p-3 rounded-lg bg-green-100">
@@ -112,9 +112,9 @@ export default function EvaluadorDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">Cursos Aprobados</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">Cursos Aprobados</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{cursosPublicados}</div>
+                    <div className="text-2xl font-bold text-text-main">{cursosPublicados}</div>
                   </dd>
                 </dl>
               </div>
@@ -123,16 +123,16 @@ export default function EvaluadorDashboard() {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h3 className="text-lg leading-6 font-medium text-slate-900">Cursos Asignados para Revisión</h3>
+      <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h3 className="text-lg leading-6 font-medium text-text-main">Cursos Asignados para Revisión</h3>
           <div className="relative rounded-md shadow-sm max-w-xs w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
             </div>
             <input
               type="text"
-              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border"
+              className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border"
               placeholder="Buscar curso..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -142,31 +142,31 @@ export default function EvaluadorDashboard() {
         
         <div className="divide-y divide-slate-200">
           {filteredCursos.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">No se encontraron cursos asignados.</div>
+            <div className="p-6 text-center text-secondary">No se encontraron cursos asignados.</div>
           ) : (
             filteredCursos.map((curso) => (
-              <div key={curso.id} className="p-6 hover:bg-slate-50 transition-colors">
+              <div key={curso.id} className="p-6 hover:bg-background transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-base font-medium text-indigo-600">{curso.nombre}</h4>
+                      <h4 className="text-base font-medium text-primary">{curso.nombre}</h4>
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
                         curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
                         curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                        'bg-slate-100 text-slate-800'
+                        'bg-slate-100 text-text-main'
                       }`}>
                         {curso.estado}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1">Docente: {curso.docente?.name || 'Sin asignar'} • Programa: {curso.programa}</p>
+                    <p className="text-sm text-secondary mt-1">Docente: {curso.docente?.name || 'Sin asignar'} • Programa: {curso.programa}</p>
                   </div>
                   <div className="flex space-x-3">
-                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-muted shadow-sm text-sm font-medium rounded-md text-text-main bg-white hover:bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                       <MessageSquare className="h-4 w-4 mr-2 text-slate-400" />
                       Feedback
                     </Link>
-                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                       <Star className="h-4 w-4 mr-2" />
                       Evaluar
                     </Link>

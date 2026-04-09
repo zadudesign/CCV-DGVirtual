@@ -113,11 +113,11 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-background flex text-text-main">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex">
-        <div className="h-16 flex items-center px-6 border-b border-slate-200">
-          <span className="text-xl font-bold text-slate-900">CCV Platform</span>
+      <div className="w-64 bg-primary text-white flex flex-col hidden md:flex shadow-xl z-10">
+        <div className="h-16 flex items-center px-6 border-b border-primary-hover">
+          <span className="text-xl font-bold text-white tracking-wide">CCV Platform</span>
         </div>
         
         <div className="flex-1 py-6 px-4 space-y-1">
@@ -128,32 +128,32 @@ export default function Layout() {
                 key={item.name}
                 to={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors",
+                  "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
                   isActive 
-                    ? "bg-indigo-50 text-indigo-700" 
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-primary-hover text-accent shadow-sm" 
+                    : "text-slate-300 hover:bg-primary-hover hover:text-white"
                 )}
               >
-                <item.icon className={cn("mr-3 h-5 w-5", isActive ? "text-indigo-700" : "text-slate-400")} />
+                <item.icon className={cn("mr-3 h-5 w-5", isActive ? "text-accent" : "text-secondary")} />
                 {item.name}
               </Link>
             );
           })}
         </div>
 
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
           <div className="flex items-center mb-4">
-            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+            <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-primary font-bold shadow-sm">
               {user.name.charAt(0)}
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+              <p className="text-sm font-medium text-white">{user.name}</p>
+              <p className="text-xs text-secondary capitalize">{user.role}</p>
             </div>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5" />
             Cerrar Sesión
@@ -164,15 +164,15 @@ export default function Layout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <button className="md:hidden p-2 text-slate-400 hover:text-slate-500">
+        <header className="h-16 bg-white border-b border-muted/50 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm z-10">
+          <button className="md:hidden p-2 text-slate-400 hover:text-secondary">
             <Menu className="h-6 w-6" />
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
             {/* Tareas Stats */}
-            <div className="hidden sm:flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider mr-1">Tareas:</span>
+            <div className="hidden sm:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
+              <span className="text-xs font-bold text-text-main uppercase tracking-wider mr-1">Tareas:</span>
               <div className="flex items-center space-x-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200" title="Completadas">
                 <CheckCircle2 className="w-4 h-4" />
                 <span className="text-sm font-bold">{completadas}</span>
@@ -190,7 +190,7 @@ export default function Layout() {
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 text-slate-400 hover:text-slate-500 relative focus:outline-none"
+                className="p-2 text-slate-400 hover:text-secondary relative focus:outline-none"
               >
                 <Bell className="h-6 w-6" />
                 {pendingTasks.length > 0 && (
@@ -203,16 +203,16 @@ export default function Layout() {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <h3 className="text-sm font-semibold text-slate-800">Notificaciones</h3>
-                    <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-muted/30 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-background flex justify-between items-center">
+                    <h3 className="text-sm font-semibold text-text-main">Notificaciones</h3>
+                    <span className="text-xs font-medium bg-primary/20 text-primary-hover px-2 py-0.5 rounded-full">
                       {pendingTasks.length} pendientes
                     </span>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {pendingTasks.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-slate-500">
+                      <div className="px-4 py-6 text-center text-sm text-secondary">
                         No tienes tareas pendientes. ¡Buen trabajo!
                       </div>
                     ) : (
@@ -222,14 +222,14 @@ export default function Layout() {
                             key={task.id} 
                             to="/calendario"
                             onClick={() => setShowNotifications(false)}
-                            className="block px-4 py-3 hover:bg-slate-50 transition-colors"
+                            className="block px-4 py-3 hover:bg-background transition-colors"
                           >
-                            <p className="text-sm font-medium text-slate-800 truncate">{task.titulo}</p>
+                            <p className="text-sm font-medium text-text-main truncate">{task.titulo}</p>
                             {task.curso?.nombre && (
-                              <p className="text-xs text-slate-500 truncate mt-0.5">{task.curso.nombre}</p>
+                              <p className="text-xs text-secondary truncate mt-0.5">{task.curso.nombre}</p>
                             )}
                             {task.fecha_vencimiento && (
-                              <p className="text-xs text-indigo-600 mt-1 font-medium">
+                              <p className="text-xs text-primary mt-1 font-medium">
                                 Vence: {new Date(task.fecha_vencimiento).toLocaleDateString()}
                               </p>
                             )}
@@ -238,11 +238,11 @@ export default function Layout() {
                       </div>
                     )}
                   </div>
-                  <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
+                  <div className="px-4 py-2 border-t border-slate-100 bg-background">
                     <Link 
                       to="/calendario" 
                       onClick={() => setShowNotifications(false)}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-700 block text-center"
+                      className="text-xs font-medium text-primary hover:text-primary-hover block text-center"
                     >
                       Ver todas mis tareas
                     </Link>

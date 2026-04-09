@@ -39,7 +39,7 @@ export default function TeamDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -51,24 +51,24 @@ export default function TeamDashboard() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Panel de Equipo</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-text-main">Panel de Equipo</h1>
+        <p className="mt-1 text-sm text-secondary">
           Bienvenido al área de {user?.team_area || user?.role || 'Trabajo'}.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-indigo-100">
-                <BookOpen className="h-6 w-6 text-indigo-600" aria-hidden="true" />
+              <div className="flex-shrink-0 p-3 rounded-lg bg-primary/20">
+                <BookOpen className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">Total Cursos</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">Total Cursos</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{totalCursos}</div>
+                    <div className="text-2xl font-bold text-text-main">{totalCursos}</div>
                   </dd>
                 </dl>
               </div>
@@ -76,7 +76,7 @@ export default function TeamDashboard() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 p-3 rounded-lg bg-blue-100">
@@ -84,9 +84,9 @@ export default function TeamDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">En Desarrollo</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">En Desarrollo</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{cursosEnDesarrollo}</div>
+                    <div className="text-2xl font-bold text-text-main">{cursosEnDesarrollo}</div>
                   </dd>
                 </dl>
               </div>
@@ -94,7 +94,7 @@ export default function TeamDashboard() {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 p-3 rounded-lg bg-amber-100">
@@ -102,9 +102,9 @@ export default function TeamDashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-slate-500 truncate">En Revisión</dt>
+                  <dt className="text-sm font-medium text-secondary truncate">En Revisión</dt>
                   <dd>
-                    <div className="text-2xl font-bold text-slate-900">{cursosRevision}</div>
+                    <div className="text-2xl font-bold text-text-main">{cursosRevision}</div>
                   </dd>
                 </dl>
               </div>
@@ -114,33 +114,33 @@ export default function TeamDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden flex flex-col">
-          <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h2 className="text-lg font-medium text-slate-900 flex items-center">
-              <BookOpen className="mr-2 h-5 w-5 text-indigo-600" />
+        <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
+          <div className="px-6 py-5 border-b border-muted/30 flex justify-between items-center bg-background">
+            <h2 className="text-lg font-medium text-text-main flex items-center">
+              <BookOpen className="mr-2 h-5 w-5 text-primary" />
               Cursos Recientes
             </h2>
-            <Link to="/cursos" className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+            <Link to="/cursos" className="text-sm font-medium text-primary hover:text-primary-hover">
               Ver Todos
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto p-0">
             {cursos.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">No hay cursos registrados.</div>
+              <div className="p-6 text-center text-secondary text-sm">No hay cursos registrados.</div>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {cursos.slice(0, 5).map((curso) => (
-                  <li key={curso.id} className="p-6 hover:bg-slate-50 transition-colors">
+                  <li key={curso.id} className="p-6 hover:bg-background transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">{curso.nombre}</Link>
-                        <p className="text-xs text-slate-500 mt-1">{curso.programa}</p>
+                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-primary hover:text-primary-hover">{curso.nombre}</Link>
+                        <p className="text-xs text-secondary mt-1">{curso.programa}</p>
                         {curso.clickup_url && (
                           <a 
                             href={curso.clickup_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center mt-2 text-xs text-slate-500 hover:text-indigo-600 transition-colors"
+                            className="inline-flex items-center mt-2 text-xs text-secondary hover:text-primary transition-colors"
                           >
                             <svg className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -154,11 +154,11 @@ export default function TeamDashboard() {
                           curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
                           curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
                           curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                          'bg-slate-100 text-slate-800'
+                          'bg-slate-100 text-text-main'
                         }`}>
                           {curso.estado}
                         </span>
-                        <span className="text-xs font-medium text-slate-500 mt-2">{curso.progreso}% completado</span>
+                        <span className="text-xs font-medium text-secondary mt-2">{curso.progreso}% completado</span>
                       </div>
                     </div>
                   </li>
@@ -169,26 +169,26 @@ export default function TeamDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-muted/30">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <Shield className="h-6 w-6 text-orange-600" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">Mis Tareas</h2>
+              <h2 className="text-lg font-semibold text-text-main">Mis Tareas</h2>
             </div>
-            <p className="text-slate-600 text-sm">
+            <p className="text-secondary text-sm">
               Aquí podrás ver las tareas asignadas a tu área de {user?.team_area || user?.role}.
             </p>
           </div>
 
-          <Link to="/usuarios" className="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors">
+          <Link to="/usuarios" className="block bg-white p-6 rounded-xl shadow-sm border border-muted/30 hover:bg-background transition-colors">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <Users className="h-6 w-6 text-indigo-600" />
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Users className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">Directorio</h2>
+              <h2 className="text-lg font-semibold text-text-main">Directorio</h2>
             </div>
-            <p className="text-slate-600 text-sm">
+            <p className="text-secondary text-sm">
               Accede al directorio de usuarios de la plataforma.
             </p>
           </Link>
