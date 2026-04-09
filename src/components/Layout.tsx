@@ -10,20 +10,24 @@ import {
   LogOut,
   Menu,
   Bell,
-  CalendarDays
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificacionTarea } from '../types';
+import { startOfDay, parseISO, differenceInDays } from 'date-fns';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
-  const [pendingTasks, setPendingTasks] = useState<NotificacionTarea[]>([]);
+  const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetchPendingTasks();
+      fetchTasks();
       
       // Subscribe to changes
       const subscription = supabase
@@ -33,7 +37,7 @@ export default function Layout() {
           schema: 'public', 
           table: 'notificaciones_tareas'
         }, () => {
-          fetchPendingTasks();
+          fetchTasks();
         })
         .subscribe();
 
@@ -43,12 +47,11 @@ export default function Layout() {
     }
   }, [user]);
 
-  const fetchPendingTasks = async () => {
+  const fetchTasks = async () => {
     try {
       let query = supabase
         .from('notificaciones_tareas')
         .select('*, curso:cursos(nombre)')
-        .neq('estado', 'Completada')
         .order('fecha_vencimiento', { ascending: true });
 
       if (user?.role !== 'admin') {
@@ -63,11 +66,36 @@ export default function Layout() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setPendingTasks(data || []);
+      setAllTasks(data || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
   };
+
+  const pendingTasks = allTasks.filter(t => t.estado !== 'Completada' && t.estado !== 'Completado');
+  
+  // Calculate stats
+  const today = startOfDay(new Date());
+  let completadas = 0;
+  let enProgreso = 0;
+  let vencidas = 0;
+
+  allTasks.forEach(task => {
+    if (task.estado === 'Completada' || task.estado === 'Completado') {
+      completadas++;
+    } else {
+      if (task.fecha_vencimiento) {
+        const dueDate = startOfDay(parseISO(task.fecha_vencimiento));
+        if (differenceInDays(dueDate, today) < 0) {
+          vencidas++;
+        } else {
+          enProgreso++;
+        }
+      } else {
+        enProgreso++;
+      }
+    }
+  });
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -142,6 +170,23 @@ export default function Layout() {
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
+            {/* Tareas Stats */}
+            <div className="hidden sm:flex items-center space-x-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Tareas:</span>
+              <div className="flex items-center space-x-1 text-green-600" title="Completadas">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-sm font-medium">{completadas}</span>
+              </div>
+              <div className="flex items-center space-x-1 text-amber-600" title="En Progreso">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">{enProgreso}</span>
+              </div>
+              <div className="flex items-center space-x-1 text-red-600" title="Vencidas">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">{vencidas}</span>
+              </div>
+            </div>
+
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
