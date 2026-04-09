@@ -171,19 +171,19 @@ export default function Layout() {
           
           <div className="flex-1 flex justify-end items-center space-x-4">
             {/* Tareas Stats */}
-            <div className="hidden sm:flex items-center space-x-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Tareas:</span>
-              <div className="flex items-center space-x-1 text-green-600" title="Completadas">
+            <div className="hidden sm:flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider mr-1">Tareas:</span>
+              <div className="flex items-center space-x-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200" title="Completadas">
                 <CheckCircle2 className="w-4 h-4" />
-                <span className="text-sm font-medium">{completadas}</span>
+                <span className="text-sm font-bold">{completadas}</span>
               </div>
-              <div className="flex items-center space-x-1 text-amber-600" title="En Progreso">
+              <div className="flex items-center space-x-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200" title="En Progreso">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">{enProgreso}</span>
+                <span className="text-sm font-bold">{enProgreso}</span>
               </div>
-              <div className="flex items-center space-x-1 text-red-600" title="Vencidas">
+              <div className="flex items-center space-x-1 bg-red-100 text-red-800 px-2 py-0.5 rounded-md border border-red-200" title="Vencidas">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">{vencidas}</span>
+                <span className="text-sm font-bold">{vencidas}</span>
               </div>
             </div>
 
