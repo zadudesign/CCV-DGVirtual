@@ -59,12 +59,15 @@ export default function Login() {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat relative"
-      style={{ backgroundImage: "url('/login-bg.png')" }}
-    >
-      {/* Overlay opcional para asegurar que el contenido sea legible sobre la imagen */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/login-bg.png')" }}
+      />
+      
+      {/* Overlay sutil para mejorar la legibilidad sin ocultar la imagen */}
+      <div className="fixed inset-0 z-0 bg-background/40 backdrop-blur-[2px]"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
@@ -75,13 +78,13 @@ export default function Login() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main">
           Plataforma CCV
         </h2>
-        <p className="mt-2 text-center text-sm text-secondary font-medium">
+        <p className="mt-2 text-center text-sm text-text-main font-medium bg-white/50 inline-block px-3 py-1 rounded-full mt-3 backdrop-blur-sm">
           Construcción de Cursos Virtuales
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-white/95 backdrop-blur-md py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/20">
+        <div className="bg-white/90 backdrop-blur-md py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/50">
           {displayError && (
             <div className="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
               <div className="flex">
