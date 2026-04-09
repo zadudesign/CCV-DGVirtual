@@ -78,9 +78,11 @@ export default function Login() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main">
           Plataforma CCV
         </h2>
-        <p className="mt-2 text-center text-sm text-text-main font-medium bg-white/50 inline-block px-3 py-1 rounded-full mt-3 backdrop-blur-sm">
-          Construcción de Cursos Virtuales
-        </p>
+        <div className="text-center mt-3">
+          <p className="text-sm text-text-main font-medium bg-white/50 inline-block px-4 py-1 rounded-full backdrop-blur-sm shadow-sm">
+            Construcción de Cursos Virtuales
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
