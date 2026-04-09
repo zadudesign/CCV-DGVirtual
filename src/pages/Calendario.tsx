@@ -88,9 +88,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   const handleStatusChange = async (event: EntregaCalendario, newStatus: string) => {
     // Optimistic update
-    setEntregas(prev => prev.map(e => 
-      (e.id === event.id) ? { ...e, estado: newStatus as any } : e
-    ));
+    setEntregas(prev => prev.map(e => {
+      if (e.id === event.id) {
+        return { 
+          ...e, 
+          estado: newStatus as any,
+          fecha_completada: newStatus === 'Completado' ? new Date().toISOString() : null
+        };
+      }
+      return e;
+    }));
 
     try {
       if (event.isNotificacion) {
@@ -213,8 +220,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         
         // Find events that span across this day
         const dayEvents = entregas.filter(entrega => {
-          const eventEnd = parseISO(entrega.fecha_entrega);
-          const eventStart = entrega.fecha_inicio ? parseISO(entrega.fecha_inicio) : eventEnd;
+          const isCompleted = entrega.estado === 'Completado' || entrega.estado === 'Completada';
+          let eventStart, eventEnd;
+          
+          if (isCompleted && entrega.fecha_completada) {
+            eventEnd = parseISO(entrega.fecha_completada);
+            eventStart = eventEnd;
+          } else {
+            eventEnd = parseISO(entrega.fecha_entrega);
+            eventStart = entrega.fecha_inicio ? parseISO(entrega.fecha_inicio) : eventEnd;
+          }
           
           // Check if the current day falls within the start and end dates (inclusive)
           return cloneDay >= startOfDay(eventStart) && cloneDay <= endOfDay(eventEnd);
@@ -239,9 +254,17 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             </div>
             <div className="mt-2 space-y-1.5 relative">
               {dayEvents.map((event, idx) => {
+                const isCompleted = event.estado === 'Completado' || event.estado === 'Completada';
                 const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
-                const eventStart = event.fecha_inicio ? parseISO(event.fecha_inicio) : parseISO(event.fecha_entrega);
-                const eventEnd = parseISO(event.fecha_entrega);
+                
+                let eventStart, eventEnd;
+                if (isCompleted && event.fecha_completada) {
+                  eventEnd = parseISO(event.fecha_completada);
+                  eventStart = eventEnd;
+                } else {
+                  eventEnd = parseISO(event.fecha_entrega);
+                  eventStart = event.fecha_inicio ? parseISO(event.fecha_inicio) : eventEnd;
+                }
                 
                 const isStart = isSameDay(cloneDay, eventStart);
                 const isEnd = isSameDay(cloneDay, eventEnd);
@@ -324,7 +347,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     });
 
     const sortByDate = (a: any, b: any) => {
-      return new Date(a.fecha_entrega).getTime() - new Date(b.fecha_entrega).getTime();
+      const dateA = (a.estado === 'Completado' || a.estado === 'Completada') && a.fecha_completada 
+        ? new Date(a.fecha_completada).getTime() 
+        : new Date(a.fecha_entrega).getTime();
+      const dateB = (b.estado === 'Completado' || b.estado === 'Completada') && b.fecha_completada 
+        ? new Date(b.fecha_completada).getTime() 
+        : new Date(b.fecha_entrega).getTime();
+      return dateA - dateB;
     };
 
     vencidas.sort(sortByDate);
@@ -362,7 +391,12 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     </div>
                   )}
                   <div className="text-xs font-medium mt-2 flex items-center justify-between">
-                    <span>{format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })}</span>
+                    <span>
+                      {(event.estado === 'Completado' || event.estado === 'Completada') && event.fecha_completada
+                        ? `Completada: ${format(parseISO(event.fecha_completada), 'dd MMM yyyy', { locale: es })}`
+                        : format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })
+                      }
+                    </span>
                     <span className="italic opacity-90 text-[10px] text-right ml-2">{status.label}</span>
                   </div>
                 </div>
