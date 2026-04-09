@@ -68,6 +68,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             curso_id: row.curso_id,
             titulo: row.titulo,
             fecha_entrega: row.fecha_vencimiento,
+            fecha_completada: row.fecha_completada,
             fecha_inicio: row.fecha_inicio, // If it exists in the future
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
@@ -93,9 +94,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
     try {
       if (event.isNotificacion) {
+        const payload: any = { estado: newStatus === 'Completado' ? 'Completada' : 'Pendiente' };
+        if (newStatus === 'Completado') {
+          payload.fecha_completada = new Date().toISOString();
+        } else {
+          payload.fecha_completada = null;
+        }
+
         const { error } = await supabase
           .from('notificaciones_tareas')
-          .update({ estado: newStatus === 'Completado' ? 'Completada' : 'Pendiente' })
+          .update(payload)
           .eq('id', event.id);
           
         if (error) throw error;

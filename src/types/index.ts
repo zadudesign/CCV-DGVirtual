@@ -31,6 +31,7 @@ export interface EntregaCalendario {
   descripcion?: string;
   fecha_inicio?: string;
   fecha_entrega: string;
+  fecha_completada?: string;
   estado: 'Pendiente' | 'En Progreso' | 'Completado' | 'Atrasado';
   created_at: string;
   curso?: {
@@ -49,6 +50,7 @@ export interface NotificacionTarea {
   descripcion?: string;
   estado: string;
   fecha_vencimiento?: string;
+  fecha_completada?: string;
   clickup_task_id?: string;
   url_clickup?: string;
   curso?: {
