@@ -71,9 +71,12 @@ export default function Login() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-            <BookOpen className="h-10 w-10 text-accent" />
-          </div>
+          <img 
+            src="/logo_pccv.svg" 
+            alt="Logo Plataforma CCV" 
+            className="h-24 w-auto object-contain drop-shadow-md"
+            referrerPolicy="no-referrer"
+          />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main">
           Plataforma CCV
