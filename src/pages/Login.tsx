@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { BookOpen, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import loginBg from '../assets/login-bg.png';
 import logoPccv from '../assets/logo_pccv.svg';
 
 export default function Login() {
@@ -61,15 +60,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
-      {/* Background Image */}
-      <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${loginBg})` }}
-      />
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden bg-slate-900">
+      {/* Background Gradient & Decorative Blobs */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/40 blur-[120px]"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-accent/20 blur-[120px]"></div>
+        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-secondary/30 blur-[120px]"></div>
+      </div>
       
-      {/* Overlay sutil para mejorar la legibilidad sin ocultar la imagen */}
-      <div className="fixed inset-0 z-0 bg-background/40 backdrop-blur-[2px]"></div>
+      {/* Overlay sutil para mejorar la textura */}
+      <div className="fixed inset-0 z-0 bg-slate-900/60 backdrop-blur-[1px] pointer-events-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
@@ -80,11 +80,11 @@ export default function Login() {
             referrerPolicy="no-referrer"
           />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-text-main">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
           Plataforma CCV
         </h2>
         <div className="text-center mt-3">
-          <p className="text-sm text-text-main font-medium bg-white/50 inline-block px-4 py-1 rounded-full backdrop-blur-sm shadow-sm">
+          <p className="text-sm text-white font-medium bg-white/10 border border-white/20 inline-block px-4 py-1 rounded-full backdrop-blur-md shadow-sm">
             Construcción de Cursos Virtuales
           </p>
         </div>
