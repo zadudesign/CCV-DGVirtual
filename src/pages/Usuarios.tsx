@@ -74,7 +74,7 @@ export default function Usuarios() {
       </div>
 
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background flex flex-col space-y-4">
+        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100 flex flex-col space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
               <UsersIcon className="mr-2 h-5 w-5 text-primary" />

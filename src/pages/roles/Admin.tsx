@@ -276,7 +276,7 @@ export default function AdminDashboard() {
           )}
 
           <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-            <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+            <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
               <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
                 <UserPlus className="mr-2 h-5 w-5 text-primary" />
                 Inscribir Nuevo Usuario
@@ -584,7 +584,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Panel Facultades */}
             <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
-              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
                 <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
                   <Building2 className="mr-2 h-5 w-5 text-primary" />
                   Facultades
@@ -630,7 +630,7 @@ export default function AdminDashboard() {
 
             {/* Panel Programas */}
             <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
-              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-background">
+              <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
                 <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
                   <GraduationCap className="mr-2 h-5 w-5 text-primary" />
                   Programas
