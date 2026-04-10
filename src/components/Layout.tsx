@@ -13,7 +13,8 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificacionTarea } from '../types';
@@ -24,6 +25,7 @@ export default function Layout() {
   const location = useLocation();
   const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -114,7 +116,72 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex text-text-main">
-      {/* Sidebar */}
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-primary text-white shadow-xl">
+            <div className="absolute top-0 right-0 -mr-12 pt-4">
+              <button
+                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="sr-only">Cerrar menú</span>
+                <X className="h-6 w-6 text-white" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="h-16 flex items-center px-6 border-b border-primary-hover">
+              <span className="text-xl font-bold text-white tracking-wide">CCV Platform</span>
+            </div>
+            
+            <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                      isActive 
+                        ? "bg-primary-hover text-accent shadow-sm" 
+                        : "text-slate-300 hover:bg-primary-hover hover:text-white"
+                    )}
+                  >
+                    <item.icon className={cn("mr-3 h-5 w-5", isActive ? "text-accent" : "text-secondary")} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
+              <div className="flex items-center mb-4">
+                <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-primary font-bold shadow-sm">
+                  {user.name.charAt(0)}
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-white">{user.name}</p>
+                  <p className="text-xs text-secondary capitalize">{user.role}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  signOut();
+                }}
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
+              >
+                <LogOut className="mr-3 h-5 w-5" />
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar (Desktop) */}
       <div className="w-64 bg-primary text-white flex flex-col hidden md:flex shadow-xl z-10">
         <div className="h-16 flex items-center px-6 border-b border-primary-hover">
           <span className="text-xl font-bold text-white tracking-wide">CCV Platform</span>
@@ -165,7 +232,10 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-muted/50 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm z-10">
-          <button className="md:hidden p-2 text-slate-400 hover:text-secondary">
+          <button 
+            className="md:hidden p-2 text-slate-400 hover:text-secondary"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
             <Menu className="h-6 w-6" />
           </button>
           
