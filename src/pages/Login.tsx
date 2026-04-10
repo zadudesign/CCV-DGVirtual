@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { BookOpen, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import loginBg from '../assets/login-bg.png';
+import logoPccv from '../assets/logo_pccv.svg';
 
 export default function Login() {
   const { user, loading: authLoading, authError, refreshSession } = useAuth();
@@ -63,7 +65,7 @@ export default function Login() {
       {/* Background Image */}
       <div 
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/login-bg.png')" }}
+        style={{ backgroundImage: `url(${loginBg})` }}
       />
       
       {/* Overlay sutil para mejorar la legibilidad sin ocultar la imagen */}
@@ -72,7 +74,7 @@ export default function Login() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
           <img 
-            src="/logo_pccv.svg" 
+            src={logoPccv}
             alt="Logo Plataforma CCV" 
             className="h-24 w-auto object-contain drop-shadow-md"
             referrerPolicy="no-referrer"
