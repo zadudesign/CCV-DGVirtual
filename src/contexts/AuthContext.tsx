@@ -70,20 +70,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
     setLoading(false);
 
-    // Obtenemos la foto de perfil en segundo plano
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('photoURL')
-        .eq('id', authUser.id)
-        .single();
-        
-      if (data?.photoURL) {
-        setUser(prev => prev ? { ...prev, photoURL: data.photoURL } : null);
+    // Obtenemos la foto de perfil en segundo plano sin bloquear la promesa principal
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('photoURL')
+          .eq('id', authUser.id)
+          .single();
+          
+        if (data?.photoURL) {
+          setUser(prev => prev ? { ...prev, photoURL: data.photoURL } : null);
+        }
+      } catch (e) {
+        console.error('Error fetching profile photo:', e);
       }
-    } catch (e) {
-      console.error('Error fetching profile photo:', e);
-    }
+    })();
   };
 
   useEffect(() => {
