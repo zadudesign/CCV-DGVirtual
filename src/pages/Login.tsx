@@ -67,6 +67,15 @@ export default function Login() {
         <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-accent/20 blur-[120px]"></div>
         <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-secondary/30 blur-[120px]"></div>
       </div>
+
+      {/* Patrón de puntos sutil */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none opacity-30"
+        style={{ 
+          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px)', 
+          backgroundSize: '24px 24px' 
+        }}
+      ></div>
       
       {/* Overlay sutil para mejorar la textura */}
       <div className="fixed inset-0 z-0 bg-slate-900/60 backdrop-blur-[1px] pointer-events-none"></div>
