@@ -81,11 +81,19 @@ export default function Login() {
       <div className="fixed inset-0 z-0 bg-slate-900/60 backdrop-blur-[1px] pointer-events-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="flex justify-center">
+        <div className="flex justify-center relative">
+          {/* Efecto de resplandor/difuminado detrás del logo */}
+          <img 
+            src={logoPccv}
+            alt="" 
+            className="absolute h-24 w-auto object-contain blur-xl opacity-40 scale-110 pointer-events-none"
+            aria-hidden="true"
+          />
+          {/* Logo principal */}
           <img 
             src={logoPccv}
             alt="Logo Plataforma CCV" 
-            className="h-24 w-auto object-contain drop-shadow-md"
+            className="h-24 w-auto object-contain drop-shadow-lg relative z-10"
             referrerPolicy="no-referrer"
           />
         </div>
