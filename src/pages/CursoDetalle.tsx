@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
+import { DynamicIcon } from '../components/DynamicIcon';
 import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
@@ -117,7 +118,10 @@ export default function CursoDetalle() {
         </button>
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-text-main">{curso.nombre}</h1>
+            <h1 className="text-2xl font-bold text-text-main flex items-center">
+              <DynamicIcon name={curso.icon} className="h-6 w-6 mr-3 text-primary" />
+              {curso.nombre}
+            </h1>
             <button
               onClick={handleCopyId}
               className="flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-secondary rounded hover:bg-slate-200 transition-colors"

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
 import { getClickupUrlForRole } from '../lib/utils';
+import { DynamicIcon } from '../components/DynamicIcon';
 
 import { Link } from 'react-router-dom';
 
@@ -312,6 +313,7 @@ export default function Cursos() {
                         to={`/cursos/${curso.id}`} 
                         className="inline-flex items-center px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-md text-sm font-medium transition-colors shadow-sm"
                       >
+                        <DynamicIcon name={curso.icon} className="h-4 w-4 mr-2" />
                         {curso.nombre}
                       </Link>
                       <div className="flex items-center mt-2 pl-1 space-x-3">

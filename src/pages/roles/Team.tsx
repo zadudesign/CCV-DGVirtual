@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Curso } from '../../types';
 import { Link } from 'react-router-dom';
 import { getClickupUrlForRole } from '../../lib/utils';
+import { DynamicIcon } from '../../components/DynamicIcon';
 
 export default function TeamDashboard() {
   const { user } = useAuth();
@@ -134,7 +135,10 @@ export default function TeamDashboard() {
                   <li key={curso.id} className="p-6 hover:bg-background transition-colors">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-primary hover:text-primary-hover">{curso.nombre}</Link>
+                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-primary hover:text-primary-hover flex items-center">
+                          <DynamicIcon name={curso.icon} className="h-4 w-4 mr-1.5" />
+                          {curso.nombre}
+                        </Link>
                         <p className="text-xs text-secondary mt-1">{curso.programa}</p>
                         {getClickupUrlForRole(curso, user?.role) && (
                           <a 
