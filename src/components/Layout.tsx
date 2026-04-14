@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificacionTarea } from '../types';
+import logoCCV from '../assets/logo_pccv.svg';
 import { startOfDay, parseISO, differenceInDays } from 'date-fns';
 
 export default function Layout() {
@@ -130,8 +131,21 @@ export default function Layout() {
                 <X className="h-6 w-6 text-white" aria-hidden="true" />
               </button>
             </div>
-            <div className="h-16 flex items-center px-6 border-b border-primary-hover">
-              <span className="text-xl font-bold text-white tracking-wide">CCV Platform</span>
+            <div className="h-16 flex items-center px-6 border-b border-primary-hover space-x-3">
+              <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
+              <span className="text-xl font-bold text-white tracking-wide">Plataforma</span>
+            </div>
+            
+            {/* User Profile Section */}
+            <div className="flex flex-col items-center py-8 px-4 border-b border-primary-hover">
+              <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4">
+                {user.name.charAt(0)}
+              </div>
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider text-center">{user.name}</h2>
+              <p className="text-sm text-slate-400 text-center mt-1">{user.email}</p>
+              <span className="mt-3 px-3 py-1 rounded-full text-xs font-medium bg-primary-hover text-accent capitalize border border-accent/20">
+                {user.role}
+              </span>
             </div>
             
             <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
@@ -157,15 +171,6 @@ export default function Layout() {
             </div>
 
             <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
-              <div className="flex items-center mb-4">
-                <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-primary font-bold shadow-sm">
-                  {user.name.charAt(0)}
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <p className="text-xs text-secondary capitalize">{user.role}</p>
-                </div>
-              </div>
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -183,8 +188,21 @@ export default function Layout() {
 
       {/* Sidebar (Desktop) */}
       <div className="w-64 bg-primary text-white flex flex-col hidden md:flex shadow-xl z-10">
-        <div className="h-16 flex items-center px-6 border-b border-primary-hover">
-          <span className="text-xl font-bold text-white tracking-wide">CCV Platform</span>
+        <div className="h-16 flex items-center px-6 border-b border-primary-hover space-x-3">
+          <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
+          <span className="text-xl font-bold text-white tracking-wide">Plataforma</span>
+        </div>
+        
+        {/* User Profile Section */}
+        <div className="flex flex-col items-center py-8 px-4 border-b border-primary-hover">
+          <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4">
+            {user.name.charAt(0)}
+          </div>
+          <h2 className="text-xl font-bold text-white uppercase tracking-wider text-center">{user.name}</h2>
+          <p className="text-sm text-slate-400 text-center mt-1">{user.email}</p>
+          <span className="mt-3 px-3 py-1 rounded-full text-xs font-medium bg-primary-hover text-accent capitalize border border-accent/20">
+            {user.role}
+          </span>
         </div>
         
         <div className="flex-1 py-6 px-4 space-y-1">
@@ -209,15 +227,6 @@ export default function Layout() {
         </div>
 
         <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
-          <div className="flex items-center mb-4">
-            <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-primary font-bold shadow-sm">
-              {user.name.charAt(0)}
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">{user.name}</p>
-              <p className="text-xs text-secondary capitalize">{user.role}</p>
-            </div>
-          </div>
           <button
             onClick={signOut}
             className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
