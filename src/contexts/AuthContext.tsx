@@ -55,21 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Extraemos el resto de datos de user_metadata
     const meta = authUser.user_metadata || {};
     
-    // Obtenemos la foto de perfil desde la tabla profiles
-    let photoURL = '';
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('photoURL')
-        .eq('id', authUser.id)
-        .single();
-      if (data?.photoURL) {
-        photoURL = data.photoURL;
-      }
-    } catch (e) {
-      console.error('Error fetching profile photo:', e);
-    }
-    
+    // Configuramos el usuario inicial sin foto para no bloquear el login
     setUser({
       id: authUser.id,
       email: authUser.email || '',
@@ -79,10 +65,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       facultad: meta.facultad || '',
       programa: meta.programa || '',
       team_area: meta.team_area || '',
-      photoURL: photoURL
+      photoURL: ''
     });
     setAuthError(null);
     setLoading(false);
+
+    // Obtenemos la foto de perfil en segundo plano
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('photoURL')
+        .eq('id', authUser.id)
+        .single();
+        
+      if (data?.photoURL) {
+        setUser(prev => prev ? { ...prev, photoURL: data.photoURL } : null);
+      }
+    } catch (e) {
+      console.error('Error fetching profile photo:', e);
+    }
   };
 
   useEffect(() => {
