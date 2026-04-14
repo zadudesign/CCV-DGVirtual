@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell, Plus, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EntregaCalendario } from '../types';
@@ -27,12 +27,37 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [entregas, setEntregas] = useState<EntregaCalendario[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [proyectos, setProyectos] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    proyecto: 'Diseño Virtual',
+    titulo: '',
+    descripcion: '',
+    fecha_vencimiento: '',
+    rol_destino: 'Diseño'
+  });
 
   useEffect(() => {
     if (user) {
       fetchEntregas();
+      fetchProyectos();
     }
   }, [user, cursoId]);
+
+  const fetchProyectos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('proyectos_ec')
+        .select('nombre')
+        .order('nombre');
+      if (!error && data) {
+        setProyectos(data);
+      }
+    } catch (e) {
+      console.error('Error fetching proyectos:', e);
+    }
+  };
 
   const fetchEntregas = async () => {
     try {
@@ -73,6 +98,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
             curso: row.curso,
+            proyecto: row.proyecto,
             isNotificacion: true
           });
         }
@@ -118,6 +144,40 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     } catch (error) {
       console.error('Error updating status:', error);
       fetchEntregas();
+    }
+  };
+
+  const handleAddTarea = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const payload = {
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        fecha_vencimiento: formData.fecha_vencimiento,
+        rol_destino: formData.rol_destino,
+        estado: 'Pendiente',
+        usuario_id: user?.id,
+        proyecto: formData.proyecto
+      };
+
+      const { error } = await supabase.from('notificaciones_tareas').insert([payload]);
+      if (error) throw error;
+
+      setIsModalOpen(false);
+      setFormData({
+        proyecto: 'Diseño Virtual',
+        titulo: '',
+        descripcion: '',
+        fecha_vencimiento: '',
+        rol_destino: 'Diseño'
+      });
+      fetchEntregas();
+    } catch (error: any) {
+      console.error('Error adding tarea:', error);
+      alert('Error al agregar tarea. Asegúrate de haber ejecutado el SQL para agregar la columna "proyecto".');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -290,7 +350,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                             {event.curso?.nombre}
                           </Link>
                         ) : (
-                          <div className="truncate opacity-80">{event.curso?.nombre}</div>
+                          <div className="truncate opacity-80">{event.proyecto || 'Diseño Virtual'}</div>
                         )}
                         {isStart && isEnd && event.detalle && (
                           <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-text-main border border-black/5 flex items-start gap-1">
@@ -380,7 +440,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                       {event.curso?.nombre}
                     </Link>
                   ) : (
-                    <div className="text-xs opacity-80 mt-0.5">{event.curso?.nombre}</div>
+                    <div className="text-xs opacity-80 mt-0.5">{event.proyecto || 'Diseño Virtual'}</div>
                   )}
                   {event.detalle && (
                     <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-text-main border border-black/5 flex items-start gap-1.5">
@@ -429,6 +489,115 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       {!cursoId && (
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-text-main">Calendario de Trabajo</h1>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Agregar Tarea
+          </button>
+        </div>
+      )}
+
+      {/* Modal Agregar Tarea */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-slate-900 opacity-75" onClick={() => setIsModalOpen(false)}></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="text-lg leading-6 font-medium text-text-main">
+                    Agregar Nueva Tarea
+                  </h3>
+                  <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-500">
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <form onSubmit={handleAddTarea} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Proyecto</label>
+                    <select
+                      required
+                      value={formData.proyecto}
+                      onChange={(e) => setFormData({...formData, proyecto: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="Diseño Virtual">Diseño Virtual</option>
+                      {proyectos.map((p, idx) => (
+                        <option key={idx} value={p.nombre}>{p.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Tarea</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.titulo}
+                      onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Nombre de la tarea"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Detalle</label>
+                    <textarea
+                      rows={3}
+                      value={formData.descripcion}
+                      onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Descripción detallada..."
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Fecha de Entrega</label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.fecha_vencimiento}
+                      onChange={(e) => setFormData({...formData, fecha_vencimiento: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Team (Rol Destino)</label>
+                    <select
+                      required
+                      value={formData.rol_destino}
+                      onChange={(e) => setFormData({...formData, rol_destino: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="Diseño">Diseño</option>
+                      <option value="Soporte">Soporte</option>
+                      <option value="Pedagogía">Pedagogía</option>
+                      <option value="Multimedia">Multimedia</option>
+                    </select>
+                  </div>
+                  <div className="pt-4 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-4 py-2 text-sm font-medium text-text-main bg-white border border-muted rounded-md hover:bg-slate-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Guardar Tarea
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
