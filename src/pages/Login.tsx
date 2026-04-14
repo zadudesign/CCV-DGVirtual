@@ -92,13 +92,13 @@ export default function Login() {
           {/* Logo principal */}
           <img 
             src={logoPccv}
-            alt="Logo Plataforma CCV" 
+            alt="Logo Plataforma" 
             className="h-24 w-auto object-contain drop-shadow-lg relative z-10"
             referrerPolicy="no-referrer"
           />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-          Plataforma CCV
+          Plataforma
         </h2>
         <div className="text-center mt-3">
           <p className="text-sm text-white font-medium bg-white/10 border border-white/20 inline-block px-4 py-1 rounded-full backdrop-blur-md shadow-sm">

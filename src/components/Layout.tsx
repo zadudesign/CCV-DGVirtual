@@ -132,8 +132,8 @@ export default function Layout() {
               </button>
             </div>
             <div className="h-16 flex items-center px-6 border-b border-primary-hover space-x-3">
-              <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
               <span className="text-xl font-bold text-white tracking-wide">Plataforma</span>
+              <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
             </div>
             
             {/* User Profile Section */}
@@ -189,8 +189,8 @@ export default function Layout() {
       {/* Sidebar (Desktop) */}
       <div className="w-64 bg-primary text-white flex flex-col hidden md:flex shadow-xl z-10">
         <div className="h-16 flex items-center px-6 border-b border-primary-hover space-x-3">
-          <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
           <span className="text-xl font-bold text-white tracking-wide">Plataforma</span>
+          <img src={logoCCV} alt="Logo CCV" className="h-8 w-auto" />
         </div>
         
         {/* User Profile Section */}
