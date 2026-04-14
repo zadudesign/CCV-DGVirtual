@@ -11,6 +11,7 @@ export interface User {
   programa?: string;
   team_area?: string;
   firma_digital?: string;
+  photoURL?: string;
 }
 
 export interface Facultad {

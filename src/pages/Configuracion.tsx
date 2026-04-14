@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { FileSignature, Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { FileSignature, Loader2, Save, CheckCircle2, UserCircle } from 'lucide-react';
 
 export default function Configuracion() {
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const [firmaDigital, setFirmaDigital] = useState<string>('');
+  const [photoURL, setPhotoURL] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -17,13 +18,14 @@ export default function Configuracion() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('firma_digital')
+          .select('firma_digital, photoURL')
           .eq('id', user.id)
           .single();
 
         if (error) throw error;
-        if (data && data.firma_digital) {
-          setFirmaDigital(data.firma_digital);
+        if (data) {
+          if (data.firma_digital) setFirmaDigital(data.firma_digital);
+          if (data.photoURL) setPhotoURL(data.photoURL);
         }
       } catch (err: any) {
         console.error('Error fetching profile:', err);
@@ -34,6 +36,22 @@ export default function Configuracion() {
 
     fetchProfile();
   }, [user]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit
+        setError('La imagen de perfil es demasiado grande. El tamaño máximo es 1MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoURL(reader.result as string);
+        setError('');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,12 +78,13 @@ export default function Configuracion() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ firma_digital: firmaDigital })
+        .update({ firma_digital: firmaDigital, photoURL: photoURL })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      setSuccessMessage('Firma digital actualizada correctamente.');
+      await refreshSession();
+      setSuccessMessage('Perfil actualizado correctamente.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err: any) {
       console.error('Error updating signature:', err);
@@ -122,6 +141,58 @@ export default function Configuracion() {
 
           <hr className="border-muted/30" />
 
+          {/* Foto de Perfil */}
+          <div>
+            <h3 className="text-lg font-medium text-text-main mb-4">Foto de Perfil</h3>
+            <p className="text-sm text-secondary mb-4">
+              Sube una imagen para tu perfil (PNG o JPG, máximo 1MB).
+            </p>
+
+            {error && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+                <div className="flex">
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-md">
+                <div className="flex items-center">
+                  <CheckCircle2 className="h-5 w-5 text-green-400 mr-2" />
+                  <p className="text-sm text-green-700">{successMessage}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-6">
+              <div className="flex-shrink-0 h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-md overflow-hidden">
+                {photoURL ? (
+                  <img src={photoURL} alt="Perfil" className="h-full w-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || <UserCircle className="h-12 w-12" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="relative rounded-md shadow-sm w-full max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <UserCircle className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    onChange={handlePhotoChange}
+                    className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary-hover hover:file:bg-primary/20"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-muted/30" />
+
           {/* Firma Digital */}
           {!['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '') && (
             <div>
@@ -129,25 +200,6 @@ export default function Configuracion() {
               <p className="text-sm text-secondary mb-4">
                 Sube una imagen con tu firma digital (PNG, JPG o SVG). Esta firma se utilizará para firmar documentos oficiales dentro de la plataforma.
               </p>
-
-              {error && (
-                <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-                  <div className="flex">
-                    <div className="ml-3">
-                      <p className="text-sm text-red-700">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-md">
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 mr-2" />
-                    <p className="text-sm text-green-700">{successMessage}</p>
-                  </div>
-                </div>
-              )}
 
               <div className="sm:col-span-2 max-w-xl">
                 <div className="mt-1 flex items-center">

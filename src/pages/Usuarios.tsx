@@ -183,8 +183,12 @@ export default function Usuarios() {
                   <tr key={user.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-hover font-bold">
-                          {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-hover font-bold overflow-hidden">
+                          {user.photoURL ? (
+                            <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
+                          ) : (
+                            user.name?.charAt(0) || user.email?.charAt(0) || '?'
+                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-text-main">{user.name || 'Sin nombre'}</div>

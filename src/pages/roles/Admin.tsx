@@ -16,7 +16,8 @@ export default function AdminDashboard() {
     facultad: '',
     programa: '',
     team_area: '',
-    firma_digital: ''
+    firma_digital: '',
+    photoURL: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -136,6 +137,25 @@ export default function AdminDashboard() {
     }));
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit
+        setError('La imagen de perfil es demasiado grande. El tamaño máximo es 1MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          photoURL: reader.result as string
+        }));
+        setError('');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -172,7 +192,8 @@ export default function AdminDashboard() {
           facultad: formData.facultad,
           programa: formData.programa,
           team_area: formData.team_area,
-          firma_digital: formData.firma_digital
+          firma_digital: formData.firma_digital,
+          photoURL: formData.photoURL
         }),
       });
 
@@ -195,11 +216,14 @@ export default function AdminDashboard() {
         facultad: '',
         programa: '',
         team_area: '',
-        firma_digital: ''
+        firma_digital: '',
+        photoURL: ''
       });
       // Reset file input
       const fileInput = document.getElementById('firma_digital') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+      const photoInput = document.getElementById('photoURL') as HTMLInputElement;
+      if (photoInput) photoInput.value = '';
 
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err: any) {
@@ -497,6 +521,39 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
+
+                  {/* Foto de Perfil */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="photoURL" className="block text-sm font-medium text-text-main">
+                      Foto de Perfil (Opcional)
+                    </label>
+                    <div className="mt-1 flex items-center">
+                      <div className="relative rounded-md shadow-sm w-full">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <UserPlus className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="file"
+                          id="photoURL"
+                          name="photoURL"
+                          accept="image/png, image/jpeg"
+                          onChange={handlePhotoChange}
+                          className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary-hover hover:file:bg-primary/20"
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-secondary">
+                      Sube una imagen para el perfil del usuario (PNG o JPG, máximo 1MB).
+                    </p>
+                    {formData.photoURL && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-text-main mb-1">Vista previa:</p>
+                        <div className="border border-muted/30 rounded-md p-2 bg-background inline-block">
+                          <img src={formData.photoURL} alt="Perfil" className="h-16 w-16 rounded-full object-cover" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Firma Digital (No aplica para Team) */}
                   {formData.role !== 'team' && (

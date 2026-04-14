@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       if (session?.user) {
-        setUserFromSession(session.user);
+        await setUserFromSession(session.user);
       } else {
         setUser(null);
         setLoading(false);
@@ -48,12 +48,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setUserFromSession = (authUser: any) => {
+  const setUserFromSession = async (authUser: any) => {
     // Extraemos el rol de app_metadata (seguro, no modificable por el usuario)
     const role = authUser.app_metadata?.role || 'docente';
     
     // Extraemos el resto de datos de user_metadata
     const meta = authUser.user_metadata || {};
+    
+    // Obtenemos la foto de perfil desde la tabla profiles
+    let photoURL = '';
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('photoURL')
+        .eq('id', authUser.id)
+        .single();
+      if (data?.photoURL) {
+        photoURL = data.photoURL;
+      }
+    } catch (e) {
+      console.error('Error fetching profile photo:', e);
+    }
     
     setUser({
       id: authUser.id,
@@ -63,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       documento: meta.documento || '',
       facultad: meta.facultad || '',
       programa: meta.programa || '',
-      team_area: meta.team_area || ''
+      team_area: meta.team_area || '',
+      photoURL: photoURL
     });
     setAuthError(null);
     setLoading(false);
@@ -83,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         
         if (session?.user) {
-          if (isMounted) setUserFromSession(session.user);
+          if (isMounted) await setUserFromSession(session.user);
         } else {
           if (isMounted) setLoading(false);
         }
@@ -113,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        if (isMounted) setUserFromSession(session.user);
+        if (isMounted) await setUserFromSession(session.user);
       } else {
         if (isMounted) {
           setUser(null);

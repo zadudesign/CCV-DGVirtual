@@ -138,8 +138,12 @@ export default function Layout() {
             
             {/* User Profile Section */}
             <div className="flex flex-col items-center py-8 px-4 border-b border-primary-hover">
-              <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4">
-                {user.name.charAt(0)}
+              <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4 overflow-hidden">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
+                ) : (
+                  user.name.charAt(0)
+                )}
               </div>
               <h2 className="text-xl font-bold text-white uppercase tracking-wider text-center">{user.name}</h2>
               <p className="text-sm text-slate-400 text-center mt-1">{user.email}</p>
@@ -195,8 +199,12 @@ export default function Layout() {
         
         {/* User Profile Section */}
         <div className="flex flex-col items-center py-8 px-4 border-b border-primary-hover">
-          <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4">
-            {user.name.charAt(0)}
+          <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center text-primary text-4xl font-bold shadow-lg mb-4 overflow-hidden">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
+            ) : (
+              user.name.charAt(0)
+            )}
           </div>
           <h2 className="text-xl font-bold text-white uppercase tracking-wider text-center">{user.name}</h2>
           <p className="text-sm text-slate-400 text-center mt-1">{user.email}</p>
