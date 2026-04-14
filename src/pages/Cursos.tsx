@@ -294,7 +294,7 @@ export default function Cursos() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link 
                         to={`/cursos/${curso.id}`} 
-                        className="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary-hover hover:bg-primary/20 rounded-md text-sm font-medium transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-md text-sm font-medium transition-colors shadow-sm"
                       >
                         {curso.nombre}
                       </Link>
