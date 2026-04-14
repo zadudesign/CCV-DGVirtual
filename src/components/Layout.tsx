@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  X
+  X,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { NotificacionTarea } from '../types';
@@ -104,10 +105,16 @@ export default function Layout() {
     return <Navigate to="/login" replace />;
   }
 
+  const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
+
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Cursos', href: '/cursos', icon: BookOpen },
     { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+    // Educación Continua is for Team roles and admin
+    ...(isTeamRole || user.role === 'admin'
+      ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
+      : []),
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 

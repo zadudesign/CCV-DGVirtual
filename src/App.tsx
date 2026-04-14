@@ -14,6 +14,7 @@ import Cursos from './pages/Cursos';
 import CursoDetalle from './pages/CursoDetalle';
 import Calendario from './pages/Calendario';
 import Configuracion from './pages/Configuracion';
+import EducacionContinua from './pages/EducacionContinua';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="cursos/:id" element={<CursoDetalle />} />
             <Route path="calendario" element={<Calendario />} />
             <Route path="usuarios" element={<Usuarios />} />
+            <Route path="educacion-continua" element={<EducacionContinua />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
