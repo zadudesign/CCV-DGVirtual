@@ -4,6 +4,7 @@ import { Shield, Users, BookOpen, AlertCircle, Clock, Loader2 } from 'lucide-rea
 import { supabase } from '../../lib/supabase';
 import { Curso } from '../../types';
 import { Link } from 'react-router-dom';
+import { getClickupUrlForRole } from '../../lib/utils';
 
 export default function TeamDashboard() {
   const { user } = useAuth();
@@ -135,9 +136,9 @@ export default function TeamDashboard() {
                       <div>
                         <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-primary hover:text-primary-hover">{curso.nombre}</Link>
                         <p className="text-xs text-secondary mt-1">{curso.programa}</p>
-                        {curso.clickup_url && (
+                        {getClickupUrlForRole(curso, user?.role) && (
                           <a 
-                            href={curso.clickup_url} 
+                            href={getClickupUrlForRole(curso, user?.role)} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="inline-flex items-center mt-2 text-xs text-secondary hover:text-primary transition-colors"

@@ -3,6 +3,7 @@ import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Cale
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
+import { getClickupUrlForRole } from '../lib/utils';
 
 import { Link } from 'react-router-dom';
 
@@ -22,7 +23,12 @@ export default function Cursos() {
   const [semestre, setSemestre] = useState<number>(1);
   const [fechaInicio, setFechaInicio] = useState('');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
-  const [clickupUrl, setClickupUrl] = useState('');
+  const [clickupDisenoUrl, setClickupDisenoUrl] = useState('');
+  const [clickupSoporteUrl, setClickupSoporteUrl] = useState('');
+  const [clickupMultimediaUrl, setClickupMultimediaUrl] = useState('');
+  const [clickupPedagogiaUrl, setClickupPedagogiaUrl] = useState('');
+  const [driveUrl, setDriveUrl] = useState('');
+  const [icon, setIcon] = useState('BookOpen');
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   // Filters
@@ -145,7 +151,12 @@ export default function Cursos() {
           semestre: Number(semestre),
           fecha_inicio: fechaInicio,
           tipo_contrato: tipoContrato,
-          clickup_url: clickupUrl || null
+          clickup_diseno_url: clickupDisenoUrl || null,
+          clickup_soporte_url: clickupSoporteUrl || null,
+          clickup_multimedia_url: clickupMultimediaUrl || null,
+          clickup_pedagogia_url: clickupPedagogiaUrl || null,
+          drive_url: driveUrl || null,
+          icon: icon || 'BookOpen'
         }]);
 
       if (error) throw error;
@@ -158,7 +169,12 @@ export default function Cursos() {
       setSemestre(1);
       setFechaInicio('');
       setTipoContrato('Carga Académica - 5 Horas Semanales');
-      setClickupUrl('');
+      setClickupDisenoUrl('');
+      setClickupSoporteUrl('');
+      setClickupMultimediaUrl('');
+      setClickupPedagogiaUrl('');
+      setDriveUrl('');
+      setIcon('BookOpen');
       fetchCursos();
     } catch (err) {
       console.error('Error creating curso:', err);
@@ -299,9 +315,9 @@ export default function Cursos() {
                         {curso.nombre}
                       </Link>
                       <div className="flex items-center mt-2 pl-1 space-x-3">
-                        {curso.clickup_url && (
+                        {getClickupUrlForRole(curso, user?.role) && (
                           <a 
-                            href={curso.clickup_url} 
+                            href={getClickupUrlForRole(curso, user?.role)} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="inline-flex items-center text-xs text-secondary hover:text-primary transition-colors"
@@ -490,16 +506,77 @@ export default function Cursos() {
                     </select>
                   </div>
 
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-text-main border-b border-muted pb-2">URLs Públicas de ClickUp (Embed)</h3>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-secondary">Diseño</label>
+                      <input
+                        type="url"
+                        value={clickupDisenoUrl}
+                        onChange={(e) => setClickupDisenoUrl(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                        placeholder="https://sharing.clickup.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-secondary">Soporte</label>
+                      <input
+                        type="url"
+                        value={clickupSoporteUrl}
+                        onChange={(e) => setClickupSoporteUrl(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                        placeholder="https://sharing.clickup.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-secondary">Multimedia</label>
+                      <input
+                        type="url"
+                        value={clickupMultimediaUrl}
+                        onChange={(e) => setClickupMultimediaUrl(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                        placeholder="https://sharing.clickup.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-secondary">Pedagogía</label>
+                      <input
+                        type="url"
+                        value={clickupPedagogiaUrl}
+                        onChange={(e) => setClickupPedagogiaUrl(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                        placeholder="https://sharing.clickup.com/..."
+                      />
+                    </div>
+                    
+                    <p className="mt-1 text-xs text-secondary">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-text-main">URL Pública de ClickUp (Embed)</label>
+                    <label className="block text-sm font-medium text-text-main">Enlace Carpeta Google Drive</label>
                     <input
                       type="url"
-                      value={clickupUrl}
-                      onChange={(e) => setClickupUrl(e.target.value)}
+                      value={driveUrl}
+                      onChange={(e) => setDriveUrl(e.target.value)}
                       className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                      placeholder="https://sharing.clickup.com/..."
+                      placeholder="https://drive.google.com/drive/folders/..."
                     />
-                    <p className="mt-1 text-xs text-secondary">Para previsualizar, usa el enlace público (Share {'->'} Public link {'->'} Embed).</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main">Icono (Lucide React)</label>
+                    <input
+                      type="text"
+                      value={icon}
+                      onChange={(e) => setIcon(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                      placeholder="Ej. BookOpen, Code, Monitor"
+                    />
+                    <p className="mt-1 text-xs text-secondary">Escribe el nombre del icono en inglés (ej. BookOpen, Code, Monitor, FileText).</p>
                   </div>
 
                   <div className="mt-6 flex justify-end space-x-3">
