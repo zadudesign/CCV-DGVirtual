@@ -175,7 +175,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       fetchEntregas();
     } catch (error: any) {
       console.error('Error adding tarea:', error);
-      alert('Error al agregar tarea. Asegúrate de haber ejecutado el SQL para agregar la columna "proyecto".');
+      alert(`Error al agregar tarea: ${error.message || JSON.stringify(error)}`);
     } finally {
       setSubmitting(false);
     }
