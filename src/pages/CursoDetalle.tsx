@@ -59,9 +59,26 @@ export default function CursoDetalle() {
         .single();
 
       if (error) throw error;
+
+      // Role-based access check
+      if (user?.role !== 'admin') {
+        let hasAccess = false;
+        if (user?.role === 'decano' && data.facultad === user.facultad) hasAccess = true;
+        else if (user?.role === 'coordinador' && data.programa === user.programa) hasAccess = true;
+        else if (user?.role === 'docente' && data.docente_id === user.id) hasAccess = true;
+        else if (user?.role === 'evaluador' && data.evaluador_id === user.id) hasAccess = true;
+        else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) hasAccess = true;
+
+        if (!hasAccess) {
+          navigate('/cursos');
+          return;
+        }
+      }
+
       setCurso(data);
     } catch (err) {
       console.error('Error fetching curso:', err);
+      navigate('/cursos');
     } finally {
       if (showLoading) setLoading(false);
     }

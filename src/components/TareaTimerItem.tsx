@@ -4,7 +4,12 @@ import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export const TareaTimerItem = ({ tarea, onUpdate }: { tarea: any, onUpdate: () => void }) => {
+interface TareaTimerItemProps {
+  tarea: any;
+  onUpdate: () => void | Promise<void>;
+}
+
+export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate }) => {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);

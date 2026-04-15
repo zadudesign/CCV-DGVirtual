@@ -4,6 +4,7 @@ import { LucideProps } from 'lucide-react';
 
 interface DynamicIconProps extends LucideProps {
   name?: string;
+  className?: string;
 }
 
 export function DynamicIcon({ name, ...props }: DynamicIconProps) {

@@ -66,16 +66,21 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       
       let notificacionesQuery = supabase
         .from('notificaciones_tareas')
-        .select('*, curso:cursos(nombre)');
+        .select('*, curso:cursos!inner(nombre, facultad, programa)');
 
       if (cursoId) {
         notificacionesQuery = notificacionesQuery.eq('curso_id', cursoId);
       } else if (user?.role !== 'admin') {
-        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
+        if (user?.role === 'decano' && user.facultad) {
+          notificacionesQuery = notificacionesQuery.eq('curso.facultad', user.facultad);
+        } else if (user?.role === 'coordinador' && user.programa) {
+          notificacionesQuery = notificacionesQuery.eq('curso.programa', user.programa);
+        } else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
           const area = user?.team_area || user?.role;
           notificacionesQuery = notificacionesQuery.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
         } else {
-          notificacionesQuery = notificacionesQuery.or(`usuario_id.eq.${user?.id},rol_destino.eq.${user?.role}`);
+          // Docentes y Evaluadores ven sus tareas asignadas
+          notificacionesQuery = notificacionesQuery.eq('usuario_id', user?.id);
         }
       }
 

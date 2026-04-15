@@ -51,15 +51,26 @@ export default function Cursos() {
   const fetchCursos = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('cursos')
         .select(`
           *,
           docente:profiles!docente_id(name, email),
           evaluador:profiles!evaluador_id(name, email),
           creador:profiles!creador_id(name, email)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      if (user?.role === 'decano' && user.facultad) {
+        query = query.eq('facultad', user.facultad);
+      } else if (user?.role === 'coordinador' && user.programa) {
+        query = query.eq('programa', user.programa);
+      } else if (user?.role === 'docente') {
+        query = query.eq('docente_id', user.id);
+      } else if (user?.role === 'evaluador') {
+        query = query.eq('evaluador_id', user.id);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       setCursos(data as Curso[]);
@@ -72,20 +83,34 @@ export default function Cursos() {
 
   const fetchOptions = async () => {
     try {
-      // Fetch posibles docentes (pueden ser docentes, coordinadores o decanos)
-      const { data: dData } = await supabase
+      // Fetch posibles docentes
+      let dQuery = supabase
         .from('profiles')
         .select('*')
-        .in('role', ['docente', 'coordinador', 'decano'])
-        .order('name');
+        .in('role', ['docente', 'coordinador', 'decano']);
+      
+      if (user?.role === 'decano' && user.facultad) {
+        dQuery = dQuery.eq('facultad', user.facultad);
+      } else if (user?.role === 'coordinador' && user.programa) {
+        dQuery = dQuery.eq('programa', user.programa);
+      }
+      
+      const { data: dData } = await dQuery.order('name');
       if (dData) setDocentes(dData as User[]);
 
-      // Fetch posibles evaluadores (pueden ser evaluadores, docentes, coordinadores o decanos)
-      const { data: eData } = await supabase
+      // Fetch posibles evaluadores
+      let eQuery = supabase
         .from('profiles')
         .select('*')
-        .in('role', ['evaluador', 'docente', 'coordinador', 'decano'])
-        .order('name');
+        .in('role', ['evaluador', 'docente', 'coordinador', 'decano']);
+      
+      if (user?.role === 'decano' && user.facultad) {
+        eQuery = eQuery.eq('facultad', user.facultad);
+      } else if (user?.role === 'coordinador' && user.programa) {
+        eQuery = eQuery.eq('programa', user.programa);
+      }
+      
+      const { data: eData } = await eQuery.order('name');
       if (eData) setEvaluadores(eData as User[]);
 
       // Fetch programas
@@ -105,6 +130,12 @@ export default function Cursos() {
             .eq('facultad_id', fData.id);
           pData = data || [];
         }
+      } else if (user?.role === 'coordinador' && user.programa) {
+        const { data } = await supabase
+          .from('programas')
+          .select('id, nombre')
+          .eq('nombre', user.programa);
+        pData = data || [];
       } else {
         const { data } = await supabase.from('programas').select('id, nombre, facultades(nombre)');
         pData = data?.map((p: any) => ({
