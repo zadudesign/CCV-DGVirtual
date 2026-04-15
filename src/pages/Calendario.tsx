@@ -20,7 +20,10 @@ import {
   startOfDay,
   endOfDay
 } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+
+const COLOMBIA_TZ = 'America/Bogota';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 
 export default function Calendario({ cursoId }: { cursoId?: string }) {
@@ -135,7 +138,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         return { 
           ...e, 
           estado: newStatus as any,
-          fecha_completada: newStatus === 'Completado' ? new Date().toISOString() : null
+          fecha_completada: newStatus === 'Completado' ? formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX") : null
         };
       }
       return e;
@@ -145,7 +148,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       if (event.isNotificacion) {
         const payload: any = { estado: newStatus === 'Completado' ? 'Completada' : 'Pendiente' };
         if (newStatus === 'Completado') {
-          payload.fecha_completada = new Date().toISOString();
+          payload.fecha_completada = formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
         } else {
           payload.fecha_completada = null;
         }
@@ -167,10 +170,14 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // Ensure date is stored with Colombia timezone offset
+      // If user picks 2023-10-27, we store it as 2023-10-27T00:00:00-05:00
+      const fechaVencimientoColombia = `${formData.fecha_vencimiento}T00:00:00-05:00`;
+
       const payload = {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
-        fecha_vencimiento: formData.fecha_vencimiento,
+        fecha_vencimiento: fechaVencimientoColombia,
         rol_destino: formData.rol_destino,
         estado: 'Pendiente',
         usuario_id: user?.id,

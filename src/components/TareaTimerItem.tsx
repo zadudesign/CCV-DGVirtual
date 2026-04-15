@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Plus, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+
+const COLOMBIA_TZ = 'America/Bogota';
 
 interface TareaTimerItemProps {
   tarea: any;
@@ -66,7 +69,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate 
         .from('notificaciones_tareas')
         .update({ 
           estado: 'Completada', 
-          fecha_completada: new Date().toISOString(),
+          fecha_completada: formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX"),
           tiempo_invertido: totalSeconds
         })
         .eq('id', tarea.id)
