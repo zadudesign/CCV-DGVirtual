@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -34,6 +34,7 @@ export default function Cursos() {
   // Filters
   const [filtroSemestre, setFiltroSemestre] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>('activos');
 
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
@@ -45,19 +46,19 @@ export default function Cursos() {
     if (user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador') {
       fetchOptions();
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   const fetchCursos = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('cursos')
-        .select(`
-          *,
-          docente:profiles!docente_id(name, email),
-          evaluador:profiles!evaluador_id(name, email),
-          creador:profiles!creador_id(name, email)
-        `);
+      const isSolicitudesTab = activeTab === 'solicitudes' && isTeamOrAdmin;
+      const table = isSolicitudesTab ? 'solicitudes_cursos' : 'cursos';
+      
+      const selectFields = isSolicitudesTab 
+        ? '*' 
+        : '*, docente:profiles!docente_id(name, email), evaluador:profiles!evaluador_id(name, email), creador:profiles!creador_id(name, email)';
+      
+      let query = supabase.from(table).select(selectFields);
 
       if (user?.role === 'decano' && user.facultad) {
         query = query.eq('facultad', user.facultad);
@@ -72,7 +73,7 @@ export default function Cursos() {
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
-      setCursos(data as Curso[]);
+      setCursos(data as any[]);
     } catch (err) {
       console.error('Error fetching cursos:', err);
     } finally {
@@ -167,7 +168,7 @@ export default function Cursos() {
       }
 
       const { error } = await supabase
-        .from('cursos')
+        .from('cursos') // Los admins cargan directamente a cursos activos
         .insert([{
           nombre,
           facultad: cursoFacultad,
@@ -208,6 +209,28 @@ export default function Cursos() {
     } catch (err) {
       console.error('Error creating curso:', err);
       alert('Error al crear el curso');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEliminarSolicitud = async (id: string, nombre: string) => {
+    if (!window.confirm(`¿Estás seguro de eliminar la solicitud del curso "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('solicitudes_cursos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      alert('Solicitud eliminada correctamente.');
+      fetchCursos();
+    } catch (err) {
+      console.error('Error deleting request:', err);
+      alert('Error al eliminar la solicitud.');
     } finally {
       setSubmitting(false);
     }
@@ -271,6 +294,8 @@ export default function Cursos() {
     return colors[index];
   };
 
+  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
+
   const cursosFiltrados = cursos.filter(curso => {
     const matchSemestre = filtroSemestre ? curso.semestre?.toString() === filtroSemestre : true;
     const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
@@ -296,6 +321,33 @@ export default function Cursos() {
           </button>
         )}
       </div>
+
+      {isTeamOrAdmin && (
+        <div className="border-b border-muted/30">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('activos')}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'activos'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+              }`}
+            >
+              Activos
+            </button>
+            <button
+              onClick={() => setActiveTab('solicitudes')}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'solicitudes'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+              }`}
+            >
+              Solicitudes
+            </button>
+          </nav>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
@@ -340,39 +392,60 @@ export default function Cursos() {
             <thead className="bg-background">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Semestre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Equipo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Progreso</th>
+                {activeTab === 'solicitudes' ? (
+                  <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa / Facultad</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Solicitado Por</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Contacto</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Tipo</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Semestre</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Equipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Progreso</th>
+                  </>
+                )}
+                {activeTab === 'solicitudes' && isTeamOrAdmin && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Acciones</th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center">
+                  <td colSpan={activeTab === 'solicitudes' ? 6 : 6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : cursosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-secondary">
-                    No hay cursos registrados.
+                  <td colSpan={activeTab === 'solicitudes' ? 6 : 6} className="px-6 py-4 text-center text-sm text-secondary">
+                    No hay solicitudes o cursos registrados.
                   </td>
                 </tr>
               ) : (
                 cursosFiltrados.map((curso) => (
                   <tr key={curso.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Link 
-                        to={`/cursos/${curso.id}`} 
-                        className="inline-flex items-center px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-md text-sm font-medium transition-colors shadow-sm"
-                      >
-                        <DynamicIcon name={curso.icon} className="h-4 w-4 mr-2" />
-                        {curso.nombre}
-                      </Link>
+                      {activeTab === 'solicitudes' ? (
+                        <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium">
+                          <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
+                          {curso.nombre}
+                        </div>
+                      ) : (
+                        <Link 
+                          to={`/cursos/${curso.id}`} 
+                          className="inline-flex items-center px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-md text-sm font-medium transition-colors shadow-sm"
+                        >
+                          <DynamicIcon name={curso.icon} className="h-4 w-4 mr-2" />
+                          {curso.nombre}
+                        </Link>
+                      )}
                       <div className="flex items-center mt-2 pl-1 space-x-3">
-                        {getClickupUrlForRole(curso, user?.role) && (
+                        {activeTab !== 'solicitudes' && getClickupUrlForRole(curso, user?.role) && (
                           <a 
                             href={getClickupUrlForRole(curso, user?.role)} 
                             target="_blank" 
@@ -385,61 +458,97 @@ export default function Cursos() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getProgramaColor(curso.programa)}`}>
-                        {curso.programa || 'General'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                      {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-2">
-                        <div>
-                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Docente</div>
-                          <div className="text-sm text-text-main leading-tight">{curso.docente?.name || 'Sin asignar'}</div>
-                        </div>
-                        {curso.evaluador && (
-                          <div>
-                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Par Evaluador</div>
-                            <div className="text-sm text-text-main leading-tight">{curso.evaluador.name}</div>
+                    {activeTab === 'solicitudes' ? (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-text-main font-medium">{curso.programa}</div>
+                          <div className="text-xs text-secondary">{curso.facultad}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-main">
+                          {curso.solicitado_por || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-text-main">{curso.email || '-'}</div>
+                          <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2.5 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                            {curso.tipo_solicitud}
+                          </span>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getProgramaColor(curso.programa)}`}>
+                            {curso.programa || 'General'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                          {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col gap-2">
+                            <div>
+                              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Docente</div>
+                              <div className="text-sm text-text-main leading-tight">{curso.docente?.name || 'Sin asignar'}</div>
+                            </div>
+                            {curso.evaluador && (
+                              <div>
+                                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Par Evaluador</div>
+                                <div className="text-sm text-text-main leading-tight">{curso.evaluador.name}</div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
-                        curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
-                        curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                        'bg-slate-100 text-text-main'
-                      }`}>
-                        {curso.estado}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center flex-1">
-                          <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
+                            curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
+                            curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
+                            'bg-slate-100 text-text-main'
+                          }`}>
+                            {curso.estado}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center flex-1">
+                              <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
+                                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
+                              </div>
+                              <span className="text-xs text-secondary">{curso.progreso_general || 0}%</span>
+                            </div>
+                            {activeTab !== 'solicitudes' && curso.clickup_list_id && (
+                              <button
+                                onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
+                                disabled={syncingId === curso.id}
+                                className="ml-2 text-primary hover:text-primary-hover disabled:opacity-50"
+                                title="Sincronizar progreso con ClickUp"
+                              >
+                                <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
+                                <svg className={`h-4 w-4 ${syncingId === curso.id ? 'hidden' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
-                          <span className="text-xs text-secondary">{curso.progreso_general || 0}%</span>
-                        </div>
-                        {curso.clickup_list_id && (
-                          <button
-                            onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
-                            disabled={syncingId === curso.id}
-                            className="ml-2 text-primary hover:text-primary-hover disabled:opacity-50"
-                            title="Sincronizar progreso con ClickUp"
-                          >
-                            <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
-                            <svg className={`h-4 w-4 ${syncingId === curso.id ? 'hidden' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                        </td>
+                      </>
+                    )}
+                    {activeTab === 'solicitudes' && isTeamOrAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleEliminarSolicitud(curso.id, curso.nombre)}
+                          disabled={submitting}
+                          className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
+                          title="Eliminar solicitud una vez procesada manualmente"
+                        >
+                          <X className="h-3.5 w-3.5 mr-1" />
+                          Eliminar
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
