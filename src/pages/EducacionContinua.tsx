@@ -36,7 +36,7 @@ export default function EducacionContinua() {
       const { data, error } = await supabase
         .from('proyectos_ec')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('nombre', { ascending: true });
 
       if (error) {
         // Ignoramos el error 42P01 (relation does not exist) para no romper la UI si la tabla no existe aún
@@ -89,7 +89,7 @@ export default function EducacionContinua() {
 
       if (error) throw error;
 
-      setProyectos(prev => [data, ...prev]);
+      await fetchProyectos();
       setNewProyectoName('');
       setSuccess('Proyecto agregado con éxito');
       
