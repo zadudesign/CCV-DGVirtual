@@ -323,7 +323,7 @@ export default function Cursos() {
   const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
 
   const cursosFiltrados = cursos.filter(curso => {
-    const matchSemestre = filtroSemestre ? curso.semestre?.toString() === filtroSemestre : true;
+    const matchSemestre = (activeTab === 'activos' && filtroSemestre) ? curso.semestre?.toString() === filtroSemestre : true;
     const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
     return matchSemestre && matchPrograma;
   });
@@ -376,24 +376,24 @@ export default function Cursos() {
       )}
 
       {/* Filters */}
-      {activeTab !== 'solicitudes' && (
-        <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
-          <div className="flex-1">
-            <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
-              Filtrar por Programa
-            </label>
-            <select
-              id="filtroPrograma"
-              value={filtroPrograma}
-              onChange={(e) => setFiltroPrograma(e.target.value)}
-              className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-            >
-              <option value="">Todos los programas</option>
-              {programasUnicos.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
+        <div className="flex-1">
+          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
+            Filtrar por Programa
+          </label>
+          <select
+            id="filtroPrograma"
+            value={filtroPrograma}
+            onChange={(e) => setFiltroPrograma(e.target.value)}
+            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+          >
+            <option value="">Todos los programas</option>
+            {programasUnicos.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+        {activeTab !== 'solicitudes' && (
           <div className="flex-1">
             <label htmlFor="filtroSemestre" className="block text-sm font-medium text-text-main mb-1">
               Filtrar por Semestre
@@ -410,8 +410,8 @@ export default function Cursos() {
               ))}
             </select>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Table */}
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
