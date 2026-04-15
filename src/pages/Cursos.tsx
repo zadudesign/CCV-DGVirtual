@@ -433,42 +433,92 @@ export default function Cursos() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Progreso</th>
                   </>
                 )}
-                {activeTab === 'solicitudes' && isTeamOrAdmin && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Acciones</th>
-                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={activeTab === 'solicitudes' ? (isTeamOrAdmin ? 5 : 4) : 6} className="px-6 py-4 text-center">
+                  <td colSpan={activeTab === 'solicitudes' ? 4 : 6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : (
                 cursosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab === 'solicitudes' ? (isTeamOrAdmin ? 5 : 4) : 6} className="px-6 py-4 text-center text-sm text-secondary">
+                    <td colSpan={activeTab === 'solicitudes' ? 4 : 6} className="px-6 py-4 text-center text-sm text-secondary">
                       No hay solicitudes o cursos registrados.
                     </td>
                   </tr>
+                ) : activeTab === 'solicitudes' ? (
+                  ESTADOS_SOLICITUD.map(estado => {
+                    const solicitudesEnEstado = cursosFiltrados.filter(c => (c.estado || 'Solicitud Recibida') === estado);
+                    if (solicitudesEnEstado.length === 0) return null;
+                    
+                    return (
+                      <React.Fragment key={estado}>
+                        <tr className="bg-slate-100/80">
+                          <td colSpan={4} className="px-6 py-3 text-[11px] font-bold text-primary uppercase tracking-wider border-y border-slate-200">
+                            <div className="flex items-center">
+                              <div className="w-1 h-4 bg-primary rounded-full mr-3"></div>
+                              {estado}
+                              <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px]">
+                                {solicitudesEnEstado.length}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        {solicitudesEnEstado.map((curso) => (
+                          <tr key={curso.id} className="hover:bg-background">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium w-fit">
+                                  <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
+                                  {curso.nombre}
+                                </div>
+                                <div className="mt-1.5">
+                                  <span className="px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                    {curso.tipo_solicitud}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-text-main font-medium">{curso.programa}</div>
+                              <div className="text-xs text-secondary">{curso.facultad}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-text-main font-medium">{curso.solicitado_por || 'N/A'}</div>
+                              <div className="flex flex-col mt-0.5">
+                                <div className="text-xs text-secondary">{curso.email || '-'}</div>
+                                <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {isTeamOrAdmin ? (
+                                <select
+                                  value={curso.estado || 'Solicitud Recibida'}
+                                  onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
+                                  className="text-xs border-muted rounded-md focus:ring-primary focus:border-primary bg-background py-1 px-2"
+                                >
+                                  {ESTADOS_SOLICITUD.map(estado => (
+                                    <option key={estado} value={estado}>{estado}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
+                                  {curso.estado || 'Solicitud Recibida'}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })
                 ) : (
                   cursosFiltrados.map((curso) => (
                     <tr key={curso.id} className="hover:bg-background">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {activeTab === 'solicitudes' ? (
-                        <div className="flex flex-col">
-                          <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium w-fit">
-                            <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
-                            {curso.nombre}
-                          </div>
-                          <div className="mt-1.5">
-                            <span className="px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                              {curso.tipo_solicitud}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <Link 
                           to={`/cursos/${curso.id}`} 
                           className="inline-flex items-center px-3 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-md text-sm font-medium transition-colors shadow-sm"
@@ -476,129 +526,80 @@ export default function Cursos() {
                           <DynamicIcon name={curso.icon} className="h-4 w-4 mr-2" />
                           {curso.nombre}
                         </Link>
-                      )}
-                      <div className="flex items-center mt-2 pl-1 space-x-3">
-                        {activeTab !== 'solicitudes' && getClickupUrlForRole(curso, user?.role) && (
-                          <a 
-                            href={getClickupUrlForRole(curso, user?.role)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-secondary hover:text-primary transition-colors"
-                          >
-                            <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
-                            Abrir Tablero ClickUp
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                    {activeTab === 'solicitudes' ? (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-text-main font-medium">{curso.programa}</div>
-                          <div className="text-xs text-secondary">{curso.facultad}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-text-main font-medium">{curso.solicitado_por || 'N/A'}</div>
-                          <div className="flex flex-col mt-0.5">
-                            <div className="text-xs text-secondary">{curso.email || '-'}</div>
-                            <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {isTeamOrAdmin ? (
-                            <select
-                              value={curso.estado || 'Solicitud Recibida'}
-                              onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
-                              className="text-xs border-muted rounded-md focus:ring-primary focus:border-primary bg-background py-1 px-2"
+                        <div className="flex items-center mt-2 pl-1 space-x-3">
+                          {getClickupUrlForRole(curso, user?.role) && (
+                            <a 
+                              href={getClickupUrlForRole(curso, user?.role)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-xs text-secondary hover:text-primary transition-colors"
                             >
-                              {ESTADOS_SOLICITUD.map(estado => (
-                                <option key={estado} value={estado}>{estado}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
-                              {curso.estado || 'Solicitud Recibida'}
-                            </span>
+                              <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
+                              Abrir Tablero ClickUp
+                            </a>
                           )}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getProgramaColor(curso.programa)}`}>
-                            {curso.programa || 'General'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                          {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-2">
-                            <div>
-                              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Docente</div>
-                              <div className="text-sm text-text-main leading-tight">{curso.docente?.name || 'Sin asignar'}</div>
-                            </div>
-                            {curso.evaluador && (
-                              <div>
-                                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Par Evaluador</div>
-                                <div className="text-sm text-text-main leading-tight">{curso.evaluador.name}</div>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
-                            curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
-                            curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                            'bg-slate-100 text-text-main'
-                          }`}>
-                            {curso.estado}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center flex-1">
-                              <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
-                              </div>
-                              <span className="text-xs text-secondary">{curso.progreso_general || 0}%</span>
-                            </div>
-                            {activeTab !== 'solicitudes' && curso.clickup_list_id && (
-                              <button
-                                onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
-                                disabled={syncingId === curso.id}
-                                className="ml-2 text-primary hover:text-primary-hover disabled:opacity-50"
-                                title="Sincronizar progreso con ClickUp"
-                              >
-                                <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
-                                <svg className={`h-4 w-4 ${syncingId === curso.id ? 'hidden' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </>
-                    )}
-                    {activeTab === 'solicitudes' && isTeamOrAdmin && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleEliminarSolicitud(curso.id, curso.nombre)}
-                          disabled={submitting}
-                          className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
-                          title="Eliminar solicitud una vez procesada manualmente"
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" />
-                          Eliminar
-                        </button>
+                        </div>
                       </td>
-                    )}
-                  </tr>
-                ))
-              )
-            )}
-          </tbody>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getProgramaColor(curso.programa)}`}>
+                          {curso.programa || 'General'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                        {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Docente</div>
+                            <div className="text-sm text-text-main leading-tight">{curso.docente?.name || 'Sin asignar'}</div>
+                          </div>
+                          {curso.evaluador && (
+                            <div>
+                              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Par Evaluador</div>
+                              <div className="text-sm text-text-main leading-tight">{curso.evaluador.name}</div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
+                          curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
+                          curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
+                          'bg-slate-100 text-text-main'
+                        }`}>
+                          {curso.estado}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center flex-1">
+                            <div className="w-full bg-slate-200 rounded-full h-2.5 mr-2 max-w-[100px]">
+                              <div className="bg-primary h-2.5 rounded-full" style={{ width: `${curso.progreso_general || 0}%` }}></div>
+                            </div>
+                            <span className="text-xs text-secondary">{curso.progreso_general || 0}%</span>
+                          </div>
+                          {curso.clickup_list_id && (
+                            <button
+                              onClick={() => handleSyncClickUp(curso.id, curso.clickup_list_id!)}
+                              disabled={syncingId === curso.id}
+                              className="ml-2 text-primary hover:text-primary-hover disabled:opacity-50"
+                              title="Sincronizar progreso con ClickUp"
+                            >
+                              <Loader2 className={`h-4 w-4 ${syncingId === curso.id ? 'animate-spin' : 'hidden'}`} />
+                              <svg className={`h-4 w-4 ${syncingId === curso.id ? 'hidden' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )
+              )}
+            </tbody>
           </table>
         </div>
       </div>

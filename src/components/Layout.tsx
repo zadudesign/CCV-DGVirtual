@@ -26,15 +26,17 @@ export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
+  const [solicitudesCount, setSolicitudesCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchTasks();
+      fetchSolicitudesCount();
       
-      // Subscribe to changes
-      const subscription = supabase
+      // Subscribe to task changes
+      const taskSubscription = supabase
         .channel('notificaciones_cambios')
         .on('postgres_changes', { 
           event: '*', 
@@ -45,11 +47,38 @@ export default function Layout() {
         })
         .subscribe();
 
+      // Subscribe to solicitudes changes
+      const solicitudesSubscription = supabase
+        .channel('solicitudes_cambios')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'solicitudes_cursos'
+        }, () => {
+          fetchSolicitudesCount();
+        })
+        .subscribe();
+
       return () => {
-        subscription.unsubscribe();
+        taskSubscription.unsubscribe();
+        solicitudesSubscription.unsubscribe();
       };
     }
   }, [user]);
+
+  const fetchSolicitudesCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('solicitudes_cursos')
+        .select('*', { count: 'exact', head: true })
+        .eq('estado', 'Solicitud Recibida');
+
+      if (error) throw error;
+      setSolicitudesCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching solicitudes count:', error);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -264,6 +293,15 @@ export default function Layout() {
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
+            {/* Solicitudes Cursos Stats */}
+            <div className="hidden lg:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
+              <span className="text-[10px] font-bold text-text-main uppercase tracking-widest mr-1">Solicitudes Cursos:</span>
+              <div className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200" title="Solicitudes Recibidas">
+                <BookOpen className="w-4 h-4" />
+                <span className="text-sm font-bold">{solicitudesCount}</span>
+              </div>
+            </div>
+
             {/* Tareas Stats */}
             <div className="hidden sm:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
               <span className="text-xs font-bold text-text-main uppercase tracking-wider mr-1">Tareas:</span>
