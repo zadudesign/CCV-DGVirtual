@@ -8,6 +8,16 @@ import { DynamicIcon } from '../components/DynamicIcon';
 
 import { Link } from 'react-router-dom';
 
+const ESTADOS_SOLICITUD = [
+  'Solicitud Recibida',
+  'Pendiente de Aprobación',
+  'Información Incompleta',
+  'Orden de Trabajo',
+  'Actas de Responsabilidad',
+  'En Preparación',
+  'En Construcción'
+];
+
 export default function Cursos() {
   const { user } = useAuth();
   const [cursos, setCursos] = useState<Curso[]>([]);
@@ -236,6 +246,21 @@ export default function Cursos() {
     }
   };
 
+  const handleUpdateEstadoSolicitud = async (id: string, nuevoEstado: string) => {
+    try {
+      const { error } = await supabase
+        .from('solicitudes_cursos')
+        .update({ estado: nuevoEstado })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchCursos();
+    } catch (err) {
+      console.error('Error updating request status:', err);
+      alert('Error al actualizar el estado de la solicitud.');
+    }
+  };
+
   const canCreate = user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador';
 
   const handleSyncClickUp = async (cursoId: string, listId: string) => {
@@ -398,6 +423,7 @@ export default function Cursos() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Solicitado Por</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Contacto</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                   </>
                 ) : (
                   <>
@@ -416,19 +442,20 @@ export default function Cursos() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={activeTab === 'solicitudes' ? 6 : 6} className="px-6 py-4 text-center">
+                  <td colSpan={activeTab === 'solicitudes' ? 7 : 6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
-              ) : cursosFiltrados.length === 0 ? (
-                <tr>
-                  <td colSpan={activeTab === 'solicitudes' ? 6 : 6} className="px-6 py-4 text-center text-sm text-secondary">
-                    No hay solicitudes o cursos registrados.
-                  </td>
-                </tr>
               ) : (
-                cursosFiltrados.map((curso) => (
-                  <tr key={curso.id} className="hover:bg-background">
+                cursosFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan={activeTab === 'solicitudes' ? 7 : 6} className="px-6 py-4 text-center text-sm text-secondary">
+                      No hay solicitudes o cursos registrados.
+                    </td>
+                  </tr>
+                ) : (
+                  cursosFiltrados.map((curso) => (
+                    <tr key={curso.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       {activeTab === 'solicitudes' ? (
                         <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium">
@@ -475,6 +502,23 @@ export default function Cursos() {
                           <span className="px-2.5 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                             {curso.tipo_solicitud}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isTeamOrAdmin ? (
+                            <select
+                              value={curso.estado || 'Solicitud Recibida'}
+                              onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
+                              className="text-xs border-muted rounded-md focus:ring-primary focus:border-primary bg-background py-1 px-2"
+                            >
+                              {ESTADOS_SOLICITUD.map(estado => (
+                                <option key={estado} value={estado}>{estado}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
+                              {curso.estado || 'Solicitud Recibida'}
+                            </span>
+                          )}
                         </td>
                       </>
                     ) : (
@@ -551,8 +595,9 @@ export default function Cursos() {
                     )}
                   </tr>
                 ))
-              )}
-            </tbody>
+              )
+            )}
+          </tbody>
           </table>
         </div>
       </div>
