@@ -40,6 +40,11 @@ export default function Cursos() {
   const [driveUrl, setDriveUrl] = useState('');
   const [icon, setIcon] = useState('BookOpen');
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [showSolicitudModal, setShowSolicitudModal] = useState(false);
+  
+  // Solicitud Form State
+  const [solicitanteId, setSolicitanteId] = useState('');
+  const [solicitantes, setSolicitantes] = useState<User[]>([]);
 
   // Filters
   const [filtroSemestre, setFiltroSemestre] = useState<string>('');
@@ -56,7 +61,25 @@ export default function Cursos() {
     if (user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador') {
       fetchOptions();
     }
+    if (user?.role === 'admin') {
+      fetchSolicitantes();
+    }
   }, [user, activeTab]);
+
+  const fetchSolicitantes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['coordinador', 'decano'])
+        .order('name');
+      
+      if (error) throw error;
+      setSolicitantes(data || []);
+    } catch (err) {
+      console.error('Error fetching solicitantes:', err);
+    }
+  };
 
   const fetchCursos = async () => {
     try {
@@ -262,6 +285,48 @@ export default function Cursos() {
     }
   };
 
+  const handleCargarSolicitud = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user?.role !== 'admin') return;
+    
+    setSubmitting(true);
+    try {
+      const solicitante = solicitantes.find(s => s.id === solicitanteId);
+      if (!solicitante) throw new Error('Solicitante no encontrado');
+
+      const selectedProg = programas.find(p => p.nombre === programa);
+      const cursoFacultad = selectedProg?.facultad || 'General';
+
+      const { error } = await supabase
+        .from('solicitudes_cursos')
+        .insert([{
+          nombre,
+          solicitado_por: solicitante.name,
+          email: solicitante.email,
+          telefono: solicitante.telefono || '',
+          programa: programa || 'General',
+          facultad: cursoFacultad,
+          tipo_solicitud: tipoSolicitud,
+          estado: 'Solicitud Recibida'
+        }]);
+
+      if (error) throw error;
+
+      setShowSolicitudModal(false);
+      setNombre('');
+      setSolicitanteId('');
+      setPrograma('');
+      setTipoSolicitud('Creación Completa');
+      fetchCursos();
+      alert('Solicitud cargada correctamente');
+    } catch (err) {
+      console.error('Error loading request:', err);
+      alert('Error al cargar la solicitud');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const canCreate = user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador';
 
   const handleSyncClickUp = async (cursoId: string, listId: string) => {
@@ -338,13 +403,24 @@ export default function Cursos() {
           </p>
         </div>
         {canCreate && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
-          </button>
+          <div className="flex space-x-3">
+            {user?.role === 'admin' && activeTab === 'solicitudes' && (
+              <button
+                onClick={() => setShowSolicitudModal(true)}
+                className="flex items-center px-4 py-2 bg-white text-primary border border-primary rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Cargar Solicitud
+              </button>
+            )}
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              {user?.role === 'admin' ? 'Cargar Curso' : 'Solicitar Curso'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -606,6 +682,102 @@ export default function Cursos() {
           </table>
         </div>
       </div>
+
+      {/* Modal Cargar Solicitud (Admin Only) */}
+      {showSolicitudModal && user?.role === 'admin' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowSolicitudModal(false)} />
+
+            <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-medium leading-6 text-text-main">
+                  Cargar Nueva Solicitud
+                </h3>
+                <button onClick={() => setShowSolicitudModal(false)} className="text-slate-400 hover:text-secondary">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCargarSolicitud} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-main">Nombre del Curso</label>
+                  <input
+                    type="text"
+                    required
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                    placeholder="Ej. Introducción a la Programación"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-main">Solicitado por</label>
+                  <select
+                    required
+                    value={solicitanteId}
+                    onChange={(e) => setSolicitanteId(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                  >
+                    <option value="">Seleccione un Coordinador o Decano</option>
+                    {solicitantes.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-main">Programa</label>
+                  <select
+                    required
+                    value={programa}
+                    onChange={(e) => setPrograma(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                  >
+                    <option value="">Seleccione un programa</option>
+                    {programas.map((p) => (
+                      <option key={p.id} value={p.nombre}>{p.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-main">Tipo de Solicitud</label>
+                  <select
+                    required
+                    value={tipoSolicitud}
+                    onChange={(e) => setTipoSolicitud(e.target.value as any)}
+                    className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                  >
+                    <option value="Creación Completa">Creación Completa</option>
+                    <option value="Actualización">Actualización</option>
+                    <option value="Visita MEN">Visita MEN</option>
+                  </select>
+                </div>
+
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowSolicitudModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-text-main bg-white border border-muted rounded-lg hover:bg-background"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-lg hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Cargar Solicitud
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
