@@ -21,6 +21,7 @@ import {
   endOfDay
 } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { TareaTimerItem } from '../components/TareaTimerItem';
 
 export default function Calendario({ cursoId }: { cursoId?: string }) {
   const { user } = useAuth();
@@ -97,8 +98,11 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             fecha_inicio: row.fecha_inicio, // If it exists in the future
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
+            descripcion: row.descripcion || '',
             curso: row.curso,
             proyecto: row.proyecto,
+            tiempo_invertido: row.tiempo_invertido || 0,
+            rol_destino: row.rol_destino || '',
             isNotificacion: true
           });
         }
@@ -431,6 +435,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             <p className="text-sm text-secondary italic">No hay tareas en esta sección</p>
           ) : (
             events.map((event, idx) => {
+              if (event.isNotificacion) {
+                return (
+                  <TareaTimerItem 
+                    key={event.id || idx} 
+                    tarea={event} 
+                    onUpdate={fetchEntregas} 
+                  />
+                );
+              }
+
               const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
               return (
                 <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
