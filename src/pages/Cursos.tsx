@@ -247,6 +247,7 @@ export default function Cursos() {
   };
 
   const handleUpdateEstadoSolicitud = async (id: string, nuevoEstado: string) => {
+    if (user?.role !== 'admin') return;
     try {
       const { error } = await supabase
         .from('solicitudes_cursos')
@@ -375,40 +376,42 @@ export default function Cursos() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
-        <div className="flex-1">
-          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
-            Filtrar por Programa
-          </label>
-          <select
-            id="filtroPrograma"
-            value={filtroPrograma}
-            onChange={(e) => setFiltroPrograma(e.target.value)}
-            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-          >
-            <option value="">Todos los programas</option>
-            {programasUnicos.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+      {activeTab !== 'solicitudes' && (
+        <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
+          <div className="flex-1">
+            <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
+              Filtrar por Programa
+            </label>
+            <select
+              id="filtroPrograma"
+              value={filtroPrograma}
+              onChange={(e) => setFiltroPrograma(e.target.value)}
+              className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+            >
+              <option value="">Todos los programas</option>
+              {programasUnicos.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label htmlFor="filtroSemestre" className="block text-sm font-medium text-text-main mb-1">
+              Filtrar por Semestre
+            </label>
+            <select
+              id="filtroSemestre"
+              value={filtroSemestre}
+              onChange={(e) => setFiltroSemestre(e.target.value)}
+              className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+            >
+              <option value="">Todos los semestres</option>
+              {semestresUnicos.map(s => (
+                <option key={s} value={s}>Semestre {s}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="flex-1">
-          <label htmlFor="filtroSemestre" className="block text-sm font-medium text-text-main mb-1">
-            Filtrar por Semestre
-          </label>
-          <select
-            id="filtroSemestre"
-            value={filtroSemestre}
-            onChange={(e) => setFiltroSemestre(e.target.value)}
-            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-          >
-            <option value="">Todos los semestres</option>
-            {semestresUnicos.map(s => (
-              <option key={s} value={s}>Semestre {s}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
       {/* Table */}
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
@@ -494,7 +497,7 @@ export default function Cursos() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              {isTeamOrAdmin ? (
+                              {user?.role === 'admin' ? (
                                 <select
                                   value={curso.estado || 'Solicitud Recibida'}
                                   onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
