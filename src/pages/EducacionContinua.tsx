@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TareaTimerItem } from '../components/TareaTimerItem';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function EducacionContinua() {
+  const { user } = useAuth();
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [tareas, setTareas] = useState<any[]>([]);
   const [selectedProyecto, setSelectedProyecto] = useState<string | null>(null);
@@ -150,27 +152,31 @@ export default function EducacionContinua() {
               Proyectos
             </h3>
             <p className="mt-1 text-xs text-secondary">
-              Agrega los proyectos que se trabajarán en Educación Continua.
+              {user?.role === 'admin' 
+                ? 'Agrega los proyectos que se trabajarán en Educación Continua.'
+                : 'Proyectos disponibles en Educación Continua.'}
             </p>
           </div>
-          <div className="p-4 border-b border-slate-100">
-            <form onSubmit={handleAddProyecto} className="flex gap-2">
-              <input
-                type="text"
-                value={newProyectoName}
-                onChange={(e) => setNewProyectoName(e.target.value)}
-                placeholder="Nombre del nuevo proyecto..."
-                className="flex-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border"
-              />
-              <button
-                type="submit"
-                disabled={!newProyectoName.trim() || submitting}
-                className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
-              >
-                {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
-              </button>
-            </form>
-          </div>
+          {user?.role === 'admin' && (
+            <div className="p-4 border-b border-slate-100">
+              <form onSubmit={handleAddProyecto} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newProyectoName}
+                  onChange={(e) => setNewProyectoName(e.target.value)}
+                  placeholder="Nombre del nuevo proyecto..."
+                  className="flex-1 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-muted rounded-md py-2 px-3 border"
+                />
+                <button
+                  type="submit"
+                  disabled={!newProyectoName.trim() || submitting}
+                  className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                </button>
+              </form>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto max-h-96 p-4">
             {loadingData ? (
               <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 text-slate-400 animate-spin" /></div>
