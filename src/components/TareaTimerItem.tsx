@@ -57,20 +57,24 @@ export const TareaTimerItem = ({ tarea, onUpdate }: { tarea: any, onUpdate: () =
     if (totalSeconds === 0) return;
     try {
       setSaving(true);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('notificaciones_tareas')
         .update({ 
           estado: 'Completada', 
           fecha_completada: new Date().toISOString(),
           tiempo_invertido: totalSeconds
         })
-        .eq('id', tarea.id);
+        .eq('id', tarea.id)
+        .select();
       
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("No se pudo actualizar. Es probable que falten permisos de UPDATE en la base de datos.");
+      }
       onUpdate();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error completing task:', err);
-      alert('Error al completar la tarea');
+      alert(`Error al completar la tarea: ${err.message || JSON.stringify(err)}`);
     } finally {
       setSaving(false);
     }

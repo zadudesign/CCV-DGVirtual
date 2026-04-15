@@ -435,7 +435,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             <p className="text-sm text-secondary italic">No hay tareas en esta sección</p>
           ) : (
             events.map((event, idx) => {
-              if (event.isNotificacion) {
+              if (event.isNotificacion && event.proyecto) {
                 return (
                   <TareaTimerItem 
                     key={event.id || idx} 
