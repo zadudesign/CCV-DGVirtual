@@ -416,17 +416,16 @@ export default function Cursos() {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso</th>
                 {activeTab === 'solicitudes' ? (
                   <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso / Tipo</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa / Facultad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Solicitado Por</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Contacto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Solicitante / Contacto</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                   </>
                 ) : (
                   <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Semestre</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Equipo</th>
@@ -442,14 +441,14 @@ export default function Cursos() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={activeTab === 'solicitudes' ? 7 : 6} className="px-6 py-4 text-center">
+                  <td colSpan={activeTab === 'solicitudes' ? (isTeamOrAdmin ? 5 : 4) : 6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : (
                 cursosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab === 'solicitudes' ? 7 : 6} className="px-6 py-4 text-center text-sm text-secondary">
+                    <td colSpan={activeTab === 'solicitudes' ? (isTeamOrAdmin ? 5 : 4) : 6} className="px-6 py-4 text-center text-sm text-secondary">
                       No hay solicitudes o cursos registrados.
                     </td>
                   </tr>
@@ -458,9 +457,16 @@ export default function Cursos() {
                     <tr key={curso.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       {activeTab === 'solicitudes' ? (
-                        <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium">
-                          <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
-                          {curso.nombre}
+                        <div className="flex flex-col">
+                          <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium w-fit">
+                            <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
+                            {curso.nombre}
+                          </div>
+                          <div className="mt-1.5">
+                            <span className="px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                              {curso.tipo_solicitud}
+                            </span>
+                          </div>
                         </div>
                       ) : (
                         <Link 
@@ -491,17 +497,12 @@ export default function Cursos() {
                           <div className="text-sm text-text-main font-medium">{curso.programa}</div>
                           <div className="text-xs text-secondary">{curso.facultad}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-main">
-                          {curso.solicitado_por || 'N/A'}
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-text-main">{curso.email || '-'}</div>
-                          <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2.5 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                            {curso.tipo_solicitud}
-                          </span>
+                          <div className="text-sm text-text-main font-medium">{curso.solicitado_por || 'N/A'}</div>
+                          <div className="flex flex-col mt-0.5">
+                            <div className="text-xs text-secondary">{curso.email || '-'}</div>
+                            <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {isTeamOrAdmin ? (
