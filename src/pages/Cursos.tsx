@@ -22,7 +22,6 @@ export default function Cursos() {
   const [evaluadorId, setEvaluadorId] = useState('');
   const [tipoSolicitud, setTipoSolicitud] = useState<'Creación Completa' | 'Actualización' | 'Visita MEN'>('Creación Completa');
   const [semestre, setSemestre] = useState<number>(1);
-  const [fechaInicio, setFechaInicio] = useState('');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
   const [clickupDisenoUrl, setClickupDisenoUrl] = useState('');
   const [clickupSoporteUrl, setClickupSoporteUrl] = useState('');
@@ -181,7 +180,6 @@ export default function Cursos() {
           progreso_general: 0,
           tipo_solicitud: tipoSolicitud,
           semestre: Number(semestre),
-          fecha_inicio: fechaInicio,
           tipo_contrato: tipoContrato,
           clickup_diseno_url: clickupDisenoUrl || null,
           clickup_soporte_url: clickupSoporteUrl || null,
@@ -199,7 +197,6 @@ export default function Cursos() {
       setEvaluadorId('');
       setTipoSolicitud('Creación Completa');
       setSemestre(1);
-      setFechaInicio('');
       setTipoContrato('Carga Académica - 5 Horas Semanales');
       setClickupDisenoUrl('');
       setClickupSoporteUrl('');
@@ -538,17 +535,6 @@ export default function Cursos() {
                         <option key={d.id} value={d.id}>{d.name || d.email}</option>
                       ))}
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-main">Fecha de Inicio</label>
-                    <input
-                      type="date"
-                      required
-                      value={fechaInicio}
-                      onChange={(e) => setFechaInicio(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                    />
                   </div>
 
                   <div>
