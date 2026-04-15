@@ -66,22 +66,10 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       
       let notificacionesQuery = supabase
         .from('notificaciones_tareas')
-        .select('*, curso:cursos!inner(nombre, facultad, programa)');
+        .select('*, curso:cursos(nombre, facultad, programa)');
 
       if (cursoId) {
         notificacionesQuery = notificacionesQuery.eq('curso_id', cursoId);
-      } else if (user?.role !== 'admin') {
-        if (user?.role === 'decano' && user.facultad) {
-          notificacionesQuery = notificacionesQuery.eq('curso.facultad', user.facultad);
-        } else if (user?.role === 'coordinador' && user.programa) {
-          notificacionesQuery = notificacionesQuery.eq('curso.programa', user.programa);
-        } else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
-          const area = user?.team_area || user?.role;
-          notificacionesQuery = notificacionesQuery.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
-        } else {
-          // Docentes y Evaluadores ven sus tareas asignadas
-          notificacionesQuery = notificacionesQuery.eq('usuario_id', user?.id);
-        }
       }
 
       const { data: notificacionesData, error: notificacionesError } = await notificacionesQuery;
@@ -90,9 +78,28 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         throw notificacionesError;
       }
       
+      let filteredData = notificacionesData || [];
+
+      // Manual filtering for non-admins to handle complex role-based access
+      if (!cursoId && user?.role !== 'admin') {
+        const area = user?.team_area || user?.role;
+        filteredData = filteredData.filter(row => {
+          // 1. Assigned directly to user or their role/area
+          if (row.usuario_id === user?.id || row.rol_destino === area) return true;
+          
+          // 2. Course-related tasks for Decanos/Coordinadores
+          if (row.curso) {
+            if (user?.role === 'decano' && row.curso.facultad === user.facultad) return true;
+            if (user?.role === 'coordinador' && row.curso.programa === user.programa) return true;
+          }
+          
+          return false;
+        });
+      }
+      
       const events: any[] = [];
       
-      (notificacionesData || []).forEach((row: any) => {
+      filteredData.forEach((row: any) => {
         if (row.fecha_vencimiento) {
           events.push({
             id: row.id,

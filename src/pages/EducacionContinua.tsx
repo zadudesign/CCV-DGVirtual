@@ -54,11 +54,17 @@ export default function EducacionContinua() {
   const fetchTareas = async (proyectoNombre: string) => {
     try {
       setLoadingTareas(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('notificaciones_tareas')
         .select('*')
-        .eq('proyecto', proyectoNombre)
-        .order('fecha_vencimiento', { ascending: true });
+        .eq('proyecto', proyectoNombre);
+
+      if (user?.role !== 'admin') {
+        const area = user?.team_area || user?.role;
+        query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
+      }
+
+      const { data, error } = await query.order('fecha_vencimiento', { ascending: true });
 
       if (error) {
         if (error.code !== '42P01') throw error;
