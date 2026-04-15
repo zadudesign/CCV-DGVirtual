@@ -99,6 +99,13 @@ export default function EducacionContinua() {
     }
   };
 
+  const totalProjectSeconds = tareas.reduce((acc, tarea) => acc + (tarea.tiempo_invertido || 0), 0);
+  const formatTotalTime = (totalSecs: number) => {
+    const h = Math.floor(totalSecs / 3600);
+    const m = Math.floor((totalSecs % 3600) / 60);
+    return `${h}h ${m}m`;
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
@@ -195,14 +202,25 @@ export default function EducacionContinua() {
 
         {/* Panel Tareas del Proyecto */}
         <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
-          <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
-            <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
-              <Calendar className="mr-2 h-5 w-5 text-primary" />
-              Tareas del Proyecto
-            </h3>
-            <p className="mt-1 text-xs text-secondary">
-              {selectedProyecto ? `Tareas asignadas a: ${selectedProyecto}` : 'Selecciona un proyecto para ver sus tareas.'}
-            </p>
+          <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100 flex justify-between items-start">
+            <div>
+              <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
+                <Calendar className="mr-2 h-5 w-5 text-primary" />
+                Tareas del Proyecto
+              </h3>
+              <p className="mt-1 text-xs text-secondary">
+                {selectedProyecto ? `Tareas asignadas a: ${selectedProyecto}` : 'Selecciona un proyecto para ver sus tareas.'}
+              </p>
+            </div>
+            {selectedProyecto && tareas.length > 0 && (
+              <div className="bg-white px-3 py-1.5 rounded-lg border border-muted/50 shadow-sm flex flex-col items-end">
+                <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Tiempo Total</span>
+                <span className="text-sm font-mono font-bold text-primary flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {formatTotalTime(totalProjectSeconds)}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto max-h-[500px] p-4 bg-slate-50/50">
             {!selectedProyecto ? (

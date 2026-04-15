@@ -216,6 +216,33 @@ export default function Cursos() {
   const semestresUnicos = Array.from(new Set(cursos.map(c => c.semestre?.toString()).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
   const programasUnicos = Array.from(new Set(cursos.map(c => c.programa).filter(Boolean))).sort();
 
+  const getProgramaColor = (programaName: string | undefined | null) => {
+    if (!programaName || programaName === 'General') return 'bg-slate-100 text-slate-800';
+    
+    const colors = [
+      'bg-blue-100 text-blue-800',
+      'bg-purple-100 text-purple-800',
+      'bg-pink-100 text-pink-800',
+      'bg-indigo-100 text-indigo-800',
+      'bg-teal-100 text-teal-800',
+      'bg-emerald-100 text-emerald-800',
+      'bg-cyan-100 text-cyan-800',
+      'bg-orange-100 text-orange-800',
+      'bg-rose-100 text-rose-800',
+      'bg-fuchsia-100 text-fuchsia-800',
+      'bg-violet-100 text-violet-800',
+      'bg-sky-100 text-sky-800'
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < programaName.length; i++) {
+      hash = programaName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  };
+
   const cursosFiltrados = cursos.filter(curso => {
     const matchSemestre = filtroSemestre ? curso.semestre?.toString() === filtroSemestre : true;
     const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
@@ -287,7 +314,7 @@ export default function Cursos() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Semestre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Docente</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Equipo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Progreso</th>
               </tr>
@@ -330,15 +357,27 @@ export default function Cursos() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                      {curso.programa}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getProgramaColor(curso.programa)}`}>
+                        {curso.programa || 'General'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-text-main">{curso.docente?.name || 'Sin asignar'}</div>
-                      <div className="text-xs text-secondary">{curso.docente?.email}</div>
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Docente</div>
+                          <div className="text-sm text-text-main leading-tight">{curso.docente?.name || 'Sin asignar'}</div>
+                        </div>
+                        {curso.evaluador && (
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Par Evaluador</div>
+                            <div className="text-sm text-text-main leading-tight">{curso.evaluador.name}</div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

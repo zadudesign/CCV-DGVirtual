@@ -106,46 +106,129 @@ export default function CursoDetalle() {
     { name: 'Documentación', value: curso.progreso_documentacion ?? 0, fill: '#00bfff' },
   ];
 
+  const getProgramaTheme = (programaName: string | undefined | null) => {
+    if (!programaName || programaName === 'General') {
+      return { 
+        bg: 'bg-slate-100', 
+        text: 'text-slate-900', 
+        textMuted: 'text-slate-600', 
+        badgeBg: 'bg-white', 
+        badgeText: 'text-slate-800', 
+        border: 'border-slate-200',
+        watermark: 'text-slate-900/5',
+        buttonBg: 'bg-white/60',
+        buttonHover: 'hover:bg-white/90',
+        buttonBorder: 'border-slate-200'
+      };
+    }
+    
+    const themes = [
+      { bg: 'bg-blue-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-blue-100', badgeText: 'text-blue-800', border: 'border-blue-200', watermark: 'text-blue-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-blue-200' },
+      { bg: 'bg-purple-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-purple-100', badgeText: 'text-purple-800', border: 'border-purple-200', watermark: 'text-purple-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-purple-200' },
+      { bg: 'bg-pink-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-pink-100', badgeText: 'text-pink-800', border: 'border-pink-200', watermark: 'text-pink-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-pink-200' },
+      { bg: 'bg-indigo-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-indigo-100', badgeText: 'text-indigo-800', border: 'border-indigo-200', watermark: 'text-indigo-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-indigo-200' },
+      { bg: 'bg-teal-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-teal-100', badgeText: 'text-teal-800', border: 'border-teal-200', watermark: 'text-teal-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-teal-200' },
+      { bg: 'bg-emerald-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-800', border: 'border-emerald-200', watermark: 'text-emerald-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-emerald-200' },
+      { bg: 'bg-cyan-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-cyan-100', badgeText: 'text-cyan-800', border: 'border-cyan-200', watermark: 'text-cyan-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-cyan-200' },
+      { bg: 'bg-orange-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-orange-100', badgeText: 'text-orange-800', border: 'border-orange-200', watermark: 'text-orange-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-orange-200' },
+      { bg: 'bg-rose-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-rose-100', badgeText: 'text-rose-800', border: 'border-rose-200', watermark: 'text-rose-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-rose-200' },
+      { bg: 'bg-fuchsia-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-fuchsia-100', badgeText: 'text-fuchsia-800', border: 'border-fuchsia-200', watermark: 'text-fuchsia-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-fuchsia-200' },
+      { bg: 'bg-violet-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-violet-100', badgeText: 'text-violet-800', border: 'border-violet-200', watermark: 'text-violet-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-violet-200' },
+      { bg: 'bg-sky-50', text: 'text-slate-900', textMuted: 'text-slate-600', badgeBg: 'bg-sky-100', badgeText: 'text-sky-800', border: 'border-sky-200', watermark: 'text-sky-900/5', buttonBg: 'bg-white/60', buttonHover: 'hover:bg-white/90', buttonBorder: 'border-sky-200' }
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < programaName.length; i++) {
+      hash = programaName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const index = Math.abs(hash) % themes.length;
+    return themes[index];
+  };
+
+  const theme = getProgramaTheme(curso.programa);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <button 
-          onClick={() => navigate('/cursos')}
-          className="p-2 rounded-full hover:bg-slate-200 text-secondary transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-text-main flex items-center">
-              <DynamicIcon name={curso.icon} className="h-6 w-6 mr-3 text-primary" />
-              {curso.nombre}
-            </h1>
-            <button
-              onClick={handleCopyId}
-              className="flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-secondary rounded hover:bg-slate-200 transition-colors"
-              title="Copiar ID de Supabase para Make"
+      <div className={`relative rounded-xl shadow-sm overflow-hidden border ${theme.border} ${theme.bg}`}>
+        {/* Background Watermark Icon */}
+        <div className="absolute -right-12 -bottom-16 pointer-events-none select-none">
+          <DynamicIcon name={curso.icon} className={`w-80 h-80 ${theme.watermark}`} />
+        </div>
+
+        <div className="relative z-10 p-6 sm:p-8">
+          <div className="flex items-start space-x-4">
+            <button 
+              onClick={() => navigate('/cursos')}
+              className={`mt-1 p-2 rounded-full ${theme.buttonBg} ${theme.buttonHover} ${theme.textMuted} transition-colors shrink-0`}
             >
-              {copiedId ? <Check className="h-3 w-3 mr-1 text-green-600" /> : <Copy className="h-3 w-3 mr-1" />}
-              {copiedId ? 'Copiado' : 'Copiar ID'}
+              <ArrowLeft className="h-5 w-5" />
             </button>
-            {getClickupUrlForRole(curso, user?.role) && (
-              <a 
-                href={getClickupUrlForRole(curso, user?.role)} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
-                title="Abrir Tablero en ClickUp"
-              >
-                <LayoutDashboard className="h-3 w-3 mr-1" />
-                Abrir en ClickUp
-              </a>
-            )}
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <h1 className={`text-2xl sm:text-4xl font-bold ${theme.text} leading-tight tracking-tight`}>
+                      {curso.nombre}
+                    </h1>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
+                        {curso.programa || 'General'}
+                      </span>
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        curso.estado === 'Publicado' ? 'bg-green-100 text-green-800 border-green-200' :
+                        curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                        curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        'bg-slate-100 text-slate-800 border-slate-200'
+                      } border`}>
+                        {curso.estado}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleCopyId}
+                    className={`flex items-center px-3 py-1.5 text-sm font-medium ${theme.buttonBg} ${theme.text} border ${theme.buttonBorder} rounded-lg ${theme.buttonHover} transition-colors backdrop-blur-sm`}
+                    title="Copiar ID de Supabase para Make"
+                  >
+                    {copiedId ? <Check className="h-4 w-4 mr-1.5 text-green-600" /> : <Copy className="h-4 w-4 mr-1.5" />}
+                    {copiedId ? 'Copiado' : 'Copiar ID'}
+                  </button>
+                  {getClickupUrlForRole(curso, user?.role) && (
+                    <a 
+                      href={getClickupUrlForRole(curso, user?.role)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={`flex items-center px-3 py-1.5 text-sm font-medium ${theme.buttonBg} ${theme.text} border ${theme.buttonBorder} rounded-lg ${theme.buttonHover} transition-colors backdrop-blur-sm`}
+                      title="Abrir Tablero en ClickUp"
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-1.5" />
+                      Abrir en ClickUp
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Ficha Técnica */}
+              <div className={`mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t ${theme.border}`}>
+                <div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Docente</div>
+                  <div className={`text-sm font-medium ${theme.text}`}>{curso.docente?.name || 'Sin asignar'}</div>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Par Evaluador</div>
+                  <div className={`text-sm font-medium ${theme.text}`}>{curso.evaluador?.name || 'Sin asignar'}</div>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Semestre</div>
+                  <div className={`text-sm font-medium ${theme.text}`}>{curso.semestre ? `Semestre ${curso.semestre}` : 'No definido'}</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-secondary mt-1">
-            {curso.programa} • Docente: {curso.docente?.name || 'No asignado'}
-          </p>
         </div>
       </div>
 
