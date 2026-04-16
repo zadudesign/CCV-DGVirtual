@@ -193,6 +193,14 @@ export default function CursoDetalle() {
                       <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
                         {curso.programa || 'General'}
                       </span>
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
+                        Semestre {curso.semestre}
+                      </span>
+                      {curso.periodo && (
+                        <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
+                          {curso.periodo}
+                        </span>
+                      )}
                       <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
                         curso.estado === 'Publicado' ? 'bg-green-100 text-green-800 border-green-200' :
                         curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800 border-amber-200' :

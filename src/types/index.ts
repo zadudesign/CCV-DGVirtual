@@ -76,6 +76,7 @@ export interface Curso {
   progreso_soporte?: number;
   tipo_solicitud: 'Creación Completa' | 'Actualización' | 'Visita MEN';
   semestre: number;
+  periodo?: string;
   fecha_inicio: string;
   tipo_contrato: 'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses';
   created_at: string;

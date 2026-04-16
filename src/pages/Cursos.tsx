@@ -32,6 +32,7 @@ export default function Cursos() {
   const [evaluadorId, setEvaluadorId] = useState('');
   const [tipoSolicitud, setTipoSolicitud] = useState<'Creación Completa' | 'Actualización' | 'Visita MEN'>('Creación Completa');
   const [semestre, setSemestre] = useState<number>(1);
+  const [periodo, setPeriodo] = useState<string>('2026-I');
   const [tipoContrato, setTipoContrato] = useState<'Carga Académica - 5 Horas Semanales' | 'Prestación de Servicios - 1 o 2 Meses'>('Carga Académica - 5 Horas Semanales');
   const [clickupDisenoUrl, setClickupDisenoUrl] = useState('');
   const [clickupSoporteUrl, setClickupSoporteUrl] = useState('');
@@ -215,6 +216,7 @@ export default function Cursos() {
           progreso_general: 0,
           tipo_solicitud: tipoSolicitud,
           semestre: Number(semestre),
+          periodo: periodo,
           tipo_contrato: tipoContrato,
           clickup_diseno_url: clickupDisenoUrl || null,
           clickup_soporte_url: clickupSoporteUrl || null,
@@ -233,6 +235,7 @@ export default function Cursos() {
       setEvaluadorId('');
       setTipoSolicitud('Creación Completa');
       setSemestre(1);
+      setPeriodo('2026-I');
       setTipoContrato('Carga Académica - 5 Horas Semanales');
       setClickupDisenoUrl('');
       setClickupSoporteUrl('');
@@ -628,7 +631,8 @@ export default function Cursos() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                        {curso.semestre ? `Semestre ${curso.semestre}` : '-'}
+                        <div>{curso.semestre ? `Semestre ${curso.semestre}` : '-'}</div>
+                        {curso.periodo && <div className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">{curso.periodo}</div>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-2">
@@ -837,6 +841,23 @@ export default function Cursos() {
                       onChange={(e) => setSemestre(parseInt(e.target.value))}
                       className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main">Periodo Académico</label>
+                    <select
+                      required
+                      value={periodo}
+                      onChange={(e) => setPeriodo(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                    >
+                      <option value="2026-I">2026-I</option>
+                      <option value="2026-II">2026-II</option>
+                      <option value="2027-I">2027-I</option>
+                      <option value="2027-II">2027-II</option>
+                      <option value="2028-I">2028-I</option>
+                      <option value="2028-II">2028-II</option>
+                    </select>
                   </div>
 
                   {user?.role !== 'coordinador' && (
