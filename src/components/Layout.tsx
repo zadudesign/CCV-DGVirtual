@@ -27,6 +27,7 @@ export default function Layout() {
   const location = useLocation();
   const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
   const [solicitudesCount, setSolicitudesCount] = useState(0);
+  const [activeCoursesCount, setActiveCoursesCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -34,6 +35,7 @@ export default function Layout() {
     if (user) {
       fetchTasks();
       fetchSolicitudesCount();
+      fetchActiveCoursesCount();
       
       // Subscribe to task changes
       const taskSubscription = supabase
@@ -59,9 +61,22 @@ export default function Layout() {
         })
         .subscribe();
 
+      // Subscribe to active courses changes
+      const coursesSubscription = supabase
+        .channel('cursos_cambios')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'cursos'
+        }, () => {
+          fetchActiveCoursesCount();
+        })
+        .subscribe();
+
       return () => {
         taskSubscription.unsubscribe();
         solicitudesSubscription.unsubscribe();
+        coursesSubscription.unsubscribe();
       };
     }
   }, [user]);
@@ -77,6 +92,19 @@ export default function Layout() {
       setSolicitudesCount(count || 0);
     } catch (error) {
       console.error('Error fetching solicitudes count:', error);
+    }
+  };
+
+  const fetchActiveCoursesCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('cursos')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      setActiveCoursesCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching active courses count:', error);
     }
   };
 
@@ -293,12 +321,20 @@ export default function Layout() {
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
-            {/* Solicitudes Cursos Stats */}
+            {/* Cursos Stats */}
             <div className="hidden lg:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
-              <span className="text-[10px] font-bold text-text-main uppercase tracking-widest mr-1">Solicitudes Cursos:</span>
-              <div className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200" title="Solicitudes Recibidas">
-                <BookOpen className="w-4 h-4" />
-                <span className="text-sm font-bold">{solicitudesCount}</span>
+              <span className="text-[10px] font-bold text-text-main uppercase tracking-widest mr-1">Cursos:</span>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200" title="Solicitudes Recibidas">
+                  <BookOpen className="w-4 h-4" />
+                  <span className="text-[11px] font-medium mr-1">Solicitudes:</span>
+                  <span className="text-sm font-bold">{solicitudesCount}</span>
+                </div>
+                <div className="flex items-center space-x-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md border border-indigo-200" title="Cursos Activos">
+                  <GraduationCap className="w-4 h-4" />
+                  <span className="text-[11px] font-medium mr-1">Activos:</span>
+                  <span className="text-sm font-bold">{activeCoursesCount}</span>
+                </div>
               </div>
             </div>
 
