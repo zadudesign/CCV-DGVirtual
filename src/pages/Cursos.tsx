@@ -503,10 +503,10 @@ export default function Cursos() {
               <tr>
                 {activeTab === 'solicitudes' ? (
                   <>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso / Tipo</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Programa / Facultad</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Solicitante / Contacto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                   </>
                 ) : (
                   <>
@@ -555,6 +555,32 @@ export default function Cursos() {
                         {solicitudesEnEstado.map((curso) => (
                           <tr key={curso.id} className="hover:bg-background">
                             <td className="px-6 py-4 whitespace-nowrap">
+                              {user?.role === 'admin' ? (
+                                <select
+                                  value={curso.estado || 'Solicitud Recibida'}
+                                  onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
+                                  className={`text-[10px] font-bold uppercase tracking-wider border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none py-1.5 px-3 transition-all shadow-sm ${
+                                    curso.estado === 'Solicitud Recibida' ? 'bg-slate-50 border-slate-200 text-slate-700' :
+                                    curso.estado === 'Pendiente de Aprobación' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                    curso.estado === 'Información Incompleta' ? 'bg-red-50 border-red-200 text-red-700' :
+                                    curso.estado === 'Orden de Trabajo' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                    curso.estado === 'Actas de Responsabilidad' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' :
+                                    curso.estado === 'En Preparación' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                                    curso.estado === 'En Construcción' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                                    'bg-slate-50 border-slate-200 text-slate-700'
+                                  }`}
+                                >
+                                  {ESTADOS_SOLICITUD.map(estado => (
+                                    <option key={estado} value={estado} className="bg-white text-text-main normal-case font-normal">{estado}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
+                                  {curso.estado || 'Solicitud Recibida'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
                                 <div className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-sm font-medium w-fit">
                                   <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
@@ -577,23 +603,6 @@ export default function Cursos() {
                                 <div className="text-xs text-secondary">{curso.email || '-'}</div>
                                 <div className="text-xs text-secondary">{curso.telefono || '-'}</div>
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {user?.role === 'admin' ? (
-                                <select
-                                  value={curso.estado || 'Solicitud Recibida'}
-                                  onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
-                                  className="text-xs border-muted rounded-md focus:ring-primary focus:border-primary bg-background py-1 px-2"
-                                >
-                                  {ESTADOS_SOLICITUD.map(estado => (
-                                    <option key={estado} value={estado}>{estado}</option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
-                                  {curso.estado || 'Solicitud Recibida'}
-                                </span>
-                              )}
                             </td>
                           </tr>
                         ))}
