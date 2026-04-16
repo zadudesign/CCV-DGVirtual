@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users as UsersIcon, Loader2 } from 'lucide-react';
+import { Users as UsersIcon, Loader2, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
@@ -13,6 +13,23 @@ export default function Usuarios() {
   const [filtroFacultad, setFiltroFacultad] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
   const [filtroRol, setFiltroRol] = useState<string>('');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof User | 'last_access', direction: 'asc' | 'desc' }>({ 
+    key: 'last_access', 
+    direction: 'desc' 
+  });
+
+  const handleSort = (key: keyof User | 'last_access') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: string) => {
+    if (sortConfig.key !== key) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
+    return sortConfig.direction === 'asc' ? <ChevronUp className="ml-1 h-3 w-3 text-primary" /> : <ChevronDown className="ml-1 h-3 w-3 text-primary" />;
+  };
 
   const getDiasDesdeUltimoAcceso = (fechaStr?: string) => {
     if (!fechaStr) return null;
@@ -83,12 +100,22 @@ export default function Usuarios() {
   const programasUnicos = Array.from(new Set(usuarios.map(u => u.programa).filter(Boolean))).sort() as string[];
   const rolesUnicos = Array.from(new Set(usuarios.map(u => u.role).filter(Boolean))).sort() as string[];
   
-  const usuariosFiltrados = usuarios.filter(u => {
-    const matchFacultad = filtroFacultad ? u.facultad === filtroFacultad : true;
-    const matchPrograma = filtroPrograma ? u.programa === filtroPrograma : true;
-    const matchRol = filtroRol ? u.role === filtroRol : true;
-    return matchFacultad && matchPrograma && matchRol;
-  });
+  const usuariosFiltrados = usuarios
+    .filter(u => {
+      const matchFacultad = filtroFacultad ? u.facultad === filtroFacultad : true;
+      const matchPrograma = filtroPrograma ? u.programa === filtroPrograma : true;
+      const matchRol = filtroRol ? u.role === filtroRol : true;
+      return matchFacultad && matchPrograma && matchRol;
+    })
+    .sort((a, b) => {
+      const key = sortConfig.key;
+      const valA = a[key as keyof User] || '';
+      const valB = b[key as keyof User] || '';
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -172,26 +199,36 @@ export default function Usuarios() {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-background">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                  Usuario
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">
+                    Perfil y Contacto
+                    {getSortIcon('name')}
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => handleSort('role')}
+                >
+                  <div className="flex items-center">
+                    Rol y Ubicación
+                    {getSortIcon('role')}
+                  </div>
                 </th>
                 {isAdmin && (
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                    Documento
-                  </th>
-                )}
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                  Rol
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                  Facultad / Área
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                  Contacto
-                </th>
-                {isAdmin && (
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                    Último Acceso
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => handleSort('last_access')}
+                  >
+                    <div className="flex items-center">
+                      Actividad
+                      {getSortIcon('last_access')}
+                    </div>
                   </th>
                 )}
               </tr>
@@ -199,92 +236,100 @@ export default function Usuarios() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-secondary">
+                  <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-secondary">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : usuariosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 5 : 4} className="px-6 py-4 text-center text-sm text-secondary">
+                  <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-secondary">
                     No hay usuarios registrados que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
               ) : (
                 usuariosFiltrados.map((user) => (
-                  <tr key={user.id} className="hover:bg-background">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-hover font-bold overflow-hidden">
+                  <tr key={user.id} className="hover:bg-background group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-start">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary-hover font-bold overflow-hidden mt-1">
                           {user.photoURL ? (
                             <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
                           ) : (
                             user.name?.charAt(0) || user.email?.charAt(0) || '?'
                           )}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-text-main">{user.name || 'Sin nombre'}</div>
-                          <div className="text-sm text-secondary">{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    {isAdmin && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                        {user.documento || '-'}
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                        user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
-                        user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
-                        user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
-                        ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? 'bg-orange-100 text-orange-800' :
-                        'bg-slate-100 text-text-main'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                      {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? (
-                        <div className="text-text-main font-medium">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
-                      ) : user.facultad ? (
-                        <>
-                          <div className="text-text-main">{user.facultad}</div>
-                          {user.programa && <div className="text-xs text-secondary">{user.programa}</div>}
-                          
-                          {/* Mostrar curso asignado para docentes y evaluadores */}
-                          {(user.role === 'docente' || user.role === 'evaluador') && (
-                            <div className="mt-2">
-                              {cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).length > 0 ? (
-                                cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).map(curso => (
-                                  <div key={curso.id} className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded inline-block mt-1 mr-1">
-                                    {curso.nombre} {curso.docente_id === user.id ? '(Docente)' : '(Evaluador)'}
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="text-xs text-slate-400 italic mt-1">Sin curso asignado</div>
+                        <div className="ml-4 space-y-0.5">
+                          <div className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">{user.name || 'Sin nombre'}</div>
+                          <div className="text-xs text-secondary leading-none">{user.email}</div>
+                          {isAdmin && (
+                            <div className="flex items-center gap-3 pt-1">
+                              {user.documento && (
+                                <div className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
+                                  DOC: {user.documento}
+                                </div>
+                              )}
+                              {user.telefono && (
+                                <div className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
+                                  TEL: {user.telefono}
+                                </div>
                               )}
                             </div>
                           )}
-                        </>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
-                      {user.telefono || '-'}
+                    <td className="px-6 py-4">
+                      <div className="space-y-2">
+                        <span className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-widest rounded-full ${
+                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                          user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
+                          user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
+                          user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
+                          user.role === 'Soporte' ? 'bg-orange-100 text-orange-800' :
+                          user.role === 'Multimedia' ? 'bg-indigo-100 text-indigo-800' :
+                          user.role === 'Diseño' ? 'bg-pink-100 text-pink-800' :
+                          user.role === 'Pedagogía' ? 'bg-cyan-100 text-cyan-800' :
+                          'bg-slate-100 text-text-main'
+                        }`}>
+                          {user.role}
+                        </span>
+                        
+                        <div className="text-xs leading-tight">
+                          {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? (
+                            <div className="text-secondary italic">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
+                          ) : user.facultad ? (
+                            <div>
+                              <div className="text-text-main font-semibold truncate max-w-[200px]" title={user.facultad}>{user.facultad}</div>
+                              {user.programa && <div className="text-secondary truncate max-w-[180px]" title={user.programa}>{user.programa}</div>}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic">No asignado</span>
+                          )}
+                        </div>
+
+                        {/* Cursos asignados en miniatura */}
+                        {(user.role === 'docente' || user.role === 'evaluador') && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).map(curso => (
+                              <div key={curso.id} className="text-[9px] font-bold text-primary bg-primary/5 border border-primary/10 px-1.5 py-0.5 rounded truncate max-w-[120px]">
+                                {curso.nombre}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     {isAdmin && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="text-secondary">{formatearFecha(user.last_access)}</div>
+                        <div className="text-xs font-medium text-text-main">{formatearFecha(user.last_access)}</div>
                         {user.last_access && (
-                           <div className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${
-                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 ? 'text-red-500' :
-                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 ? 'text-amber-500' :
-                             'text-green-600'
+                           <div className={`text-[10px] font-extrabold mt-1.5 uppercase tracking-tighter inline-block px-2 py-0.5 rounded-sm ${
+                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 ? 'bg-red-50 text-red-600 border border-red-100' :
+                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                             'bg-green-50 text-green-700 border border-green-100'
                            }`}>
                              {getDiasDesdeUltimoAcceso(user.last_access) === 0 
-                               ? 'Hoy' 
+                               ? '● Activo hoy' 
                                : `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`}
                            </div>
                         )}
