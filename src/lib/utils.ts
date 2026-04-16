@@ -19,6 +19,7 @@ export function getClickupUrlForRole(curso: Curso, role?: Role): string | undefi
     case 'Pedagogía':
       return curso.clickup_pedagogia_url || curso.clickup_url;
     case 'admin':
+      return curso.clickup_admin_url || curso.clickup_url;
     case 'coordinador':
     case 'decano':
     case 'team':

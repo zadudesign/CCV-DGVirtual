@@ -37,6 +37,7 @@ export default function Cursos() {
   const [clickupSoporteUrl, setClickupSoporteUrl] = useState('');
   const [clickupMultimediaUrl, setClickupMultimediaUrl] = useState('');
   const [clickupPedagogiaUrl, setClickupPedagogiaUrl] = useState('');
+  const [clickupAdminUrl, setClickupAdminUrl] = useState('');
   const [driveUrl, setDriveUrl] = useState('');
   const [icon, setIcon] = useState('BookOpen');
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -219,6 +220,7 @@ export default function Cursos() {
           clickup_soporte_url: clickupSoporteUrl || null,
           clickup_multimedia_url: clickupMultimediaUrl || null,
           clickup_pedagogia_url: clickupPedagogiaUrl || null,
+          clickup_admin_url: clickupAdminUrl || null,
           drive_url: driveUrl || null,
           icon: icon || 'BookOpen'
         }]);
@@ -236,6 +238,7 @@ export default function Cursos() {
       setClickupSoporteUrl('');
       setClickupMultimediaUrl('');
       setClickupPedagogiaUrl('');
+      setClickupAdminUrl('');
       setDriveUrl('');
       setIcon('BookOpen');
       fetchCursos();
@@ -937,6 +940,17 @@ export default function Cursos() {
                         type="url"
                         value={clickupPedagogiaUrl}
                         onChange={(e) => setClickupPedagogiaUrl(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                        placeholder="https://sharing.clickup.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-secondary">Admin</label>
+                      <input
+                        type="url"
+                        value={clickupAdminUrl}
+                        onChange={(e) => setClickupAdminUrl(e.target.value)}
                         className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                         placeholder="https://sharing.clickup.com/..."
                       />

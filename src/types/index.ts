@@ -84,6 +84,7 @@ export interface Curso {
   clickup_soporte_url?: string;
   clickup_multimedia_url?: string;
   clickup_pedagogia_url?: string;
+  clickup_admin_url?: string;
   clickup_list_id?: string;
   drive_url?: string;
   icon?: string;
