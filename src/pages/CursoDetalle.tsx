@@ -226,6 +226,23 @@ export default function CursoDetalle() {
                       Abrir en ClickUp
                     </a>
                   )}
+                  {curso.drive_url && (
+                    <a 
+                      href={curso.drive_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={`flex items-center px-3 py-1.5 text-sm font-medium bg-white text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95`}
+                      title="Abrir Carpeta en Google Drive"
+                    >
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.71 3.502L1.15 15l3.446 6.004L11.157 9.502H7.71z" fill="#0066DA"/>
+                        <path d="M16.29 3.502L9.73 15l3.447 6.004L19.737 9.502H16.29z" fill="#00AC47"/>
+                        <path d="M12 9.502l-3.447 6.004h13.894L19.001 9.502H12z" fill="#EA4335"/>
+                        <path d="M16.29 3.502H7.71L12 11l4.29-7.498z" fill="#FFBA00"/>
+                      </svg>
+                      Google Drive
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -308,32 +325,39 @@ export default function CursoDetalle() {
             <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
               Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
             </p>
-            {curso.drive_url ? (
-              <a 
-                href={curso.drive_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-3 bg-white border border-muted/30 text-text-main rounded-lg hover:bg-background hover:text-primary transition-colors shadow-sm font-medium"
-              >
-                <svg className="w-5 h-5 mr-3" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
-                  <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
-                  <path d="M43.65 25.25v26.7L20.5 65.3V38.6l23.15-13.35z" fill="#FFC107"/>
-                  <path d="M43.65 25.25v26.7L66.8 65.3V38.6L43.65 25.25z" fill="#1976D2"/>
-                  <path d="M20.5 12.7l23.15 13.35L66.8 12.7 43.65-.65 20.5 12.7z" fill="#4CAF50"/>
-                </svg>
-                Abrir Carpeta en Google Drive
-              </a>
-            ) : (
-              <div className="inline-flex items-center px-6 py-3 bg-background border border-muted/30 text-slate-400 rounded-lg cursor-not-allowed font-medium">
-                <svg className="w-5 h-5 mr-3 opacity-50 grayscale" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
-                  <path d="m6.6 66.85 22.35 11.1c5.8 2.9 15.6 2.9 21.4 0l22.35-11.1c5.8-2.9 8.7-8.2 8.7-14.9V25.25c0-6.7-2.9-12-8.7-14.9L50.35-1.1c-5.8-2.9-15.6-2.9-21.4 0L6.6 10.35C.8 13.25-2.1 18.55-2.1 25.25v26.7c0 6.7 2.9 12 8.7 14.9z" fill="#000000" fillOpacity="0"/>
-                  <path d="M43.65 25.25v26.7L20.5 65.3V38.6l23.15-13.35z" fill="#FFC107"/>
-                  <path d="M43.65 25.25v26.7L66.8 65.3V38.6L43.65 25.25z" fill="#1976D2"/>
-                  <path d="M20.5 12.7l23.15 13.35L66.8 12.7 43.65-.65 20.5 12.7z" fill="#4CAF50"/>
-                </svg>
-                Carpeta de Drive no configurada
+            <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
+                    <svg className="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7.71 3.502L1.15 15l3.446 6.004L11.157 9.502H7.71z" fill="#0066DA"/>
+                      <path d="M16.29 3.502L9.73 15l3.447 6.004L19.737 9.502H16.29z" fill="#00AC47"/>
+                      <path d="M12 9.502l-3.447 6.004h13.894L19.001 9.502H12z" fill="#EA4335"/>
+                      <path d="M16.29 3.502H7.71L12 11l4.29-7.498z" fill="#FFBA00"/>
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
+                    <div className="text-xs text-secondary">Google Drive</div>
+                  </div>
+                </div>
+                {curso.drive_url ? (
+                  <a 
+                    href={curso.drive_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
+                  >
+                    Acceder
+                  </a>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">No configurada</span>
+                )}
               </div>
-            )}
+              <p className="text-[11px] text-secondary text-left leading-relaxed">
+                Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
+              </p>
+            </div>
           </div>
         )}
 
