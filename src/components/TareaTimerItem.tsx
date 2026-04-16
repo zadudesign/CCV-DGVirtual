@@ -106,53 +106,55 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate 
         </p>
       )}
       
-      {/* Time UI */}
-      <div className="mt-3 bg-slate-50 border border-slate-100 rounded-lg p-2.5">
-        <div className="flex items-center justify-between mb-1">
-          <h5 className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Tiempo registrado</h5>
+      {/* Time UI Compact */}
+      <div className="mt-2.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-secondary" />
+            <span className="text-xs font-mono font-bold text-text-main">{formatTime(totalSeconds)}</span>
+            <span className="text-[9px] font-bold text-secondary uppercase tracking-widest ml-1">Registrado</span>
+          </div>
           {!isCompleted && (
             <button 
               onClick={() => setShowManualInput(!showManualInput)}
-              className="text-[10px] font-medium text-secondary hover:text-primary flex items-center gap-1 transition-colors"
+              className="text-[10px] font-medium text-primary hover:text-primary-hover flex items-center gap-1 transition-colors bg-white px-2 py-0.5 rounded border border-muted/50 shadow-sm"
             >
-              <Plus className="w-3 h-3" /> Añadir tiempo
+              <Plus className="w-3 h-3" /> {showManualInput ? 'Cerrar' : 'Añadir'}
             </button>
           )}
         </div>
-        
-        <div className="flex items-center gap-3 mt-2">
-          <span className="text-sm font-mono font-medium text-text-main">{formatTime(totalSeconds)}</span>
-        </div>
 
         {showManualInput && !isCompleted && (
-          <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-3 pt-3 border-t border-slate-200/60">
-            <div>
-              <label className="block text-[10px] font-medium text-secondary mb-1">Horas</label>
-              <input 
-                type="number" 
-                min="0" 
-                value={manualHours} 
-                onChange={(e) => setManualHours(Number(e.target.value))}
-                className="w-14 bg-white border border-muted rounded px-2 py-1 text-xs text-text-main focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-medium text-secondary mb-1">Minutos</label>
-              <input 
-                type="number" 
-                min="0" 
-                max="59"
-                value={manualMinutes} 
-                onChange={(e) => setManualMinutes(Number(e.target.value))}
-                className="w-14 bg-white border border-muted rounded px-2 py-1 text-xs text-text-main focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
-              />
+          <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-2 pt-2 border-t border-slate-200/60">
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[9px] font-bold text-secondary mb-0.5 uppercase">Hrs</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={manualHours} 
+                  onChange={(e) => setManualHours(Number(e.target.value))}
+                  className="w-full bg-white border border-muted rounded px-1.5 py-1 text-xs text-text-main focus:outline-none focus:border-primary shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-bold text-secondary mb-0.5 uppercase">Min</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="59"
+                  value={manualMinutes} 
+                  onChange={(e) => setManualMinutes(Number(e.target.value))}
+                  className="w-full bg-white border border-muted rounded px-1.5 py-1 text-xs text-text-main focus:outline-none focus:border-primary shadow-sm"
+                />
+              </div>
             </div>
             <button 
               type="submit"
               disabled={saving || (manualHours === 0 && manualMinutes === 0)}
-              className="bg-primary hover:bg-primary-hover text-white px-3 py-1 rounded text-xs font-medium disabled:opacity-50 shadow-sm"
+              className="bg-primary hover:bg-primary-hover text-white px-2.5 py-1 rounded text-xs font-bold disabled:opacity-50 shadow-sm"
             >
-              Guardar
+              Ok
             </button>
           </form>
         )}
