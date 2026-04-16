@@ -65,22 +65,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       facultad: meta.facultad || '',
       programa: meta.programa || '',
       team_area: meta.team_area || '',
-      photoURL: ''
+      photoURL: '',
+      last_access: ''
     });
     setAuthError(null);
     setLoading(false);
 
-    // Obtenemos la foto de perfil en segundo plano sin bloquear la promesa principal
+    // Actualizamos el último acceso y obtenemos la foto de perfil en segundo plano
     (async () => {
       try {
+        const now = new Date().toISOString();
+        
+        // Actualizar último acceso
+        await supabase
+          .from('profiles')
+          .update({ last_access: now })
+          .eq('id', authUser.id);
+
         const { data } = await supabase
           .from('profiles')
-          .select('photoURL')
+          .select('photoURL, last_access')
           .eq('id', authUser.id)
           .single();
           
-        if (data?.photoURL) {
-          setUser(prev => prev ? { ...prev, photoURL: data.photoURL } : null);
+        if (data) {
+          setUser(prev => prev ? { 
+            ...prev, 
+            photoURL: data.photoURL || prev.photoURL,
+            last_access: data.last_access || now
+          } : null);
         }
       } catch (e) {
         console.error('Error fetching profile photo:', e);

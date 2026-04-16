@@ -14,6 +14,32 @@ export default function Usuarios() {
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
   const [filtroRol, setFiltroRol] = useState<string>('');
 
+  const getDiasDesdeUltimoAcceso = (fechaStr?: string) => {
+    if (!fechaStr) return null;
+    const fechaAcceso = new Date(fechaStr);
+    const hoy = new Date();
+    
+    // Resetear horas para comparar solo días
+    fechaAcceso.setHours(0, 0, 0, 0);
+    hoy.setHours(0, 0, 0, 0);
+    
+    const diferenciaMs = hoy.getTime() - fechaAcceso.getTime();
+    const diferenciaDias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
+    
+    return diferenciaDias;
+  };
+
+  const formatearFecha = (fechaStr?: string) => {
+    if (!fechaStr) return '-';
+    return new Date(fechaStr).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   useEffect(() => {
     if (user) {
       fetchData();
@@ -163,6 +189,11 @@ export default function Usuarios() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                   Contacto
                 </th>
+                {isAdmin && (
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                    Último Acceso
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
@@ -243,6 +274,22 @@ export default function Usuarios() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                       {user.telefono || '-'}
                     </td>
+                    {isAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="text-secondary">{formatearFecha(user.last_access)}</div>
+                        {user.last_access && (
+                           <div className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${
+                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 ? 'text-red-500' :
+                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 ? 'text-amber-500' :
+                             'text-green-600'
+                           }`}>
+                             {getDiasDesdeUltimoAcceso(user.last_access) === 0 
+                               ? 'Hoy' 
+                               : `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`}
+                           </div>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
