@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
 
@@ -234,12 +234,7 @@ export default function CursoDetalle() {
                       className={`flex items-center px-3 py-1.5 text-sm font-medium bg-white text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95`}
                       title="Abrir Carpeta en Google Drive"
                     >
-                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7.71 3.502L1.15 15l3.446 6.004L11.157 9.502H7.71z" fill="#0066DA"/>
-                        <path d="M16.29 3.502L9.73 15l3.447 6.004L19.737 9.502H16.29z" fill="#00AC47"/>
-                        <path d="M12 9.502l-3.447 6.004h13.894L19.001 9.502H12z" fill="#EA4335"/>
-                        <path d="M16.29 3.502H7.71L12 11l4.29-7.498z" fill="#FFBA00"/>
-                      </svg>
+                      <HardDrive className="w-4 h-4 mr-1.5 text-primary" />
                       Google Drive
                     </a>
                   )}
@@ -329,12 +324,7 @@ export default function CursoDetalle() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
-                    <svg className="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.71 3.502L1.15 15l3.446 6.004L11.157 9.502H7.71z" fill="#0066DA"/>
-                      <path d="M16.29 3.502L9.73 15l3.447 6.004L19.737 9.502H16.29z" fill="#00AC47"/>
-                      <path d="M12 9.502l-3.447 6.004h13.894L19.001 9.502H12z" fill="#EA4335"/>
-                      <path d="M16.29 3.502H7.71L12 11l4.29-7.498z" fill="#FFBA00"/>
-                    </svg>
+                    <HardDrive className="w-8 h-8 text-primary" />
                   </div>
                   <div className="text-left">
                     <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
