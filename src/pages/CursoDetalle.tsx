@@ -182,6 +182,24 @@ export default function CursoDetalle() {
     }
   };
 
+  const handleUpdateFechaInicio = async (newDate: string) => {
+    if (!id || user?.role !== 'admin') return;
+    
+    try {
+      const { error } = await supabase
+        .from('cursos')
+        .update({ fecha_inicio: newDate })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setCurso({ ...curso, fecha_inicio: newDate });
+    } catch (err) {
+      console.error('Error updating fecha_inicio:', err);
+      alert('Error al actualizar la fecha de inicio');
+    }
+  };
+
   const handleUpdateDocStatus = async (docId: string, nuevoEstado: 'Pendiente' | 'En Revisión' | 'Completo') => {
     try {
       const updateData: any = { estado: nuevoEstado };
@@ -331,14 +349,6 @@ export default function CursoDetalle() {
                       <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
                         {curso.programa || 'General'}
                       </span>
-                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
-                        Semestre {curso.semestre}
-                      </span>
-                      {curso.periodo && (
-                        <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${theme.badgeBg} ${theme.badgeText} border ${theme.border}`}>
-                          {curso.periodo}
-                        </span>
-                      )}
                       <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
                         curso.estado === 'Publicado' ? 'bg-green-100 text-green-800 border-green-200' :
                         curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800 border-amber-200' :
@@ -388,7 +398,7 @@ export default function CursoDetalle() {
               </div>
 
               {/* Ficha Técnica */}
-              <div className={`mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t ${theme.border}`}>
+              <div className={`mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t ${theme.border}`}>
                 <div>
                   <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Docente</div>
                   <div className={`text-sm font-medium ${theme.text}`}>{curso.docente?.name || 'Sin asignar'}</div>
@@ -400,6 +410,10 @@ export default function CursoDetalle() {
                 <div>
                   <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Semestre</div>
                   <div className={`text-sm font-medium ${theme.text}`}>{curso.semestre ? `Semestre ${curso.semestre}` : 'No definido'}</div>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Periodo</div>
+                  <div className={`text-sm font-medium ${theme.text}`}>{curso.periodo || 'No definido'}</div>
                 </div>
               </div>
             </div>
@@ -876,8 +890,50 @@ export default function CursoDetalle() {
         )}
 
         {activeTab === 'calendario' && (
-          <div className="bg-background rounded-xl shadow-sm border border-muted/30 p-6">
-            <Calendario cursoId={curso.id} />
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-text-main flex items-center">
+                    <CalendarDays className="h-5 w-5 mr-2 text-primary" />
+                    Cronograma de Construcción
+                  </h3>
+                  <p className="text-xs text-secondary mt-1">
+                    Visualice y gestione los hitos y entregas del proceso de construcción.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="text-right hidden sm:block">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-wider">Fecha de Inicio de Construcción</div>
+                    <div className="text-xs font-medium text-text-main">
+                      {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
+                    </div>
+                  </div>
+                  {user?.role === 'admin' ? (
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-bold text-secondary uppercase mb-1 sm:hidden">Fecha de Inicio</span>
+                      <input 
+                        type="date"
+                        value={curso.fecha_inicio || ''}
+                        onChange={(e) => handleUpdateFechaInicio(e.target.value)}
+                        className="text-xs font-bold bg-white border border-muted rounded-md px-2 py-1.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                      />
+                    </div>
+                  ) : (
+                    <div className="sm:hidden">
+                      <div className="text-[10px] font-bold text-secondary uppercase tracking-wider">Inicio</div>
+                      <div className="text-xs font-medium text-text-main">
+                        {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-background rounded-xl shadow-sm border border-muted/30 p-6">
+              <Calendario cursoId={curso.id} />
+            </div>
           </div>
         )}
       </div>
