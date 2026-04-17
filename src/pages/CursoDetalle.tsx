@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
 import { DocumentoCurso } from '../types';
@@ -23,6 +23,7 @@ export default function CursoDetalle() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
   const [editingDoc, setEditingDoc] = useState<DocumentoCurso | null>(null);
+  const [selectedDocForPreview, setSelectedDocForPreview] = useState<DocumentoCurso | null>(null);
   const [submittingDoc, setSubmittingDoc] = useState(false);
   const [docForm, setDocForm] = useState({
     documento: '',
@@ -210,6 +211,15 @@ export default function CursoDetalle() {
       fecha: doc.fecha || ''
     });
     setShowDocModal(true);
+  };
+
+  const getEmbedUrl = (url: string | undefined) => {
+    if (!url) return '';
+    // Para Google Drive, cambiamos /view por /preview para que permita el embed en un iframe
+    if (url.includes('drive.google.com')) {
+      return url.replace(/\/view(\?.*)?$/, '/preview');
+    }
+    return url;
   };
 
   const handleCopyId = () => {
@@ -655,14 +665,24 @@ export default function CursoDetalle() {
                                 </>
                               )}
                               {doc.link && (
-                                <a 
-                                  href={doc.link} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
+                                <>
+                                  <button 
+                                    onClick={() => setSelectedDocForPreview(doc)} 
+                                    className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                    title="Visualizar documento"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                  <a 
+                                    href={doc.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                    title="Abrir en pestaña nueva"
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                  </a>
+                                </>
                               )}
                             </div>
                           </td>
@@ -794,6 +814,50 @@ export default function CursoDetalle() {
                         </button>
                       </div>
                     </form>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal para Visualización de Documentos (Iframe) */}
+            {selectedDocForPreview && (
+              <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setSelectedDocForPreview(null)} />
+                <div className="relative bg-white w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                  <div className="px-6 py-4 border-b border-muted/30 flex justify-between items-center bg-white">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-slate-100 rounded-lg mr-3">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-bold text-text-main truncate max-w-md">
+                        {selectedDocForPreview.documento}
+                      </h3>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <a 
+                        href={selectedDocForPreview.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-full transition-all"
+                        title="Abrir en Google Drive"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                      <button 
+                        onClick={() => setSelectedDocForPreview(null)}
+                        className="p-2 text-slate-500 hover:text-red-500 hover:bg-slate-100 rounded-full transition-all"
+                      >
+                        <X className="h-6 w-6" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex-1 bg-slate-100 relative">
+                    <iframe 
+                      src={getEmbedUrl(selectedDocForPreview.link)} 
+                      className="w-full h-full border-none shadow-inner"
+                      title={selectedDocForPreview.documento}
+                      allow="autoplay"
+                    />
                   </div>
                 </div>
               </div>
