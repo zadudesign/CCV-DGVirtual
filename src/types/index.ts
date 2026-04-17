@@ -96,3 +96,13 @@ export interface Curso {
   evaluador?: { name: string; email: string };
   creador?: { name: string; email: string };
 }
+
+export interface DocumentoCurso {
+  id: string;
+  curso_id: string;
+  documento: string;
+  link?: string;
+  estado: 'Pendiente' | 'En Revisión' | 'Completo';
+  fecha?: string;
+  created_at: string;
+}

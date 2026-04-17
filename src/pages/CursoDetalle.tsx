@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
+import { DocumentoCurso } from '../types';
 
 export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -17,9 +18,23 @@ export default function CursoDetalle() {
   const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
   
+  // Documentación state
+  const [documentos, setDocumentos] = useState<DocumentoCurso[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<DocumentoCurso | null>(null);
+  const [submittingDoc, setSubmittingDoc] = useState(false);
+  const [docForm, setDocForm] = useState({
+    documento: '',
+    link: '',
+    estado: 'Pendiente' as 'Pendiente' | 'En Revisión' | 'Completo',
+    fecha: ''
+  });
+  
   useEffect(() => {
     if (id) {
       fetchCurso();
+      fetchDocumentos();
 
       // Suscribirse a cambios en tiempo real en la tabla cursos para este curso específico
       const channel = supabase
@@ -82,6 +97,119 @@ export default function CursoDetalle() {
     } finally {
       if (showLoading) setLoading(false);
     }
+  };
+
+  const fetchDocumentos = async () => {
+    if (!id) return;
+    try {
+      setLoadingDocs(true);
+      const { data, error } = await supabase
+        .from('documentos_cursos')
+        .select('*')
+        .eq('curso_id', id)
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        if (error.code === 'PGRST116' || error.message.includes('not found')) {
+          setDocumentos([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setDocumentos(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching documentos:', err);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleSaveDoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !user) return;
+    
+    setSubmittingDoc(true);
+    try {
+      const docData = {
+        curso_id: id,
+        documento: docForm.documento,
+        link: docForm.link || null,
+        estado: docForm.estado,
+        fecha: docForm.estado === 'Completo' ? (docForm.fecha || new Date().toISOString().split('T')[0]) : (docForm.fecha || null)
+      };
+
+      if (editingDoc) {
+        const { error } = await supabase
+          .from('documentos_cursos')
+          .update(docData)
+          .eq('id', editingDoc.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('documentos_cursos')
+          .insert([docData]);
+        if (error) throw error;
+      }
+
+      setShowDocModal(false);
+      setEditingDoc(null);
+      setDocForm({ documento: '', link: '', estado: 'Pendiente', fecha: '' });
+      fetchDocumentos();
+    } catch (err) {
+      console.error('Error saving document:', err);
+      alert('Error al guardar el documento. Asegúrate de que la tabla "documentos_cursos" haya sido creada en Supabase.');
+    } finally {
+      setSubmittingDoc(false);
+    }
+  };
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('documentos_cursos')
+        .delete()
+        .eq('id', docId);
+      
+      if (error) throw error;
+      fetchDocumentos();
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      alert('Error al eliminar el documento');
+    }
+  };
+
+  const handleUpdateDocStatus = async (docId: string, nuevoEstado: 'Pendiente' | 'En Revisión' | 'Completo') => {
+    try {
+      const updateData: any = { estado: nuevoEstado };
+      if (nuevoEstado === 'Completo') {
+        updateData.fecha = new Date().toISOString().split('T')[0];
+      }
+
+      const { error } = await supabase
+        .from('documentos_cursos')
+        .update(updateData)
+        .eq('id', docId);
+      
+      if (error) throw error;
+      fetchDocumentos();
+    } catch (err) {
+      console.error('Error updating document status:', err);
+      alert('Error al actualizar el estado');
+    }
+  };
+
+  const handleEditDoc = (doc: DocumentoCurso) => {
+    setEditingDoc(doc);
+    setDocForm({
+      documento: doc.documento,
+      link: doc.link || '',
+      estado: doc.estado,
+      fecha: doc.fecha || ''
+    });
+    setShowDocModal(true);
   };
 
   const handleCopyId = () => {
@@ -403,40 +531,273 @@ export default function CursoDetalle() {
         )}
 
         {activeTab === 'documentacion' && (
-          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
-            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-text-main">Documentación del Curso</h3>
-            <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
-              Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
-            </p>
-            <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
-                    <HardDrive className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
-                    <div className="text-xs text-secondary">Google Drive</div>
-                  </div>
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-muted/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-muted/30 flex justify-between items-center bg-slate-50/50">
+                <div>
+                  <h3 className="text-lg font-bold text-text-main flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-primary" />
+                    Listado de Documentación Requerida
+                  </h3>
+                  <p className="text-xs text-secondary mt-1">
+                    Gestione los documentos obligatorios que deben estar diligenciados para este curso.
+                  </p>
                 </div>
-                {curso.drive_url ? (
-                  <a 
-                    href={curso.drive_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
+                {user?.role === 'admin' && (
+                  <button 
+                    onClick={() => {
+                      setEditingDoc(null);
+                      setDocForm({ documento: '', link: '', estado: 'Pendiente', fecha: '' });
+                      setShowDocModal(true);
+                    }}
+                    className="flex items-center px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
                   >
-                    Acceder
-                  </a>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">No configurada</span>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo Documento
+                  </button>
                 )}
               </div>
-              <p className="text-[11px] text-secondary text-left leading-relaxed">
-                Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
-              </p>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50/80">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Documento</th>
+                      <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Estado</th>
+                      <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Fecha Completado</th>
+                      <th className="px-6 py-3 text-right text-[10px] font-bold text-secondary uppercase tracking-widest">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {loadingDocs ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                        </td>
+                      </tr>
+                    ) : documentos.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center flex flex-col items-center">
+                          <FileText className="h-10 w-10 text-slate-200 mb-2" />
+                          <p className="text-sm text-secondary">No hay documentos registrados para este curso.</p>
+                          {user?.role === 'admin' && (
+                            <button 
+                              onClick={() => setShowDocModal(true)}
+                              className="mt-4 text-xs font-bold text-primary hover:underline"
+                            >
+                              Agregar el primer documento
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ) : (
+                      documentos.map((doc) => (
+                        <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="p-2 bg-slate-100 rounded-lg mr-3">
+                                <FileText className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-text-main">{doc.documento}</span>
+                                {doc.link && (
+                                  <a 
+                                    href={doc.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-[10px] text-primary hover:underline flex items-center mt-1"
+                                  >
+                                    <ExternalLink className="h-2.5 w-2.5 mr-1" />
+                                    Visualizar en Drive
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user?.role === 'admin' ? (
+                              <select
+                                value={doc.estado}
+                                onChange={(e) => handleUpdateDocStatus(doc.id, e.target.value as any)}
+                                className={`text-[10px] font-bold uppercase tracking-wider border rounded-md py-1 px-2 focus:ring-1 focus:ring-primary focus:outline-none ${
+                                  doc.estado === 'Completo' ? 'bg-green-50 text-green-700 border-green-100' :
+                                  doc.estado === 'En Revisión' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                  'bg-slate-50 text-slate-600 border-slate-200'
+                                }`}
+                              >
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Revisión">En Revisión</option>
+                                <option value="Completo">Completo</option>
+                              </select>
+                            ) : (
+                              <span className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full ${
+                                doc.estado === 'Completo' ? 'bg-green-100 text-green-800' :
+                                doc.estado === 'En Revisión' ? 'bg-amber-100 text-amber-800' :
+                                'bg-slate-100 text-slate-800'
+                              }`}>
+                                {doc.estado}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
+                            {doc.fecha ? new Date(doc.fecha).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end space-x-2">
+                              {user?.role === 'admin' && (
+                                <>
+                                  <button onClick={() => handleEditDoc(doc)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                                    <Edit2 className="h-4 w-4" />
+                                  </button>
+                                  <button onClick={() => handleDeleteDoc(doc.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+                              {doc.link && (
+                                <a 
+                                  href={doc.link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {/* Drive Folder Access (Original UI moved down) */}
+            <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
+              <HardDrive className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-text-main">Carpeta General de Recursos</h3>
+              <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
+                Acceda directamente al repositorio principal de este curso en Google Drive.
+              </p>
+              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
+                      <HardDrive className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
+                      <div className="text-xs text-secondary">Google Drive</div>
+                    </div>
+                  </div>
+                  {curso.drive_url ? (
+                    <a 
+                      href={curso.drive_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
+                    >
+                      Acceder
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No configurada</span>
+                  )}
+                </div>
+                <p className="text-[11px] text-secondary text-left leading-relaxed">
+                  Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal para Documentos */}
+            {showDocModal && (
+              <div className="fixed inset-0 z-[60] overflow-y-auto">
+                <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                  <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowDocModal(false)} />
+
+                  <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                    <div className="flex justify-between items-center mb-5">
+                      <h3 className="text-lg font-bold text-text-main">
+                        {editingDoc ? 'Editar Documento' : 'Nuevo Documento Requerido'}
+                      </h3>
+                      <button onClick={() => setShowDocModal(false)} className="text-slate-400 hover:text-secondary">
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveDoc} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Nombre del Documento</label>
+                        <input
+                          type="text"
+                          required
+                          value={docForm.documento}
+                          onChange={(e) => setDocForm({ ...docForm, documento: e.target.value })}
+                          className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="Ej. Guía Didáctica"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Link de Google Drive (Vista Pública)</label>
+                        <input
+                          type="url"
+                          value={docForm.link}
+                          onChange={(e) => setDocForm({ ...docForm, link: e.target.value })}
+                          className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="https://drive.google.com/file/d/..."
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Estado</label>
+                          <select
+                            value={docForm.estado}
+                            onChange={(e) => setDocForm({ ...docForm, estado: e.target.value as any })}
+                            className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Revisión">En Revisión</option>
+                            <option value="Completo">Completo</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Fecha Completado</label>
+                          <input
+                            type="date"
+                            disabled={docForm.estado !== 'Completo'}
+                            value={docForm.fecha}
+                            onChange={(e) => setDocForm({ ...docForm, fecha: e.target.value })}
+                            className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-slate-50 disabled:text-slate-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-8 flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowDocModal(false)}
+                          className="px-4 py-2 text-sm font-bold text-secondary border border-muted rounded-lg hover:bg-slate-50"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={submittingDoc}
+                          className="flex items-center px-6 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm disabled:opacity-50"
+                        >
+                          {submittingDoc && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                          {editingDoc ? 'Actualizar' : 'Crear Documento'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
