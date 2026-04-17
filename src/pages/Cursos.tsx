@@ -10,11 +10,11 @@ import { Link } from 'react-router-dom';
 
 const ESTADOS_SOLICITUD = [
   'Solicitud Recibida',
+  'En Preparación',
   'Pendiente de Aprobación',
   'Información Incompleta',
   'Orden de Trabajo',
   'Actas de Responsabilidad',
-  'En Preparación',
   'En Construcción'
 ];
 
@@ -539,34 +539,69 @@ export default function Cursos() {
                     const solicitudesEnEstado = cursosFiltrados.filter(c => (c.estado || 'Solicitud Recibida') === estado);
                     if (solicitudesEnEstado.length === 0) return null;
                     
+                    const getEstadoHeaderStyles = (est: string) => {
+                      switch (est) {
+                        case 'Solicitud Recibida':
+                        case 'En Construcción':
+                          return 'bg-emerald-100/90 text-emerald-900 border-emerald-300 border-l-emerald-600';
+                        case 'Pendiente de Aprobación':
+                        case 'Información Incompleta':
+                          return 'bg-red-100/90 text-red-900 border-red-300 border-l-red-600';
+                        case 'En Preparación':
+                          return 'bg-blue-100/90 text-blue-900 border-blue-300 border-l-blue-600';
+                        case 'Orden de Trabajo':
+                        case 'Actas de Responsabilidad':
+                          return 'bg-orange-100/90 text-orange-900 border-orange-300 border-l-orange-600';
+                        default:
+                          return 'bg-slate-100/90 text-slate-900 border-slate-200 border-l-slate-600';
+                      }
+                    };
+
+                    const getEstadoBadgeColor = (est: string) => {
+                      switch (est) {
+                        case 'Solicitud Recibida':
+                        case 'En Construcción':
+                          return 'bg-emerald-600 text-white';
+                        case 'Pendiente de Aprobación':
+                        case 'Información Incompleta':
+                          return 'bg-red-600 text-white';
+                        case 'En Preparación':
+                          return 'bg-blue-600 text-white';
+                        case 'Orden de Trabajo':
+                        case 'Actas de Responsabilidad':
+                          return 'bg-orange-600 text-white';
+                        default:
+                          return 'bg-slate-600 text-white';
+                      }
+                    };
+                    
+                    const headerStyle = getEstadoHeaderStyles(estado);
+                    const badgeColor = getEstadoBadgeColor(estado);
+
                     return (
                       <React.Fragment key={estado}>
-                        <tr className="bg-slate-100/80">
-                          <td colSpan={4} className="px-6 py-3 text-[11px] font-bold text-primary uppercase tracking-wider border-y border-slate-200">
+                        <tr>
+                          <td colSpan={4} className={`px-6 py-3 text-[11px] font-bold uppercase tracking-wider border-y border-l-4 ${headerStyle}`}>
                             <div className="flex items-center">
-                              <div className="w-1 h-4 bg-primary rounded-full mr-3"></div>
                               {estado}
-                              <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px]">
+                              <span className={`ml-3 px-2 py-0.5 rounded-full text-[10px] shadow-sm ${badgeColor}`}>
                                 {solicitudesEnEstado.length}
                               </span>
                             </div>
                           </td>
                         </tr>
                         {solicitudesEnEstado.map((curso) => (
-                          <tr key={curso.id} className="hover:bg-background">
+                          <tr key={curso.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               {user?.role === 'admin' ? (
                                 <select
                                   value={curso.estado || 'Solicitud Recibida'}
                                   onChange={(e) => handleUpdateEstadoSolicitud(curso.id, e.target.value)}
                                   className={`text-[10px] font-bold uppercase tracking-wider border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none py-1.5 px-3 transition-all shadow-sm ${
-                                    curso.estado === 'Solicitud Recibida' ? 'bg-slate-50 border-slate-200 text-slate-700' :
-                                    curso.estado === 'Pendiente de Aprobación' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                                    curso.estado === 'Información Incompleta' ? 'bg-red-50 border-red-200 text-red-700' :
-                                    curso.estado === 'Orden de Trabajo' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                    curso.estado === 'Actas de Responsabilidad' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' :
-                                    curso.estado === 'En Preparación' ? 'bg-purple-50 border-purple-200 text-purple-700' :
-                                    curso.estado === 'En Construcción' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                                    (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                                    (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-50 border-red-200 text-red-700' :
+                                    (curso.estado === 'En Preparación') ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                    (curso.estado === 'Orden de Trabajo' || curso.estado === 'Actas de Responsabilidad') ? 'bg-orange-50 border-orange-200 text-orange-700' :
                                     'bg-slate-50 border-slate-200 text-slate-700'
                                   }`}
                                 >
@@ -575,7 +610,13 @@ export default function Cursos() {
                                   ))}
                                 </select>
                               ) : (
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-text-main">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+                                  (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-100 text-emerald-800' :
+                                  (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-100 text-red-800' :
+                                  (curso.estado === 'En Preparación') ? 'bg-blue-100 text-blue-800' :
+                                  (curso.estado === 'Orden de Trabajo' || curso.estado === 'Actas de Responsabilidad') ? 'bg-orange-100 text-orange-800' :
+                                  'bg-slate-100 text-slate-800'
+                                }`}>
                                   {curso.estado || 'Solicitud Recibida'}
                                 </span>
                               )}
