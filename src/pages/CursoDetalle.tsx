@@ -273,17 +273,6 @@ export default function CursoDetalle() {
       <div className="border-b border-muted/30">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setActiveTab('documentacion')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
-              activeTab === 'documentacion'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
-            }`}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Documentación
-          </button>
-          <button
             onClick={() => setActiveTab('construccion')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
               activeTab === 'construccion'
@@ -293,6 +282,17 @@ export default function CursoDetalle() {
           >
             <PenTool className="h-4 w-4 mr-2" />
             Construcción
+          </button>
+          <button
+            onClick={() => setActiveTab('documentacion')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+              activeTab === 'documentacion'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+            }`}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Documentación
           </button>
           <button
             onClick={() => setActiveTab('novedades')}
@@ -321,60 +321,6 @@ export default function CursoDetalle() {
 
       {/* Tab Content */}
       <div className="mt-6">
-        {activeTab === 'documentacion' && (
-          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
-            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-text-main">Documentación del Curso</h3>
-            <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
-              Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
-            </p>
-            <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
-                    <HardDrive className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
-                    <div className="text-xs text-secondary">Google Drive</div>
-                  </div>
-                </div>
-                {curso.drive_url ? (
-                  <a 
-                    href={curso.drive_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
-                  >
-                    Acceder
-                  </a>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">No configurada</span>
-                )}
-              </div>
-              <p className="text-[11px] text-secondary text-left leading-relaxed">
-                Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'novedades' && (
-          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center">
-            <Bell className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-text-main">Novedades y Actualizaciones</h3>
-            <p className="text-secondary mt-2 max-w-md mx-auto">
-              Historial de cambios, notificaciones y comentarios sobre el progreso del curso.
-            </p>
-          </div>
-        )}
-
-        {activeTab === 'calendario' && (
-          <div className="bg-background rounded-xl shadow-sm border border-muted/30 p-6">
-            <Calendario cursoId={curso.id} />
-          </div>
-        )}
-
         {activeTab === 'construccion' && (
           <div className="space-y-8">
             <div className="bg-[#222631] rounded-2xl shadow-lg border border-slate-800 p-8 max-w-5xl mx-auto">
@@ -453,6 +399,60 @@ export default function CursoDetalle() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'documentacion' && (
+          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
+            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-text-main">Documentación del Curso</h3>
+            <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
+              Aquí se alojarán los sílabos, guías didácticas, y recursos bibliográficos del curso.
+            </p>
+            <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
+                    <HardDrive className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
+                    <div className="text-xs text-secondary">Google Drive</div>
+                  </div>
+                </div>
+                {curso.drive_url ? (
+                  <a 
+                    href={curso.drive_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
+                  >
+                    Acceder
+                  </a>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">No configurada</span>
+                )}
+              </div>
+              <p className="text-[11px] text-secondary text-left leading-relaxed">
+                Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'novedades' && (
+          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center">
+            <Bell className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-text-main">Novedades y Actualizaciones</h3>
+            <p className="text-secondary mt-2 max-w-md mx-auto">
+              Historial de cambios, notificaciones y comentarios sobre el progreso del curso.
+            </p>
+          </div>
+        )}
+
+        {activeTab === 'calendario' && (
+          <div className="bg-background rounded-xl shadow-sm border border-muted/30 p-6">
+            <Calendario cursoId={curso.id} />
           </div>
         )}
       </div>
