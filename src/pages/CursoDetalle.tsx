@@ -891,43 +891,24 @@ export default function CursoDetalle() {
 
         {activeTab === 'calendario' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-bold text-text-main flex items-center">
-                    <CalendarDays className="h-5 w-5 mr-2 text-primary" />
-                    Cronograma de Construcción
-                  </h3>
-                  <p className="text-xs text-secondary mt-1">
-                    Visualice y gestione los hitos y entregas del proceso de construcción.
-                  </p>
-                </div>
-                <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div className="text-right hidden sm:block">
-                    <div className="text-[10px] font-bold text-secondary uppercase tracking-wider">Fecha de Inicio de Construcción</div>
-                    <div className="text-xs font-medium text-text-main">
-                      {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
-                    </div>
+            <div className="bg-white rounded-xl shadow-sm border border-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                <span className="text-sm font-bold text-text-main uppercase tracking-wider">Fecha de Inicio de Construcción</span>
+              </div>
+              <div>
+                {user?.role === 'admin' ? (
+                  <input 
+                    type="date"
+                    value={curso.fecha_inicio || ''}
+                    onChange={(e) => handleUpdateFechaInicio(e.target.value)}
+                    className="text-sm font-bold bg-slate-50 border border-muted rounded-lg px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-all"
+                  />
+                ) : (
+                  <div className="text-sm font-bold text-text-main bg-slate-50 border border-slate-100 rounded-lg px-4 py-2">
+                    {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
                   </div>
-                  {user?.role === 'admin' ? (
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-secondary uppercase mb-1 sm:hidden">Fecha de Inicio</span>
-                      <input 
-                        type="date"
-                        value={curso.fecha_inicio || ''}
-                        onChange={(e) => handleUpdateFechaInicio(e.target.value)}
-                        className="text-xs font-bold bg-white border border-muted rounded-md px-2 py-1.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
-                      />
-                    </div>
-                  ) : (
-                    <div className="sm:hidden">
-                      <div className="text-[10px] font-bold text-secondary uppercase tracking-wider">Inicio</div>
-                      <div className="text-xs font-medium text-text-main">
-                        {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
             
