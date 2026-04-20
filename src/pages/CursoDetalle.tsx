@@ -434,20 +434,20 @@ export default function CursoDetalle() {
                   <div className={`text-sm font-medium ${theme.text}`}>{curso.periodo || 'No definido'}</div>
                 </div>
                 <div>
-                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Curso en Moodle</div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-2`}>Curso en Moodle</div>
                   <div className="flex items-center space-x-2">
                     {curso.moodle_url ? (
                       <a 
                         href={curso.moodle_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-xs font-bold text-primary hover:underline flex items-center"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-bold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
                       >
-                        <ExternalLink className="w-3 h-3 mr-1" />
+                        <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                         Acceder al Curso
                       </a>
                     ) : (
-                      <span className={`text-xs ${theme.textMuted} italic`}>No configurado</span>
+                      <span className={`text-xs ${theme.textMuted} italic px-3 py-1.5 bg-slate-100 rounded-lg border border-dashed border-slate-300 w-full text-center block`}>No configurado</span>
                     )}
                     {user?.role === 'admin' && (
                       <button 
@@ -455,10 +455,10 @@ export default function CursoDetalle() {
                           const url = prompt('Ingrese la URL del curso en Moodle:', curso.moodle_url || '');
                           if (url !== null) handleUpdateMoodleUrl(url);
                         }}
-                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-primary transition-colors"
+                        className="p-1.5 bg-white border border-slate-200 hover:border-primary hover:text-primary rounded-lg shadow-sm transition-all text-slate-400"
                         title="Configurar URL de Moodle"
                       >
-                        <Edit2 className="w-3 h-3" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
