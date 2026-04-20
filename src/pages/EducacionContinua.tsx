@@ -17,7 +17,18 @@ export default function EducacionContinua() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>('tareas');
+  const isAdmin = user?.role === 'admin';
+  const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
+  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(isTeam ? 'tareas' : 'proyectos');
+
+  useEffect(() => {
+    if (!isTeam && isAdmin && activeTab === 'tareas') {
+      setActiveTab('proyectos');
+    }
+    if (!isAdmin && isTeam && activeTab === 'proyectos') {
+      setActiveTab('tareas');
+    }
+  }, [user, isAdmin, isTeam]);
 
   useEffect(() => {
     fetchProyectos();
@@ -246,28 +257,32 @@ export default function EducacionContinua() {
 
       {/* Navegación por pestañas */}
       <div className="flex border-b border-muted/30 -mb-px">
-        <button
-          onClick={() => setActiveTab('tareas')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'tareas'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <CheckCircle className={`mr-2 h-4 w-4 ${activeTab === 'tareas' ? 'text-primary' : 'text-slate-400'}`} />
-          Tareas
-        </button>
-        <button
-          onClick={() => setActiveTab('proyectos')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'proyectos'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <FolderKanban className={`mr-2 h-4 w-4 ${activeTab === 'proyectos' ? 'text-primary' : 'text-slate-400'}`} />
-          Proyectos
-        </button>
+        {isTeam && (
+          <button
+            onClick={() => setActiveTab('tareas')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'tareas'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <CheckCircle className={`mr-2 h-4 w-4 ${activeTab === 'tareas' ? 'text-primary' : 'text-slate-400'}`} />
+            Tareas
+          </button>
+        )}
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('proyectos')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'proyectos'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <FolderKanban className={`mr-2 h-4 w-4 ${activeTab === 'proyectos' ? 'text-primary' : 'text-slate-400'}`} />
+            Proyectos
+          </button>
+        )}
       </div>
 
       {success && (
