@@ -13,8 +13,6 @@ const ESTADOS_SOLICITUD = [
   'En Preparación',
   'Pendiente de Aprobación',
   'Información Incompleta',
-  'Orden de Trabajo',
-  'Actas de Responsabilidad',
   'En Construcción'
 ];
 
@@ -552,9 +550,6 @@ export default function Cursos() {
                           return 'bg-red-100/90 text-red-900 border-red-300 border-l-red-600';
                         case 'En Preparación':
                           return 'bg-blue-100/90 text-blue-900 border-blue-300 border-l-blue-600';
-                        case 'Orden de Trabajo':
-                        case 'Actas de Responsabilidad':
-                          return 'bg-orange-100/90 text-orange-900 border-orange-300 border-l-orange-600';
                         default:
                           return 'bg-slate-100/90 text-slate-900 border-slate-200 border-l-slate-600';
                       }
@@ -570,9 +565,6 @@ export default function Cursos() {
                           return 'bg-red-600 text-white';
                         case 'En Preparación':
                           return 'bg-blue-600 text-white';
-                        case 'Orden de Trabajo':
-                        case 'Actas de Responsabilidad':
-                          return 'bg-orange-600 text-white';
                         default:
                           return 'bg-slate-600 text-white';
                       }
@@ -604,7 +596,6 @@ export default function Cursos() {
                                     (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                                     (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-50 border-red-200 text-red-700' :
                                     (curso.estado === 'En Preparación') ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                    (curso.estado === 'Orden de Trabajo' || curso.estado === 'Actas de Responsabilidad') ? 'bg-orange-50 border-orange-200 text-orange-700' :
                                     'bg-slate-50 border-slate-200 text-slate-700'
                                   }`}
                                 >
@@ -617,7 +608,6 @@ export default function Cursos() {
                                   (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-100 text-emerald-800' :
                                   (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-100 text-red-800' :
                                   (curso.estado === 'En Preparación') ? 'bg-blue-100 text-blue-800' :
-                                  (curso.estado === 'Orden de Trabajo' || curso.estado === 'Actas de Responsabilidad') ? 'bg-orange-100 text-orange-800' :
                                   'bg-slate-100 text-slate-800'
                                 }`}>
                                   {curso.estado || 'Solicitud Recibida'}
