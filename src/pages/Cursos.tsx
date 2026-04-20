@@ -49,7 +49,7 @@ export default function Cursos() {
   const [solicitantes, setSolicitantes] = useState<User[]>([]);
 
   // Filters
-  const [filtroSemestre, setFiltroSemestre] = useState<string>('');
+  const [filtroPeriodo, setFiltroPeriodo] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>('activos');
 
@@ -361,7 +361,7 @@ export default function Cursos() {
     }
   };
 
-  const semestresUnicos = Array.from(new Set(cursos.map(c => c.semestre?.toString()).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
+  const periodosUnicos = Array.from(new Set(cursos.map(c => c.periodo).filter(Boolean))).sort();
   const programasUnicos = Array.from(new Set(cursos.map(c => c.programa).filter(Boolean))).sort();
 
   const getProgramaColor = (programaName: string | undefined | null) => {
@@ -394,9 +394,9 @@ export default function Cursos() {
   const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
 
   const cursosFiltrados = cursos.filter(curso => {
-    const matchSemestre = (activeTab === 'activos' && filtroSemestre) ? curso.semestre?.toString() === filtroSemestre : true;
+    const matchPeriodo = (activeTab === 'activos' && filtroPeriodo) ? curso.periodo === filtroPeriodo : true;
     const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
-    return matchSemestre && matchPrograma;
+    return matchPeriodo && matchPrograma;
   });
 
   return (
@@ -477,18 +477,18 @@ export default function Cursos() {
         </div>
         {activeTab !== 'solicitudes' && (
           <div className="flex-1">
-            <label htmlFor="filtroSemestre" className="block text-sm font-medium text-text-main mb-1">
-              Filtrar por Semestre
+            <label htmlFor="filtroPeriodo" className="block text-sm font-medium text-text-main mb-1">
+              Filtrar por Periodo
             </label>
             <select
-              id="filtroSemestre"
-              value={filtroSemestre}
-              onChange={(e) => setFiltroSemestre(e.target.value)}
+              id="filtroPeriodo"
+              value={filtroPeriodo}
+              onChange={(e) => setFiltroPeriodo(e.target.value)}
               className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
             >
-              <option value="">Todos los semestres</option>
-              {semestresUnicos.map(s => (
-                <option key={s} value={s}>Semestre {s}</option>
+              <option value="">Todos los periodos</option>
+              {periodosUnicos.map(p => (
+                <option key={p} value={p}>{p}</option>
               ))}
             </select>
           </div>
