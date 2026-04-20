@@ -721,43 +721,6 @@ export default function CursoDetalle() {
               </div>
             </div>
 
-            {/* Drive Folder Access (Original UI moved down) */}
-            <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center flex flex-col items-center">
-              <HardDrive className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-text-main">Carpeta General de Recursos</h3>
-              <p className="text-secondary mt-2 max-w-md mx-auto mb-6">
-                Acceda directamente al repositorio principal de este curso en Google Drive.
-              </p>
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-white rounded-lg shadow-sm mr-3">
-                      <HardDrive className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-sm font-bold text-text-main">Carpeta de Recursos</div>
-                      <div className="text-xs text-secondary">Google Drive</div>
-                    </div>
-                  </div>
-                  {curso.drive_url ? (
-                    <a 
-                      href={curso.drive_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold shadow-sm"
-                    >
-                      Acceder
-                    </a>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">No configurada</span>
-                  )}
-                </div>
-                <p className="text-[11px] text-secondary text-left leading-relaxed">
-                  Utiliza esta carpeta para cargar y organizar todo el material pedagógico, lecturas, y archivos multimedia necesarios para la construcción del curso virtual.
-                </p>
-              </div>
-            </div>
-
             {/* Modal para Documentos */}
             {showDocModal && (
               <div className="fixed inset-0 z-[60] overflow-y-auto">
