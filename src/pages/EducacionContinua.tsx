@@ -119,16 +119,15 @@ export default function EducacionContinua() {
     return `${h}h ${m}m`;
   };
 
-  // Categorización de tareas para el nuevo listado
+  // Categorización de tareas para el nuevo listado (solo pendientes/en progreso)
   const categorizarTareas = () => {
     const vencidas: any[] = [];
     const enProgreso: any[] = [];
-    const completadas: any[] = [];
     const today = startOfDay(new Date());
 
     tareas.forEach(tarea => {
+      // Por si acaso llegan tareas completadas, las ignoramos
       if (tarea.estado === 'Completada' || tarea.estado === 'Completado') {
-        completadas.push(tarea);
         return;
       }
 
@@ -155,12 +154,11 @@ export default function EducacionContinua() {
 
     return {
       vencidas: vencidas.sort(sortByDate),
-      enProgreso: enProgreso.sort(sortByDate),
-      completadas: completadas.sort(sortByDate)
+      enProgreso: enProgreso.sort(sortByDate)
     };
   };
 
-  const { vencidas, enProgreso, completadas } = categorizarTareas();
+  const { vencidas, enProgreso } = categorizarTareas();
 
   const getTrafficLightStatus = (fecha: string, estado: string) => {
     if (estado === 'Completada' || estado === 'Completado') {
@@ -422,7 +420,6 @@ export default function EducacionContinua() {
           <div className="flex flex-col lg:flex-row gap-8 overflow-x-auto pb-4">
             {renderCategorizedList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
             {renderCategorizedList('Tareas En Progreso', enProgreso, 'text-amber-700', 'bg-amber-500')}
-            {renderCategorizedList('Tareas Completadas', completadas, 'text-emerald-700', 'bg-emerald-500')}
           </div>
         </div>
       )}

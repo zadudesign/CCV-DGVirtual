@@ -103,6 +103,11 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       const events: any[] = [];
       
       filteredData.forEach((row: any) => {
+        // Ocultar tareas completadas según requerimiento
+        if (row.estado === 'Completada' || row.estado === 'Completado') {
+          return;
+        }
+
         if (row.fecha_vencimiento) {
           events.push({
             id: row.id,
@@ -504,7 +509,6 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
         {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
         {renderList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
-        {renderList('Tareas Completadas', completadas, 'text-green-700', 'bg-green-500')}
       </div>
     );
   };
