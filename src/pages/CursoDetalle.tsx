@@ -589,19 +589,18 @@ export default function CursoDetalle() {
                       <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Documento</th>
                       <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Estado</th>
                       <th className="px-6 py-3 text-left text-[10px] font-bold text-secondary uppercase tracking-widest">Fecha Completado</th>
-                      <th className="px-6 py-3 text-right text-[10px] font-bold text-secondary uppercase tracking-widest">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
                     {loadingDocs ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center">
+                        <td colSpan={3} className="px-6 py-12 text-center">
                           <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                         </td>
                       </tr>
                     ) : documentos.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center flex flex-col items-center">
+                        <td colSpan={3} className="px-6 py-12 text-center flex flex-col items-center">
                           <FileText className="h-10 w-10 text-slate-200 mb-2" />
                           <p className="text-sm text-secondary">No hay documentos registrados para este curso.</p>
                           {user?.role === 'admin' && (
@@ -665,40 +664,6 @@ export default function CursoDetalle() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                             {doc.fecha ? new Date(doc.fecha).toLocaleDateString() : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex justify-end space-x-2">
-                              {user?.role === 'admin' && (
-                                <>
-                                  <button onClick={() => handleEditDoc(doc)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                                    <Edit2 className="h-4 w-4" />
-                                  </button>
-                                  <button onClick={() => handleDeleteDoc(doc.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </>
-                              )}
-                              {doc.link && (
-                                <>
-                                  <button 
-                                    onClick={() => setSelectedDocForPreview(doc)} 
-                                    className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    title="Visualizar documento"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </button>
-                                  <a 
-                                    href={doc.link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    title="Abrir en pestaña nueva"
-                                  >
-                                    <ExternalLink className="h-4 w-4" />
-                                  </a>
-                                </>
-                              )}
-                            </div>
                           </td>
                         </tr>
                       ))
