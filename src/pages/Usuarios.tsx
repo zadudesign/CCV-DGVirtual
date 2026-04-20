@@ -1,15 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Users as UsersIcon, Loader2, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { 
+  Users as UsersIcon, 
+  Loader2, 
+  ArrowUpDown, 
+  ChevronUp, 
+  ChevronDown, 
+  UserPlus, 
+  Library, 
+  Mail, 
+  IdCard, 
+  Phone, 
+  Shield,
+  Plus,
+  Trash2,
+  Edit,
+  Save,
+  X
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { User } from '../types';
+import { User, Role } from '../types';
 
 export default function Usuarios() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const [activeTab, setActiveTab] = useState<'inscribir' | 'facultades'>('inscribir');
+  const [activeSubTab, setActiveSubTab] = useState<'form' | 'lista'>('lista');
+  
   const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [facultades, setFacultades] = useState<any[]>([]);
+  const [programas, setProgramas] = useState<any[]>([]);
   const [cursos, setCursos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filtros de la lista
   const [filtroFacultad, setFiltroFacultad] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
   const [filtroRol, setFiltroRol] = useState<string>('');
@@ -17,6 +41,73 @@ export default function Usuarios() {
     key: 'last_access', 
     direction: 'desc' 
   });
+
+  // Inscribir Form State
+  const [formInscribir, setFormInscribir] = useState({
+    nombre: '',
+    email: '',
+    role: 'docente' as Role,
+    documento: '',
+    telefono: '',
+    facultad: '',
+    programa: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Facultades/Programas State
+  const [newFacultad, setNewFacultad] = useState('');
+  const [newPrograma, setNewPrograma] = useState('');
+  const [selectedFacultadId, setSelectedFacultadId] = useState('');
+  const [editingFacultadId, setEditingFacultadId] = useState<string | null>(null);
+  const [editingFacultadNombre, setEditingFacultadNombre] = useState('');
+  const [editingProgramaId, setEditingProgramaId] = useState<string | null>(null);
+  const [editingProgramaNombre, setEditingProgramaNombre] = useState('');
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      let query = supabase.from('profiles').select('*').order('name');
+      
+      if (user?.role === 'decano' && user.facultad) {
+        query = query.eq('facultad', user.facultad);
+      } else if (user?.role === 'coordinador' && user.programa) {
+        query = query.eq('programa', user.programa);
+      }
+      
+      const { data: usersData, error: usersError } = await query;
+      if (usersError) throw usersError;
+      
+      const { data: cursosData, error: cursosError } = await supabase
+        .from('cursos')
+        .select('id, nombre, docente_id, evaluador_id');
+      if (cursosError) throw cursosError;
+      
+      setUsuarios((usersData as User[]) || []);
+      setCursos(cursosData || []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFacultadesYProgramas = async () => {
+    try {
+      const { data: fData } = await supabase.from('facultades').select('*').order('nombre');
+      const { data: pData } = await supabase.from('programas').select('*, facultades(nombre)').order('nombre');
+      setFacultades(fData || []);
+      setProgramas(pData || []);
+    } catch (err) {
+      console.error('Error fetching facultades/programas:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+      fetchFacultadesYProgramas();
+    }
+  }, [user]);
 
   const handleSort = (key: keyof User | 'last_access') => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -31,69 +122,75 @@ export default function Usuarios() {
     return sortConfig.direction === 'asc' ? <ChevronUp className="ml-1 h-3 w-3 text-primary" /> : <ChevronDown className="ml-1 h-3 w-3 text-primary" />;
   };
 
+  const formatearFecha = (fechaStr?: string) => {
+    if (!fechaStr) return '-';
+    return new Date(fechaStr).toLocaleDateString('es-ES', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  };
+
   const getDiasDesdeUltimoAcceso = (fechaStr?: string) => {
     if (!fechaStr) return null;
     const fechaAcceso = new Date(fechaStr);
     const hoy = new Date();
-    
-    // Resetear horas para comparar solo días
     fechaAcceso.setHours(0, 0, 0, 0);
     hoy.setHours(0, 0, 0, 0);
-    
     const diferenciaMs = hoy.getTime() - fechaAcceso.getTime();
-    const diferenciaDias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
-    
-    return diferenciaDias;
+    return Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
-  const formatearFecha = (fechaStr?: string) => {
-    if (!fechaStr) return '-';
-    return new Date(fechaStr).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
-
-  const fetchData = async () => {
+  const handleInscribir = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
     try {
-      setLoading(true);
-      
-      // Fetch usuarios
-      let query = supabase.from('profiles').select('*').order('name');
-      
-      // Filtro automático según el rol del usuario actual
-      if (user?.role === 'decano' && user.facultad) {
-        query = query.eq('facultad', user.facultad);
-      } else if (user?.role === 'coordinador' && user.programa) {
-        query = query.eq('programa', user.programa);
-      }
-      
-      const { data: usersData, error: usersError } = await query;
-      if (usersError) throw usersError;
-      
-      // Fetch cursos to map them to docentes and evaluadores
-      const { data: cursosData, error: cursosError } = await supabase
-        .from('cursos')
-        .select('id, nombre, docente_id, evaluador_id');
-        
-      if (cursosError) throw cursosError;
-      
-      setUsuarios((usersData as User[]) || []);
-      setCursos(cursosData || []);
-    } catch (err) {
-      console.error('Error fetching data:', err);
+      const { error } = await supabase.from('profiles').insert([{
+        id: crypto.randomUUID(), 
+        name: formInscribir.nombre,
+        email: formInscribir.email,
+        role: formInscribir.role,
+        documento: formInscribir.documento,
+        telefono: formInscribir.telefono,
+        facultad: formInscribir.facultad || null,
+        programa: formInscribir.programa || null
+      }]);
+      if (error) throw error;
+      alert('Usuario inscrito correctamente.');
+      setFormInscribir({
+        nombre: '', email: '', role: 'docente', documento: '',
+        telefono: '', facultad: '', programa: ''
+      });
+      fetchData();
+      setActiveSubTab('lista');
+    } catch (err: any) {
+      alert('Error al inscribir usuario: ' + err.message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
+  };
+
+  const handleAddFacultad = async () => {
+    if (!newFacultad.trim()) return;
+    const { error } = await supabase.from('facultades').insert([{ nombre: newFacultad }]);
+    if (!error) { setNewFacultad(''); fetchFacultadesYProgramas(); }
+  };
+
+  const handleDeleteFacultad = async (id: string, nombre: string) => {
+    if (!window.confirm(`¿Seguro que quieres eliminar la facultad "${nombre}"?`)) return;
+    const { error } = await supabase.from('facultades').delete().eq('id', id);
+    if (!error) fetchFacultadesYProgramas();
+  };
+
+  const handleAddPrograma = async () => {
+    if (!newPrograma.trim() || !selectedFacultadId) return;
+    const { error } = await supabase.from('programas').insert([{ nombre: newPrograma, facultad_id: selectedFacultadId }]);
+    if (!error) { setNewPrograma(''); fetchFacultadesYProgramas(); }
+  };
+
+  const handleDeletePrograma = async (id: string, nombre: string) => {
+    if (!window.confirm(`¿Seguro que quieres eliminar el programa "${nombre}"?`)) return;
+    const { error } = await supabase.from('programas').delete().eq('id', id);
+    if (!error) fetchFacultadesYProgramas();
   };
 
   const facultadesUnicas = Array.from(new Set(usuarios.map(u => u.facultad).filter(Boolean))).sort() as string[];
@@ -111,7 +208,6 @@ export default function Usuarios() {
       const key = sortConfig.key;
       const valA = a[key as keyof User] || '';
       const valB = b[key as keyof User] || '';
-
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
@@ -119,229 +215,293 @@ export default function Usuarios() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-text-main">Gestión de Usuarios</h1>
-        <p className="mt-1 text-sm text-secondary">
-          Lista de todos los usuarios inscritos en la plataforma.
-        </p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-text-main">Panel de Administración</h1>
+          <p className="mt-1 text-sm text-secondary">Gestión de usuarios, facultades y programas de la plataforma CCV.</p>
+        </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100 flex flex-col space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
-              <UsersIcon className="mr-2 h-5 w-5 text-primary" />
-              Usuarios Registrados
-            </h3>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            {facultadesUnicas.length > 1 && (
-              <div className="flex-1">
-                <label htmlFor="facultad-filter" className="block text-xs font-medium text-text-main mb-1">
-                  Facultad:
-                </label>
-                <select
-                  id="facultad-filter"
-                  value={filtroFacultad}
-                  onChange={(e) => setFiltroFacultad(e.target.value)}
-                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                >
-                  <option value="">Todas las facultades</option>
-                  {facultadesUnicas.map(facultad => (
-                    <option key={facultad} value={facultad}>{facultad}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+      <div className="border-b border-muted/30">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('inscribir')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
+              activeTab === 'inscribir' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+            }`}
+          >
+            <UserPlus className="h-5 w-5 mr-2" /> Inscribir Usuarios
+          </button>
+          <button
+            onClick={() => setActiveTab('facultades')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
+              activeTab === 'facultades' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+            }`}
+          >
+            <Library className="h-5 w-5 mr-2" /> Facultades y Programas
+          </button>
+        </nav>
+      </div>
 
-            {programasUnicos.length > 1 && (
-              <div className="flex-1">
-                <label htmlFor="programa-filter" className="block text-xs font-medium text-text-main mb-1">
-                  Programa:
-                </label>
-                <select
-                  id="programa-filter"
-                  value={filtroPrograma}
-                  onChange={(e) => setFiltroPrograma(e.target.value)}
-                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                >
-                  <option value="">Todos los programas</option>
-                  {programasUnicos.map(programa => (
-                    <option key={programa} value={programa}>{programa}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {rolesUnicos.length > 1 && (
-              <div className="flex-1">
-                <label htmlFor="rol-filter" className="block text-xs font-medium text-text-main mb-1">
-                  Rol:
-                </label>
-                <select
-                  id="rol-filter"
-                  value={filtroRol}
-                  onChange={(e) => setFiltroRol(e.target.value)}
-                  className="block w-full rounded-md border border-muted px-3 py-1.5 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                >
-                  <option value="">Todos los roles</option>
-                  {rolesUnicos.map(rol => (
-                    <option key={rol} value={rol}>{rol}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+      {activeTab === 'inscribir' && (
+        <div className="space-y-6">
+          <div className="flex space-x-4 mb-4">
+            <button onClick={() => setActiveSubTab('lista')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'lista' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Lista de Usuarios</button>
+            <button onClick={() => setActiveSubTab('form')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'form' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Inscribir Nuevo Usuario</button>
           </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-background">
-              <tr>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center">
-                    Perfil y Contacto
-                    {getSortIcon('name')}
+
+          {activeSubTab === 'form' ? (
+            <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
+              <div className="p-8">
+                <div className="flex items-center mb-6">
+                  <UserPlus className="h-6 w-6 text-primary mr-3" />
+                  <div>
+                    <h2 className="text-xl font-bold text-text-main">Inscribir Nuevo Usuario</h2>
+                    <p className="text-sm text-secondary">Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.</p>
                   </div>
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
-                  onClick={() => handleSort('role')}
-                >
-                  <div className="flex items-center">
-                    Rol y Ubicación
-                    {getSortIcon('role')}
-                  </div>
-                </th>
-                {isAdmin && (
-                  <th 
-                    scope="col" 
-                    className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors"
-                    onClick={() => handleSort('last_access')}
-                  >
-                    <div className="flex items-center">
-                      Actividad
-                      {getSortIcon('last_access')}
-                    </div>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-secondary">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                  </td>
-                </tr>
-              ) : usuariosFiltrados.length === 0 ? (
-                <tr>
-                  <td colSpan={isAdmin ? 3 : 2} className="px-6 py-4 text-center text-sm text-secondary">
-                    No hay usuarios registrados que coincidan con los filtros seleccionados.
-                  </td>
-                </tr>
-              ) : (
-                usuariosFiltrados.map((user) => (
-                  <tr key={user.id} className="hover:bg-background group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start">
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary-hover font-bold overflow-hidden mt-1">
-                          {user.photoURL ? (
-                            <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
-                          ) : (
-                            user.name?.charAt(0) || user.email?.charAt(0) || '?'
-                          )}
-                        </div>
-                        <div className="ml-4 space-y-0.5">
-                          <div className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">{user.name || 'Sin nombre'}</div>
-                          <div className="text-xs text-secondary leading-none">{user.email}</div>
-                          {isAdmin && (
-                            <div className="flex items-center gap-3 pt-1">
-                              {user.documento && (
-                                <div className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
-                                  DOC: {user.documento}
-                                </div>
-                              )}
-                              {user.telefono && (
-                                <div className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
-                                  TEL: {user.telefono}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                </div>
+                <form onSubmit={handleInscribir} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-text-main mb-2">Rol a inscribir</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
+                        <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
+                          <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
+                        </select>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        <span className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-widest rounded-full ${
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                          user.role === 'decano' ? 'bg-blue-100 text-blue-800' :
-                          user.role === 'coordinador' ? 'bg-green-100 text-green-800' :
-                          user.role === 'docente' ? 'bg-yellow-100 text-yellow-800' :
-                          user.role === 'Soporte' ? 'bg-orange-100 text-orange-800' :
-                          user.role === 'Multimedia' ? 'bg-indigo-100 text-indigo-800' :
-                          user.role === 'Diseño' ? 'bg-pink-100 text-pink-800' :
-                          user.role === 'Pedagogía' ? 'bg-cyan-100 text-cyan-800' :
-                          'bg-slate-100 text-text-main'
-                        }`}>
-                          {user.role}
-                        </span>
-                        
-                        <div className="text-xs leading-tight">
-                          {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role) ? (
-                            <div className="text-secondary italic">Equipo: {user.role === 'team' ? user.team_area : user.role}</div>
-                          ) : user.facultad ? (
-                            <div>
-                              <div className="text-text-main font-semibold truncate max-w-[200px]" title={user.facultad}>{user.facultad}</div>
-                              {user.programa && <div className="text-secondary truncate max-w-[180px]" title={user.programa}>{user.programa}</div>}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 italic">No asignado</span>
-                          )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-text-main mb-2">Nombre Completo</label>
+                      <input type="text" required value={formInscribir.nombre} onChange={(e) => setFormInscribir({...formInscribir, nombre: e.target.value})} className="block w-full px-4 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. Juan Pérez" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-text-main mb-2">Correo Institucional</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-slate-400" /></div>
+                        <input type="email" required value={formInscribir.email} onChange={(e) => setFormInscribir({...formInscribir, email: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="juan.perez@universidad.edu" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-text-main mb-2">Número de Documento</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IdCard className="h-5 w-5 text-slate-400" /></div>
+                        <input type="text" required value={formInscribir.documento} onChange={(e) => setFormInscribir({...formInscribir, documento: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 1020304050" />
+                      </div>
+                      <p className="mt-1 text-[11px] text-primary font-medium">Este número será usado como contraseña inicial.</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-text-main mb-2">Número de Contacto</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-5 w-5 text-slate-400" /></div>
+                        <input type="tel" value={formInscribir.telefono} onChange={(e) => setFormInscribir({...formInscribir, telefono: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 3001234567" />
+                      </div>
+                    </div>
+                    {['decano','coordinador','docente','evaluador'].includes(formInscribir.role) && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-main mb-2">Facultad</label>
+                          <select required value={formInscribir.facultad} onChange={(e) => setFormInscribir({...formInscribir, facultad: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
+                            <option value="">Seleccione Facultad</option>
+                            {facultades.map(f => (<option key={f.id} value={f.nombre}>{f.nombre}</option>))}
+                          </select>
                         </div>
-
-                        {/* Cursos asignados en miniatura */}
-                        {(user.role === 'docente' || user.role === 'evaluador') && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {cursos.filter(c => c.docente_id === user.id || c.evaluador_id === user.id).map(curso => (
-                              <div key={curso.id} className="text-[9px] font-bold text-primary bg-primary/5 border border-primary/10 px-1.5 py-0.5 rounded truncate max-w-[120px]">
-                                {curso.nombre}
-                              </div>
-                            ))}
+                        {formInscribir.role !== 'decano' && (
+                          <div>
+                            <label className="block text-sm font-semibold text-text-main mb-2">Programa</label>
+                            <select required value={formInscribir.programa} onChange={(e) => setFormInscribir({...formInscribir, programa: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
+                              <option value="">Seleccione Programa</option>
+                              {programas.filter(p => !formInscribir.facultad || p.facultades?.nombre === formInscribir.facultad).map(p => (<option key={p.id} value={p.nombre}>{p.nombre}</option>))}
+                            </select>
                           </div>
                         )}
-                      </div>
-                    </td>
-                    {isAdmin && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="text-xs font-medium text-text-main">{formatearFecha(user.last_access)}</div>
-                        {user.last_access && (
-                           <div className={`text-[10px] font-extrabold mt-1.5 uppercase tracking-tighter inline-block px-2 py-0.5 rounded-sm ${
-                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 ? 'bg-red-50 text-red-600 border border-red-100' :
-                             (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                             'bg-green-50 text-green-700 border border-green-100'
-                           }`}>
-                             {getDiasDesdeUltimoAcceso(user.last_access) === 0 
-                               ? '● Activo hoy' 
-                               : `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`}
-                           </div>
-                        )}
-                      </td>
+                      </>
                     )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  <div className="pt-4">
+                    <button type="submit" disabled={submitting} className="w-full flex justify-center items-center px-4 py-3 bg-primary text-white rounded-xl shadow-lg hover:bg-primary-hover disabled:opacity-50">
+                      {submitting ? <><Loader2 className="animate-spin h-5 w-5 mr-3" /> Inscribiendo...</> : <><UserPlus className="h-5 w-5 mr-3" /> Inscribir Nuevo Usuario</>}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+               <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100 flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full">
+                    {facultadesUnicas.length > 1 && (
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-text-main mb-1">Facultad:</label>
+                        <select value={filtroFacultad} onChange={(e) => setFiltroFacultad(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                          <option value="">Todas las facultades</option>
+                          {facultadesUnicas.map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    {programasUnicos.length > 1 && (
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-text-main mb-1">Programa:</label>
+                        <select value={filtroPrograma} onChange={(e) => setFiltroPrograma(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                          <option value="">Todos los programas</option>
+                          {programasUnicos.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+               </div>
+               <div className="overflow-x-auto">
+                 <table className="min-w-full divide-y divide-slate-200">
+                   <thead className="bg-background">
+                     <tr>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>Perfil y Contacto {getSortIcon('name')}</th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('role')}>Rol y Ubicación {getSortIcon('role')}</th>
+                       {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_access')}>Actividad {getSortIcon('last_access')}</th>}
+                     </tr>
+                   </thead>
+                   <tbody className="bg-white divide-y divide-slate-200">
+                     {loading ? (<tr><td colSpan={isAdmin?3:2} className="py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></td></tr>) : 
+                      usuariosFiltrados.length === 0 ? (<tr><td colSpan={isAdmin?3:2} className="py-8 text-center text-sm text-secondary">No hay usuarios.</td></tr>) :
+                      usuariosFiltrados.map(user => (
+                        <tr key={user.id} className="hover:bg-background">
+                          <td className="px-6 py-4">
+                            <div className="flex items-start">
+                              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20">
+                                {user.photoURL ? <img src={user.photoURL} className="h-full w-full object-cover" /> : user.name?.charAt(0)}
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-bold text-text-main leading-tight">{user.name}</div>
+                                <div className="text-[11px] text-secondary mt-0.5">{user.email}</div>
+                                {isAdmin && (
+                                  <div className="mt-1.5 flex flex-col space-y-0.5">
+                                    <div className="flex items-center text-[10px] text-slate-500">
+                                      <IdCard className="h-3 w-3 mr-1" /> {user.documento || 'Sin doc.'}
+                                    </div>
+                                    <div className="flex items-center text-[10px] text-slate-500">
+                                      <Phone className="h-3 w-3 mr-1" /> {user.telefono || 'Sin tel.'}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                             <div className="space-y-2">
+                               <div className="flex items-center space-x-2">
+                                 <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-blue-50 text-blue-700 border border-blue-100">{user.role}</span>
+                               </div>
+                               <div className="text-[11px] text-secondary font-medium">{user.facultad} {user.programa && `• ${user.programa}`}</div>
+                               
+                               {/* Cursos Asignados */}
+                               {(user.role === 'docente' || user.role === 'evaluador') && (
+                                 <div className="pt-1">
+                                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1">Cursos asignados:</div>
+                                   <div className="flex flex-wrap gap-1">
+                                     {cursos
+                                       .filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id))
+                                       .map(c => (
+                                         <span key={c.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                           {c.nombre}
+                                         </span>
+                                       ))
+                                     }
+                                     {cursos.filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id)).length === 0 && (
+                                       <span className="text-[10px] italic text-slate-400">Ninguno</span>
+                                     )}
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
+                          </td>
+                          {isAdmin && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <div className="text-xs font-medium text-text-main">
+                                {user.last_access ? (
+                                  new Date(user.last_access).toLocaleDateString('es-ES', { 
+                                    day: '2-digit', month: 'short', year: 'numeric' 
+                                  }) + ' ' + new Date(user.last_access).toLocaleTimeString('es-ES', { 
+                                    hour: '2-digit', minute: '2-digit', hour12: true 
+                                  })
+                                ) : '-'}
+                              </div>
+                              {user.last_access && (
+                                <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-extrabold uppercase tracking-tighter border ${
+                                  (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 
+                                    ? 'bg-red-50 text-red-600 border-red-100' :
+                                  (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 
+                                    ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                    'bg-green-50 text-green-700 border-green-100'
+                                }`}>
+                                  {getDiasDesdeUltimoAcceso(user.last_access) === 0 ? (
+                                    <><span className="mr-1">●</span> Activo hoy</>
+                                  ) : (
+                                    `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                     }
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {activeTab === 'facultades' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30">
+            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center"><Library className="mr-2 h-5 w-5 text-primary" /> Facultades</div>
+            <div className="p-6">
+              <div className="flex space-x-2 mb-4">
+                <input type="text" value={newFacultad} onChange={e => setNewFacultad(e.target.value)} className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Nueva..." />
+                <button onClick={handleAddFacultad} className="p-2 bg-primary text-white rounded-lg"><Plus className="h-5 w-5"/></button>
+              </div>
+              <div className="space-y-2">
+                {facultades.map(f => (
+                  <div key={f.id} className="flex justify-between p-2 border rounded-lg hover:bg-slate-50">
+                    <span className="text-sm font-medium">{f.nombre}</span>
+                    <button onClick={() => handleDeleteFacultad(f.id, f.nombre)} className="text-slate-300 hover:text-red-500"><Trash2 className="h-4 w-4"/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30">
+            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Programas</div>
+            <div className="p-6">
+              <div className="space-y-2 mb-4">
+                <select value={selectedFacultadId} onChange={e => setSelectedFacultadId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option value="">Facultad...</option>
+                  {facultades.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
+                </select>
+                <div className="flex space-x-2">
+                  <input type="text" value={newPrograma} onChange={e => setNewPrograma(e.target.value)} className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Nuevo..." />
+                  <button onClick={handleAddPrograma} className="p-2 bg-primary text-white rounded-lg"><Plus className="h-5 w-5"/></button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                {programas.filter(p => !selectedFacultadId || p.facultad_id === selectedFacultadId).map(p => (
+                  <div key={p.id} className="flex justify-between p-2 border rounded-lg hover:bg-slate-50">
+                    <div>
+                      <div className="text-sm font-medium">{p.nombre}</div>
+                      <div className="text-[10px] text-secondary font-bold uppercase">{p.facultades?.nombre}</div>
+                    </div>
+                    <button onClick={() => handleDeletePrograma(p.id, p.nombre)} className="text-slate-300 hover:text-red-500"><Trash2 className="h-4 w-4"/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

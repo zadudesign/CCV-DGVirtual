@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle, Bell, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,18 +17,12 @@ export default function EducacionContinua() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>('tareas');
 
   useEffect(() => {
     fetchProyectos();
-  }, []);
-
-  useEffect(() => {
-    if (selectedProyecto) {
-      fetchTareas(selectedProyecto);
-    } else {
-      setTareas([]);
-    }
-  }, [selectedProyecto]);
+    fetchAllTasks();
+  }, [user]);
 
   const fetchProyectos = async () => {
     try {
@@ -39,7 +33,6 @@ export default function EducacionContinua() {
         .order('nombre', { ascending: true });
 
       if (error) {
-        // Ignoramos el error 42P01 (relation does not exist) para no romper la UI si la tabla no existe aún
         if (error.code !== '42P01') throw error;
       } else {
         setProyectos(data || []);
@@ -51,13 +44,23 @@ export default function EducacionContinua() {
     }
   };
 
-  const fetchTareas = async (proyectoNombre: string) => {
+  const fetchAllTasks = async () => {
     try {
       setLoadingTareas(true);
+      
+      // Obtenemos los nombres de todos los proyectos de EC para filtrar
+      const { data: pData } = await supabase.from('proyectos_ec').select('nombre');
+      const pNames = pData?.map(p => p.nombre) || [];
+      
+      if (pNames.length === 0) {
+        setTareas([]);
+        return;
+      }
+
       let query = supabase
         .from('notificaciones_tareas')
         .select('*')
-        .eq('proyecto', proyectoNombre);
+        .in('proyecto', pNames);
 
       if (user?.role !== 'admin') {
         const area = user?.team_area || user?.role;
@@ -72,7 +75,7 @@ export default function EducacionContinua() {
         setTareas(data || []);
       }
     } catch (err: any) {
-      console.error('Error fetching tareas:', err);
+      console.error('Error fetching all tasks:', err);
     } finally {
       setLoadingTareas(false);
     }
@@ -96,6 +99,7 @@ export default function EducacionContinua() {
       if (error) throw error;
 
       await fetchProyectos();
+      await fetchAllTasks();
       setNewProyectoName('');
       setSuccess('Proyecto agregado con éxito');
       
@@ -107,12 +111,128 @@ export default function EducacionContinua() {
     }
   };
 
-  const totalProjectSeconds = tareas.reduce((acc, tarea) => acc + (tarea.tiempo_invertido || 0), 0);
+  const tareasDelProyecto = selectedProyecto ? tareas.filter(t => t.proyecto === selectedProyecto) : [];
+  const totalProjectSeconds = tareasDelProyecto.reduce((acc, tarea) => acc + (tarea.tiempo_invertido || 0), 0);
   const formatTotalTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
     return `${h}h ${m}m`;
   };
+
+  // Categorización de tareas para el nuevo listado
+  const categorizarTareas = () => {
+    const vencidas: any[] = [];
+    const enProgreso: any[] = [];
+    const completadas: any[] = [];
+    const today = startOfDay(new Date());
+
+    tareas.forEach(tarea => {
+      if (tarea.estado === 'Completada' || tarea.estado === 'Completado') {
+        completadas.push(tarea);
+        return;
+      }
+
+      if (!tarea.fecha_vencimiento) {
+        enProgreso.push(tarea);
+        return;
+      }
+
+      const dueDate = startOfDay(parseISO(tarea.fecha_vencimiento));
+      const diffDays = differenceInDays(dueDate, today);
+
+      if (diffDays < 0) {
+        vencidas.push(tarea);
+      } else {
+        enProgreso.push(tarea);
+      }
+    });
+
+    const sortByDate = (a: any, b: any) => {
+      const dateA = new Date(a.fecha_vencimiento || 0).getTime();
+      const dateB = new Date(b.fecha_vencimiento || 0).getTime();
+      return dateA - dateB;
+    };
+
+    return {
+      vencidas: vencidas.sort(sortByDate),
+      enProgreso: enProgreso.sort(sortByDate),
+      completadas: completadas.sort(sortByDate)
+    };
+  };
+
+  const { vencidas, enProgreso, completadas } = categorizarTareas();
+
+  const getTrafficLightStatus = (fecha: string, estado: string) => {
+    if (estado === 'Completada' || estado === 'Completado') {
+      return {
+        color: 'bg-green-50 text-green-700 border-green-100',
+        iconBg: 'bg-green-500',
+        label: 'Completada'
+      };
+    }
+
+    if (!fecha) return { color: 'bg-yellow-50 text-yellow-700 border-yellow-100', iconBg: 'bg-yellow-500', label: 'En Progreso' };
+
+    const today = startOfDay(new Date());
+    const dueDate = startOfDay(parseISO(fecha));
+    const diffDays = differenceInDays(dueDate, today);
+
+    if (diffDays < 0) {
+      const daysLate = Math.abs(diffDays);
+      return {
+        color: 'bg-red-50 text-red-700 border-red-100',
+        iconBg: 'bg-red-500',
+        label: `Vencida (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`
+      };
+    } else {
+      return {
+        color: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+        iconBg: 'bg-yellow-500',
+        label: 'En Progreso'
+      };
+    }
+  };
+
+  const renderCategorizedList = (title: string, events: any[], colorClass: string, bgClass: string) => (
+    <div className="flex-1 min-w-[300px]">
+      <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 flex items-center ${colorClass}`}>
+        <div className={`w-2 h-2 rounded-full mr-2 ${bgClass}`}></div>
+        {title} ({events.length})
+      </h3>
+      <div className="space-y-3">
+        {events.length === 0 ? (
+          <p className="text-xs text-secondary italic py-2">No hay tareas</p>
+        ) : (
+          events.map((tarea, idx) => {
+            const status = getTrafficLightStatus(tarea.fecha_vencimiento, tarea.estado);
+            return (
+              <div key={tarea.id || idx} className="bg-white p-3 rounded-lg border border-muted/30 shadow-sm hover:shadow-md transition-shadow">
+                <TareaTimerItem 
+                  tarea={tarea} 
+                  onUpdate={fetchAllTasks} 
+                />
+                <div className={`mt-2 p-2 rounded border ${status.color} flex flex-col gap-1`}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase">{status.label}</span>
+                    <span className="text-[10px] opacity-80">
+                      {tarea.proyecto ? `${tarea.proyecto} • ` : ''}
+                      {tarea.fecha_vencimiento ? format(parseISO(tarea.fecha_vencimiento), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}
+                    </span>
+                  </div>
+                  {tarea.descripcion && (
+                    <div className="flex items-start gap-1 mt-1 opacity-90 border-t border-current/10 pt-1">
+                      <Bell className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      <p className="text-[10px] leading-tight line-clamp-2">{tarea.descripcion}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -124,6 +244,32 @@ export default function EducacionContinua() {
         <p className="mt-1 text-sm text-secondary">
           Gestión y seguimiento de proyectos de Educación Continua.
         </p>
+      </div>
+
+      {/* Navegación por pestañas */}
+      <div className="flex border-b border-muted/30 -mb-px">
+        <button
+          onClick={() => setActiveTab('tareas')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'tareas'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <CheckCircle className={`mr-2 h-4 w-4 ${activeTab === 'tareas' ? 'text-primary' : 'text-slate-400'}`} />
+          Tareas
+        </button>
+        <button
+          onClick={() => setActiveTab('proyectos')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'proyectos'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <FolderKanban className={`mr-2 h-4 w-4 ${activeTab === 'proyectos' ? 'text-primary' : 'text-slate-400'}`} />
+          Proyectos
+        </button>
       </div>
 
       {success && (
@@ -149,8 +295,9 @@ export default function EducacionContinua() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Panel Proyectos */}
+      {activeTab === 'proyectos' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Panel Proyectos */}
         <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
           <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
             <h3 className="text-lg leading-6 font-medium text-text-main flex items-center">
@@ -242,7 +389,7 @@ export default function EducacionContinua() {
               </div>
             ) : loadingTareas ? (
               <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 text-slate-400 animate-spin" /></div>
-            ) : tareas.length === 0 ? (
+            ) : tareasDelProyecto.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <CheckCircle2 className="h-12 w-12 text-slate-300 mb-3" />
                 <p className="text-sm text-secondary">No hay tareas registradas para este proyecto.</p>
@@ -250,11 +397,11 @@ export default function EducacionContinua() {
               </div>
             ) : (
               <div className="space-y-3">
-                {tareas.map(tarea => (
+                {tareasDelProyecto.map(tarea => (
                   <TareaTimerItem 
                     key={tarea.id} 
                     tarea={tarea} 
-                    onUpdate={() => fetchTareas(selectedProyecto)} 
+                    onUpdate={fetchAllTasks} 
                   />
                 ))}
               </div>
@@ -262,6 +409,23 @@ export default function EducacionContinua() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* Listado de Tareas Clasificadas */}
+      {activeTab === 'tareas' && (
+        <div className="bg-white/50 shadow-sm rounded-xl border border-muted/30 p-6">
+          <div className="flex items-center mb-6">
+            <CheckCircle className="h-5 w-5 text-primary mr-2" />
+            <h2 className="text-lg font-bold text-text-main">Listado General de Tareas de Educación Continua</h2>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-8 overflow-x-auto pb-4">
+            {renderCategorizedList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
+            {renderCategorizedList('Tareas En Progreso', enProgreso, 'text-amber-700', 'bg-amber-500')}
+            {renderCategorizedList('Tareas Completadas', completadas, 'text-emerald-700', 'bg-emerald-500')}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
