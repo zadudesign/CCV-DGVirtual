@@ -200,6 +200,24 @@ export default function CursoDetalle() {
     }
   };
 
+  const handleUpdateMoodleUrl = async (newUrl: string) => {
+    if (!id || user?.role !== 'admin') return;
+    
+    try {
+      const { error } = await supabase
+        .from('cursos')
+        .update({ moodle_url: newUrl })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setCurso({ ...curso, moodle_url: newUrl });
+    } catch (err) {
+      console.error('Error updating moodle_url:', err);
+      alert('Error al actualizar la URL de Moodle');
+    }
+  };
+
   const handleUpdateDocStatus = async (docId: string, nuevoEstado: 'Pendiente' | 'En Revisión' | 'Completo') => {
     try {
       const updateData: any = { estado: nuevoEstado };
@@ -398,7 +416,7 @@ export default function CursoDetalle() {
               </div>
 
               {/* Ficha Técnica */}
-              <div className={`mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t ${theme.border}`}>
+              <div className={`mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-6 border-t ${theme.border}`}>
                 <div>
                   <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Docente</div>
                   <div className={`text-sm font-medium ${theme.text}`}>{curso.docente?.name || 'Sin asignar'}</div>
@@ -414,6 +432,36 @@ export default function CursoDetalle() {
                 <div>
                   <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Periodo</div>
                   <div className={`text-sm font-medium ${theme.text}`}>{curso.periodo || 'No definido'}</div>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-semibold ${theme.textMuted} uppercase tracking-wider mb-1`}>Curso en Moodle</div>
+                  <div className="flex items-center space-x-2">
+                    {curso.moodle_url ? (
+                      <a 
+                        href={curso.moodle_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-primary hover:underline flex items-center"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Acceder al Curso
+                      </a>
+                    ) : (
+                      <span className={`text-xs ${theme.textMuted} italic`}>No configurado</span>
+                    )}
+                    {user?.role === 'admin' && (
+                      <button 
+                        onClick={() => {
+                          const url = prompt('Ingrese la URL del curso en Moodle:', curso.moodle_url || '');
+                          if (url !== null) handleUpdateMoodleUrl(url);
+                        }}
+                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-primary transition-colors"
+                        title="Configurar URL de Moodle"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

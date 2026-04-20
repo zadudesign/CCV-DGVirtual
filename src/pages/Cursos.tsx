@@ -41,6 +41,7 @@ export default function Cursos() {
   const [clickupAdminUrl, setClickupAdminUrl] = useState('');
   const [driveUrl, setDriveUrl] = useState('');
   const [icon, setIcon] = useState('BookOpen');
+  const [moodleUrl, setMoodleUrl] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [showSolicitudModal, setShowSolicitudModal] = useState(false);
   
@@ -224,6 +225,7 @@ export default function Cursos() {
           clickup_pedagogia_url: clickupPedagogiaUrl || null,
           clickup_admin_url: clickupAdminUrl || null,
           drive_url: driveUrl || null,
+          moodle_url: moodleUrl || null,
           icon: icon || 'BookOpen'
         }]);
 
@@ -243,6 +245,7 @@ export default function Cursos() {
       setClickupPedagogiaUrl('');
       setClickupAdminUrl('');
       setDriveUrl('');
+      setMoodleUrl('');
       setIcon('BookOpen');
       fetchCursos();
     } catch (err) {
@@ -1038,6 +1041,17 @@ export default function Cursos() {
                       onChange={(e) => setDriveUrl(e.target.value)}
                       className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                       placeholder="https://drive.google.com/drive/folders/..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-main">URL del Curso en Moodle</label>
+                    <input
+                      type="url"
+                      value={moodleUrl}
+                      onChange={(e) => setMoodleUrl(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                      placeholder="https://moodle.ejemplo.com/course/view.php?id=..."
                     />
                   </div>
 

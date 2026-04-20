@@ -89,6 +89,7 @@ export interface Curso {
   clickup_admin_url?: string;
   clickup_list_id?: string;
   drive_url?: string;
+  moodle_url?: string;
   icon?: string;
   make_webhook_url?: string;
   clickup_stats?: any;
