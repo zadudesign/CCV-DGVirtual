@@ -183,6 +183,22 @@ export default function EducacionContinua() {
     return acc + (hours * rate);
   }, 0);
 
+  const globalTotalCost = tareas.reduce((acc, tarea) => {
+    const rate = hourlyRates[tarea.tipo_tarea as string] || 0;
+    const hours = (tarea.tiempo_invertido || 0) / 3600;
+    return acc + (hours * rate);
+  }, 0);
+
+  const getProjectCost = (projectName: string) => {
+    return tareas
+      .filter(t => t.proyecto === projectName)
+      .reduce((acc, tarea) => {
+        const rate = hourlyRates[tarea.tipo_tarea as string] || 0;
+        const hours = (tarea.tiempo_invertido || 0) / 3600;
+        return acc + (hours * rate);
+      }, 0);
+  };
+
   const formatTotalTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
@@ -368,7 +384,34 @@ export default function EducacionContinua() {
       )}
 
       {activeTab === 'proyectos' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <>
+          {isAdmin && (
+            <div className="bg-emerald-600 rounded-xl p-6 text-white shadow-lg mb-6 flex flex-col md:flex-row justify-between items-center gap-4 transition-all hover:shadow-xl border border-emerald-500/50">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <FolderKanban className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider opacity-80">Inversión Global de Educación Continua</h3>
+                  <p className="text-3xl font-mono font-bold">
+                    ${globalTotalCost.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-6 text-right">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase opacity-70">Total Proyectos</span>
+                  <span className="text-xl font-bold">{proyectos.length}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase opacity-70">Total Tareas EC</span>
+                  <span className="text-xl font-bold">{tareas.length}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Panel Proyectos */}
         <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
           <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100">
@@ -409,23 +452,33 @@ export default function EducacionContinua() {
               <p className="text-sm text-secondary text-center py-4">No hay proyectos registrados.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
-                {proyectos.map(proyecto => (
-                  <li 
-                    key={proyecto.id} 
-                    onClick={() => setSelectedProyecto(proyecto.nombre)}
-                    className={`py-3 flex justify-between items-center px-3 rounded-md transition-colors cursor-pointer ${
-                      selectedProyecto === proyecto.nombre ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-50 border border-transparent'
-                    }`}
-                  >
-                    <span className={`text-sm font-medium ${selectedProyecto === proyecto.nombre ? 'text-primary' : 'text-text-main'}`}>
-                      {proyecto.nombre}
-                    </span>
-                    <div className="flex items-center text-xs text-secondary">
-                      <span className="mr-2">{new Date(proyecto.created_at).toLocaleDateString()}</span>
-                      <ChevronRight className={`h-4 w-4 ${selectedProyecto === proyecto.nombre ? 'text-primary' : 'text-slate-300'}`} />
-                    </div>
-                  </li>
-                ))}
+                 {proyectos.map(proyecto => {
+                   const projectCost = getProjectCost(proyecto.nombre);
+                   return (
+                     <li 
+                       key={proyecto.id} 
+                       onClick={() => setSelectedProyecto(proyecto.nombre)}
+                       className={`py-3 flex justify-between items-center px-3 rounded-md transition-colors cursor-pointer ${
+                         selectedProyecto === proyecto.nombre ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-50 border border-transparent'
+                       }`}
+                     >
+                       <div className="flex flex-col">
+                         <span className={`text-sm font-medium ${selectedProyecto === proyecto.nombre ? 'text-primary' : 'text-text-main'}`}>
+                           {proyecto.nombre}
+                         </span>
+                         {projectCost > 0 && (
+                           <span className="text-[10px] font-mono font-bold text-emerald-600">
+                             ${projectCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                           </span>
+                         )}
+                       </div>
+                       <div className="flex items-center text-xs text-secondary">
+                         <span className="mr-2">{new Date(proyecto.created_at).toLocaleDateString()}</span>
+                         <ChevronRight className={`h-4 w-4 ${selectedProyecto === proyecto.nombre ? 'text-primary' : 'text-slate-300'}`} />
+                       </div>
+                     </li>
+                   );
+                 })}
               </ul>
             )}
           </div>
@@ -490,6 +543,7 @@ export default function EducacionContinua() {
           </div>
         </div>
       </div>
+      </>
       )}
 
       {/* Listado de Tareas Clasificadas */}
