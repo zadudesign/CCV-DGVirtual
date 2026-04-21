@@ -37,6 +37,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
     titulo: '',
+    tipo_tarea: 'Diseño' as 'Diseño' | 'Multimedia' | 'Transmisión',
     descripcion: '',
     fecha_vencimiento: '',
     rol_destino: 'Diseño'
@@ -118,6 +119,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             fecha_inicio: row.fecha_inicio, // If it exists in the future
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
+            tipo_tarea: row.tipo_tarea,
             descripcion: row.descripcion || '',
             curso: row.curso,
             proyecto: row.proyecto,
@@ -181,6 +183,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
       const payload = {
         titulo: formData.titulo,
+        tipo_tarea: formData.tipo_tarea,
         descripcion: formData.descripcion,
         fecha_vencimiento: fechaVencimientoColombia,
         rol_destino: formData.rol_destino,
@@ -196,6 +199,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       setFormData({
         proyecto: 'Diseño Virtual',
         titulo: '',
+        tipo_tarea: 'Diseño',
         descripcion: '',
         fecha_vencimiento: '',
         rol_destino: 'Diseño'
@@ -564,6 +568,19 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                       {proyectos.map((p, idx) => (
                         <option key={idx} value={p.nombre}>{p.nombre}</option>
                       ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Tipo de Tarea</label>
+                    <select
+                      required
+                      value={formData.tipo_tarea}
+                      onChange={(e) => setFormData({...formData, tipo_tarea: e.target.value as any})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="Diseño">Diseño</option>
+                      <option value="Multimedia">Multimedia</option>
+                      <option value="Transmisión">Transmisión</option>
                     </select>
                   </div>
                   <div>

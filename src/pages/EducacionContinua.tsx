@@ -5,6 +5,7 @@ import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 import { useAuth } from '../contexts/AuthContext';
+import { HOURLY_RATES } from '../lib/constants';
 
 export default function EducacionContinua() {
   const { user } = useAuth();
@@ -17,23 +18,74 @@ export default function EducacionContinua() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [hourlyRates, setHourlyRates] = useState<Record<string, number>>(HOURLY_RATES);
+  const [loadingRates, setLoadingRates] = useState(false);
   const isAdmin = user?.role === 'admin';
   const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
-  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(isTeam ? 'tareas' : 'proyectos');
+  const canSeeTareas = isAdmin || isTeam;
+  const canSeeProyectos = isAdmin;
+  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(canSeeTareas ? 'tareas' : 'proyectos');
 
   useEffect(() => {
-    if (!isTeam && isAdmin && activeTab === 'tareas') {
+    if (!canSeeTareas && canSeeProyectos && activeTab === 'tareas') {
       setActiveTab('proyectos');
     }
-    if (!isAdmin && isTeam && activeTab === 'proyectos') {
+    if (!canSeeProyectos && canSeeTareas && activeTab === 'proyectos') {
       setActiveTab('tareas');
     }
-  }, [user, isAdmin, isTeam]);
+  }, [user, isAdmin, isTeam, activeTab]);
 
   useEffect(() => {
     fetchProyectos();
     fetchAllTasks();
+    fetchRates();
   }, [user]);
+
+  const fetchRates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('configuracion_tarifas')
+        .select('*');
+      
+      if (!error && data && data.length > 0) {
+        const ratesMap: Record<string, number> = { ...HOURLY_RATES };
+        data.forEach((r: any) => {
+          ratesMap[r.nombre_tipo] = r.tarifa_hora;
+        });
+        setHourlyRates(ratesMap);
+      }
+    } catch (e) {
+      console.error('Error fetching rates:', e);
+    }
+  };
+
+  const handleUpdateRoleRate = async (tipo: string, value: string) => {
+    const numValue = parseInt(value.replace(/\D/g, '')) || 0;
+    try {
+      setLoadingRates(true);
+      const { error } = await supabase
+        .from('configuracion_tarifas')
+        .upsert({ 
+          nombre_tipo: tipo, 
+          tarifa_hora: numValue 
+        }, { onConflict: 'nombre_tipo' });
+      
+      if (error) throw error;
+      setHourlyRates(prev => ({ ...prev, [tipo]: numValue }));
+      setSuccess(`Tarifa de ${tipo} actualizada correctamente`);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      console.error('Error updating rate:', err);
+      // If table doesn't exist yet, we inform the user
+      if (err.code === '42P01') {
+        setError('La tabla "configuracion_tarifas" no existe en Supabase.');
+      } else {
+        setError('Error al actualizar la tarifa.');
+      }
+    } finally {
+      setLoadingRates(false);
+    }
+  };
 
   const fetchProyectos = async () => {
     try {
@@ -124,6 +176,13 @@ export default function EducacionContinua() {
 
   const tareasDelProyecto = selectedProyecto ? tareas.filter(t => t.proyecto === selectedProyecto) : [];
   const totalProjectSeconds = tareasDelProyecto.reduce((acc, tarea) => acc + (tarea.tiempo_invertido || 0), 0);
+  
+  const totalProjectCost = tareasDelProyecto.reduce((acc, tarea) => {
+    const rate = hourlyRates[tarea.tipo_tarea as string] || 0;
+    const hours = (tarea.tiempo_invertido || 0) / 3600;
+    return acc + (hours * rate);
+  }, 0);
+
   const formatTotalTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
@@ -257,7 +316,7 @@ export default function EducacionContinua() {
 
       {/* Navegación por pestañas */}
       <div className="flex border-b border-muted/30 -mb-px">
-        {isTeam && (
+        {canSeeTareas && (
           <button
             onClick={() => setActiveTab('tareas')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
@@ -270,7 +329,7 @@ export default function EducacionContinua() {
             Tareas
           </button>
         )}
-        {isAdmin && (
+        {canSeeProyectos && (
           <button
             onClick={() => setActiveTab('proyectos')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
@@ -385,12 +444,20 @@ export default function EducacionContinua() {
               </p>
             </div>
             {selectedProyecto && tareas.length > 0 && (
-              <div className="bg-white px-3 py-1.5 rounded-lg border border-muted/50 shadow-sm flex flex-col items-end">
-                <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Tiempo Total</span>
-                <span className="text-sm font-mono font-bold text-primary flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatTotalTime(totalProjectSeconds)}
-                </span>
+              <div className="flex gap-2">
+                <div className="bg-white px-3 py-1.5 rounded-lg border border-muted/50 shadow-sm flex flex-col items-end">
+                  <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Tiempo Total</span>
+                  <span className="text-sm font-mono font-bold text-primary flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatTotalTime(totalProjectSeconds)}
+                  </span>
+                </div>
+                <div className="bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm flex flex-col items-end">
+                  <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider">Inversión Estimada</span>
+                  <span className="text-sm font-mono font-bold text-emerald-600">
+                    ${totalProjectCost.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -414,7 +481,8 @@ export default function EducacionContinua() {
                   <TareaTimerItem 
                     key={tarea.id} 
                     tarea={tarea} 
-                    onUpdate={fetchAllTasks} 
+                    onUpdate={fetchAllTasks}
+                    customRates={hourlyRates}
                   />
                 ))}
               </div>
@@ -435,6 +503,54 @@ export default function EducacionContinua() {
           <div className="flex flex-col lg:flex-row gap-8 overflow-x-auto pb-4">
             {renderCategorizedList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
             {renderCategorizedList('Tareas En Progreso', enProgreso, 'text-amber-700', 'bg-amber-500')}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'proyectos' && isAdmin && (
+        <div className="mt-8 bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+          <div className="px-6 py-5 border-b border-muted/30 bg-slate-50 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-bold text-text-main flex items-center">
+                <Clock className="mr-2 h-5 w-5 text-primary" />
+                Configuración de Tarifas por Hora
+              </h3>
+              <p className="text-xs text-secondary mt-1">Define el valor de la hora para cada tipo de tarea en Educación Continua.</p>
+            </div>
+            {loadingRates && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {Object.keys(HOURLY_RATES).map((tipo) => (
+                <div key={tipo} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700">{tipo}</span>
+                    <span className="text-[10px] uppercase font-bold text-primary bg-primary/5 px-2 py-1 rounded">Valor / Hora</span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <input
+                      type="text"
+                      className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold text-slate-600 outline-none transition-all"
+                      defaultValue={hourlyRates[tipo]?.toLocaleString('es-CO')}
+                      onBlur={(e) => handleUpdateRoleRate(tipo, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-blue-700 leading-relaxed">
+                Los cambios realizados aquí se aplicarán a todos los cálculos de "Inversión Estimada" de forma inmediata tanto en proyectos existentes como en tareas nuevas. 
+                <strong> Presiona Enter o haz clic fuera del campo para guardar los cambios.</strong>
+              </p>
+            </div>
           </div>
         </div>
       )}

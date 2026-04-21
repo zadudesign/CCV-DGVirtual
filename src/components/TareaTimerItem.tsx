@@ -4,15 +4,17 @@ import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+import { HOURLY_RATES } from '../lib/constants';
 
 const COLOMBIA_TZ = 'America/Bogota';
 
 interface TareaTimerItemProps {
   tarea: any;
   onUpdate: () => void | Promise<void>;
+  customRates?: Record<string, number>;
 }
 
-export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate }) => {
+export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates }) => {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -20,6 +22,8 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate 
 
   const totalSeconds = tarea.tiempo_invertido || 0;
   const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
+  const hourlyRate = (customRates && customRates[tarea.tipo_tarea as string]) || HOURLY_RATES[tarea.tipo_tarea as string] || 0;
+  const estimatedCost = (totalSeconds / 3600) * hourlyRate;
 
   const formatTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
@@ -114,14 +118,21 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate 
             <span className="text-xs font-mono font-bold text-text-main">{formatTime(totalSeconds)}</span>
             <span className="text-[9px] font-bold text-secondary uppercase tracking-widest ml-1">Registrado</span>
           </div>
-          {!isCompleted && (
-            <button 
-              onClick={() => setShowManualInput(!showManualInput)}
-              className="text-[10px] font-medium text-primary hover:text-primary-hover flex items-center gap-1 transition-colors bg-white px-2 py-0.5 rounded border border-muted/50 shadow-sm"
-            >
-              <Plus className="w-3 h-3" /> {showManualInput ? 'Cerrar' : 'Añadir'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {estimatedCost > 0 && (
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                ${estimatedCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+              </span>
+            )}
+            {!isCompleted && (
+              <button 
+                onClick={() => setShowManualInput(!showManualInput)}
+                className="text-[10px] font-medium text-primary hover:text-primary-hover flex items-center gap-1 transition-colors bg-white px-2 py-0.5 rounded border border-muted/50 shadow-sm"
+              >
+                <Plus className="w-3 h-3" /> {showManualInput ? 'Cerrar' : 'Añadir'}
+              </button>
+            )}
+          </div>
         </div>
 
         {showManualInput && !isCompleted && (
@@ -167,6 +178,11 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate 
         </div>
         
         <div className="flex items-center gap-2">
+          {tarea.tipo_tarea && (
+            <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md font-medium">
+              {tarea.tipo_tarea}
+            </span>
+          )}
           <span className="bg-primary/10 text-primary-hover px-2 py-1 rounded-md font-medium">
             {tarea.rol_destino || 'General'}
           </span>
