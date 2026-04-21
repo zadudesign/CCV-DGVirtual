@@ -30,7 +30,7 @@ export interface EntregaCalendario {
   id: string;
   curso_id: string;
   titulo: string;
-  tipo_tarea?: 'Diseño' | 'Multimedia' | 'Transmisión';
+  tipo_tarea?: 'Diseño' | 'Multimedia' | 'Transmisión' | 'Soporte';
   descripcion?: string;
   fecha_inicio?: string;
   fecha_entrega: string;

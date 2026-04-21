@@ -37,7 +37,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
     titulo: '',
-    tipo_tarea: 'Diseño' as 'Diseño' | 'Multimedia' | 'Transmisión',
+    tipo_tarea: 'Diseño' as 'Diseño' | 'Multimedia' | 'Transmisión' | 'Soporte',
     descripcion: '',
     fecha_vencimiento: '',
     rol_destino: 'Diseño'
@@ -581,6 +581,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                       <option value="Diseño">Diseño</option>
                       <option value="Multimedia">Multimedia</option>
                       <option value="Transmisión">Transmisión</option>
+                      <option value="Soporte">Soporte</option>
                     </select>
                   </div>
                   <div>
