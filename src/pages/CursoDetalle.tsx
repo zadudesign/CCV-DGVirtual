@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare, Filter, ArrowUpDown } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
 import { DocumentoCurso, NovedadCurso } from '../types';
@@ -26,9 +26,10 @@ export default function CursoDetalle() {
   const [novedadForm, setNovedadForm] = useState({
     titulo: '',
     comentario: '',
-    fecha: new Date().toISOString().split('T')[0],
     estado: 'Normal' as NovedadCurso['estado']
   });
+  const [filtroEstadoNovedad, setFiltroEstadoNovedad] = useState<string>('Todos');
+  const [ordenNovedades, setOrdenNovedades] = useState<'asc' | 'desc'>('desc');
   
   // Documentación state
   const [documentos, setDocumentos] = useState<DocumentoCurso[]>([]);
@@ -147,7 +148,7 @@ export default function CursoDetalle() {
         .from('novedades_curso')
         .select('*')
         .eq('curso_id', id)
-        .order('fecha', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error && error.code !== '42P01') throw error;
       setNovedades(data || []);
@@ -170,7 +171,6 @@ export default function CursoDetalle() {
           curso_id: id,
           titulo: novedadForm.titulo,
           comentario: novedadForm.comentario,
-          fecha: novedadForm.fecha,
           estado: novedadForm.estado
         }]);
       
@@ -179,7 +179,6 @@ export default function CursoDetalle() {
       setNovedadForm({
         titulo: '',
         comentario: '',
-        fecha: new Date().toISOString().split('T')[0],
         estado: 'Normal'
       });
       setShowNovedadModal(false);
@@ -362,6 +361,15 @@ export default function CursoDetalle() {
     { name: 'Grabación', value: curso.progreso_grabacion ?? 0, fill: '#ff3333' },
     { name: 'Documentación', value: curso.progreso_documentacion ?? 0, fill: '#00bfff' },
   ];
+
+  // Filter and sort novedades
+  const novedadesFiltradasYOrdenadas = novedades
+    .filter((n) => filtroEstadoNovedad === 'Todos' || n.estado === filtroEstadoNovedad)
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return ordenNovedades === 'desc' ? dateB - dateA : dateA - dateB;
+    });
 
   const getProgramaTheme = (programaName: string | undefined | null) => {
     if (!programaName || programaName === 'General') {
@@ -942,6 +950,40 @@ export default function CursoDetalle() {
               )}
             </div>
 
+            {/* Barra de Filtros y Orden */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-xl border border-muted/20">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-secondary" />
+                  <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Filtrar Estado:</span>
+                  <select 
+                    value={filtroEstadoNovedad}
+                    onChange={(e) => setFiltroEstadoNovedad(e.target.value)}
+                    className="text-xs py-1.5 pl-3 pr-8 rounded-lg border border-muted bg-white focus:outline-none focus:ring-1 focus:ring-primary shadow-sm appearance-none relative"
+                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1rem' }}
+                  >
+                    <option value="Todos">Todos los estados</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Importante">Importante</option>
+                    <option value="Crítico">Crítico</option>
+                    <option value="Completado">Completado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setOrdenNovedades(ordenNovedades === 'desc' ? 'asc' : 'desc')}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-muted bg-white hover:bg-slate-50 transition-all shadow-sm group"
+                >
+                  <ArrowUpDown className={`h-3.5 w-3.5 transition-transform duration-300 ${ordenNovedades === 'asc' ? 'rotate-180' : ''} text-primary`} />
+                  <span className="text-[10px] font-bold text-secondary uppercase tracking-widest group-hover:text-primary">
+                    {ordenNovedades === 'desc' ? 'Más recientes primero' : 'Más antiguas primero'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             {loadingNovedades ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-10 w-10 text-primary animate-spin" />
@@ -964,9 +1006,21 @@ export default function CursoDetalle() {
                   </button>
                 )}
               </div>
+            ) : novedadesFiltradasYOrdenadas.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-12 text-center">
+                <Filter className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-text-main">No hay resultados</h3>
+                <p className="text-secondary mt-2">No se encontraron novedades con el estado "{filtroEstadoNovedad}".</p>
+                <button 
+                  onClick={() => setFiltroEstadoNovedad('Todos')}
+                  className="mt-4 text-primary font-bold text-sm hover:underline"
+                >
+                  Ver todas las novedades
+                </button>
+              </div>
             ) : (
               <div className="space-y-4">
-                {novedades.map((novedad) => (
+                {novedadesFiltradasYOrdenadas.map((novedad) => (
                   <div 
                     key={novedad.id} 
                     className="bg-white rounded-xl shadow-sm border border-muted/30 overflow-hidden transition-all hover:shadow-md"
@@ -993,13 +1047,19 @@ export default function CursoDetalle() {
                                novedad.estado === 'Completado' ? <CheckCircle2 className="h-4 w-4" /> :
                                <MessageSquare className="h-4 w-4" />}
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="font-bold text-sm text-text-main truncate">{novedad.titulo}</h4>
-                              <p className="text-[10px] text-slate-400 font-mono flex items-center mt-0.5">
-                                <History className="h-3 w-3 mr-1" />
-                                {new Date(novedad.fecha).toLocaleDateString()}
-                              </p>
-                            </div>
+                              <div className="min-w-0">
+                                <h4 className="font-bold text-sm text-text-main truncate">{novedad.titulo}</h4>
+                                <p className="text-[10px] text-slate-400 font-mono flex items-center mt-0.5">
+                                  <History className="h-3 w-3 mr-1" />
+                                  {new Date(novedad.created_at).toLocaleString([], { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </p>
+                              </div>
                           </div>
 
                           {/* Columna 2: Comentario y Estado */}
@@ -1054,7 +1114,7 @@ export default function CursoDetalle() {
                         />
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Estado / Gravedad</label>
                           <select
@@ -1067,16 +1127,6 @@ export default function CursoDetalle() {
                             <option value="Crítico">Crítico</option>
                             <option value="Completado">Completado</option>
                           </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Fecha</label>
-                          <input
-                            required
-                            type="date"
-                            value={novedadForm.fecha}
-                            onChange={(e) => setNovedadForm({ ...novedadForm, fecha: e.target.value })}
-                            className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                          />
                         </div>
                       </div>
 

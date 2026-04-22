@@ -115,7 +115,7 @@ export interface NovedadCurso {
   curso_id: string;
   titulo: string;
   comentario: string;
-  fecha: string;
+  fecha?: string;
   estado: 'Normal' | 'Importante' | 'Crítico' | 'Completado';
   created_at: string;
 }
