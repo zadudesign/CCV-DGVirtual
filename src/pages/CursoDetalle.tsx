@@ -978,41 +978,46 @@ export default function CursoDetalle() {
                         novedad.estado === 'Completado' ? 'bg-emerald-500' :
                         'bg-slate-300'
                       }`} />
-                      <div className="p-6 flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
+                      <div className="p-4 flex-1">
+                        <div className="flex flex-col md:grid md:grid-cols-[250px_1fr] gap-4">
+                          {/* Columna 1: Info Básica */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`p-2 rounded-lg flex-shrink-0 ${
                               novedad.estado === 'Crítico' ? 'bg-red-50 text-red-600' :
                               novedad.estado === 'Importante' ? 'bg-amber-50 text-amber-600' :
                               novedad.estado === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
                               'bg-slate-50 text-slate-600'
                             }`}>
-                              {novedad.estado === 'Crítico' ? <AlertCircle className="h-5 w-5" /> :
-                               novedad.estado === 'Importante' ? <AlertTriangle className="h-5 w-5" /> :
-                               novedad.estado === 'Completado' ? <CheckCircle2 className="h-5 w-5" /> :
-                               <MessageSquare className="h-5 w-5" />}
+                              {novedad.estado === 'Crítico' ? <AlertCircle className="h-4 w-4" /> :
+                               novedad.estado === 'Importante' ? <AlertTriangle className="h-4 w-4" /> :
+                               novedad.estado === 'Completado' ? <CheckCircle2 className="h-4 w-4" /> :
+                               <MessageSquare className="h-4 w-4" />}
                             </div>
-                            <div>
-                              <h4 className="font-bold text-text-main">{novedad.titulo}</h4>
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-sm text-text-main truncate">{novedad.titulo}</h4>
                               <p className="text-[10px] text-slate-400 font-mono flex items-center mt-0.5">
                                 <History className="h-3 w-3 mr-1" />
-                                {new Date(novedad.fecha).toLocaleDateString()} - {new Date(novedad.created_at || novedad.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(novedad.fecha).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
-                          <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full border self-start sm:self-center ${
-                            novedad.estado === 'Crítico' ? 'bg-red-50 text-red-700 border-red-100' :
-                            novedad.estado === 'Importante' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                            novedad.estado === 'Completado' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                            'bg-slate-50 text-slate-700 border-slate-200'
-                          }`}>
-                            {novedad.estado}
-                          </span>
-                        </div>
-                        <div className="pr-4">
-                          <p className="text-sm text-text-main leading-relaxed whitespace-pre-wrap">
-                            {novedad.comentario}
-                          </p>
+
+                          {/* Columna 2: Comentario y Estado */}
+                          <div className="flex flex-col md:flex-row justify-between gap-4 md:border-l md:border-slate-100 md:pl-6">
+                            <p className="text-sm text-secondary leading-relaxed whitespace-pre-wrap flex-1">
+                              {novedad.comentario}
+                            </p>
+                            <div className="flex-shrink-0 self-start">
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full border ${
+                                novedad.estado === 'Crítico' ? 'bg-red-50 text-red-700 border-red-100' :
+                                novedad.estado === 'Importante' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                novedad.estado === 'Completado' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                'bg-slate-50 text-slate-700 border-slate-200'
+                              }`}>
+                                {novedad.estado}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
