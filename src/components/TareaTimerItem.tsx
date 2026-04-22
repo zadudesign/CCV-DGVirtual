@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Clock, CheckCircle } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Bell, AlertCircle, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { HOURLY_RATES } from '../lib/constants';
@@ -12,9 +12,11 @@ interface TareaTimerItemProps {
   tarea: any;
   onUpdate: () => void | Promise<void>;
   customRates?: Record<string, number>;
+  hideType?: boolean;
+  hideRole?: boolean;
 }
 
-export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates }) => {
+export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates, hideType, hideRole }) => {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -24,6 +26,51 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
   const hourlyRate = (customRates && customRates[tarea.tipo_tarea as string]) || HOURLY_RATES[tarea.tipo_tarea as string] || 0;
   const estimatedCost = (totalSeconds / 3600) * hourlyRate;
+
+  const getTrafficLightStatus = (fecha: string, estado: string) => {
+    if (estado === 'Completada' || estado === 'Completado') {
+      return {
+        color: 'bg-green-50 text-green-700 border-green-100',
+        iconBg: 'bg-green-500',
+        label: 'Completada',
+        titleColor: 'text-green-700',
+        icon: <CheckCircle2 className="h-4 w-4" />
+      };
+    }
+
+    if (!fecha) return { 
+      color: 'bg-yellow-50 text-yellow-700 border-yellow-100', 
+      iconBg: 'bg-yellow-500', 
+      label: 'En Progreso',
+      titleColor: 'text-yellow-700',
+      icon: <Clock className="h-4 w-4" />
+    };
+
+    const today = startOfDay(new Date());
+    const dueDate = startOfDay(parseISO(fecha));
+    const diffDays = differenceInDays(dueDate, today);
+
+    if (diffDays < 0) {
+      const daysLate = Math.abs(diffDays);
+      return {
+        color: 'bg-red-50 text-red-700 border-red-100',
+        iconBg: 'bg-red-500',
+        label: `Vencida (${daysLate} día${daysLate === 1 ? '' : 's'} de retraso)`,
+        titleColor: 'text-red-700',
+        icon: <AlertCircle className="h-4 w-4" />
+      };
+    } else {
+      return {
+        color: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+        iconBg: 'bg-yellow-500',
+        label: 'En Progreso',
+        titleColor: 'text-yellow-700',
+        icon: <AlertTriangle className="h-4 w-4" />
+      };
+    }
+  };
+
+  const status = getTrafficLightStatus(tarea.fecha_vencimiento || tarea.fecha_entrega, tarea.estado);
 
   const formatTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
@@ -93,77 +140,94 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   };
 
   return (
-    <div className={`bg-white p-4 rounded-lg border shadow-sm ${isCompleted ? 'border-green-200' : 'border-muted/50'}`}>
-      <div className="flex justify-between items-start mb-2">
-        <h4 className={`text-sm font-semibold ${isCompleted ? 'text-green-800' : 'text-text-main'}`}>
-          {tarea.titulo}
-        </h4>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-          isCompleted ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-        }`}>
-          {isCompleted ? 'Completada' : 'Pendiente'}
-        </span>
+    <div className={`p-4 rounded-xl border-2 transition-all hover:shadow-md ${status.color}`}>
+      <div className="flex justify-between items-start mb-1">
+        <div className="min-w-0 pr-4">
+          <h4 className={`text-base font-bold truncate leading-tight ${status.titleColor}`}>
+            {tarea.titulo}
+          </h4>
+          <p className="text-xs opacity-80 truncate font-medium mt-0.5 text-secondary italic">
+            {tarea.proyecto || (tarea.curso && tarea.curso.nombre) || 'Diseño Virtual'}
+          </p>
+        </div>
+        <div className="flex-shrink-0">
+          <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider bg-white/60 border border-black/5 ${status.titleColor}`}>
+            {tarea.estado === 'Completada' || tarea.estado === 'Completado' ? 'Completado' : 'Pendiente'}
+          </span>
+        </div>
       </div>
+
       {tarea.descripcion && (
-        <p className="text-xs text-secondary mb-3 bg-slate-50 p-2 rounded border border-slate-100">
-          {tarea.descripcion}
-        </p>
+        <div className="mt-3 bg-white/80 rounded-xl p-3 text-xs border border-white flex items-start gap-2 shadow-sm">
+          <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${status.iconBg} shadow-sm`}>
+             <Bell className="w-3 h-3 text-white" />
+          </div>
+          <span className="leading-snug text-slate-600 font-medium">{tarea.descripcion}</span>
+        </div>
       )}
       
-      {/* Time UI Compact */}
-      <div className="mt-2.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg">
+      {/* Time Tracking Section */}
+      <div className="mt-4 p-3 bg-white/60 border border-white rounded-xl shadow-inner backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-secondary" />
-            <span className="text-xs font-mono font-bold text-text-main">{formatTime(totalSeconds)}</span>
-            <span className="text-[9px] font-bold text-secondary uppercase tracking-widest ml-1">Registrado</span>
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-secondary uppercase tracking-widest leading-none mb-0.5 pointer-events-none">Tiempo Registrado</span>
+              <span className="text-sm font-mono font-bold text-text-main leading-none">{formatTime(totalSeconds)}</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {estimatedCost > 0 && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
-                ${estimatedCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-              </span>
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter leading-none mb-0.5 pointer-events-none">Eco. Estimado</span>
+                <span className="text-xs font-bold text-emerald-600 leading-none">
+                  ${estimatedCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
             )}
             {!isCompleted && (
               <button 
                 onClick={() => setShowManualInput(!showManualInput)}
-                className="text-[10px] font-medium text-primary hover:text-primary-hover flex items-center gap-1 transition-colors bg-white px-2 py-0.5 rounded border border-muted/50 shadow-sm"
+                className="text-[10px] font-bold text-primary hover:bg-primary hover:text-white flex items-center gap-1 transition-all bg-white px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm"
               >
-                <Plus className="w-3 h-3" /> {showManualInput ? 'Cerrar' : 'Añadir'}
+                <Plus className="w-3.5 h-3.5" /> 
+                {showManualInput ? 'Cerrar' : 'Añadir'}
               </button>
             )}
           </div>
         </div>
 
         {showManualInput && !isCompleted && (
-          <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-2 pt-2 border-t border-slate-200/60">
+          <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-3 pt-3 border-t border-slate-200/40">
             <div className="flex-1 grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[9px] font-bold text-secondary mb-0.5 uppercase">Hrs</label>
+                <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Horas</label>
                 <input 
                   type="number" 
                   min="0" 
                   value={manualHours} 
                   onChange={(e) => setManualHours(Number(e.target.value))}
-                  className="w-full bg-white border border-muted rounded px-1.5 py-1 text-xs text-text-main focus:outline-none focus:border-primary shadow-sm"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
                 />
               </div>
               <div>
-                <label className="block text-[9px] font-bold text-secondary mb-0.5 uppercase">Min</label>
+                <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Minutos</label>
                 <input 
                   type="number" 
                   min="0" 
                   max="59"
                   value={manualMinutes} 
                   onChange={(e) => setManualMinutes(Number(e.target.value))}
-                  className="w-full bg-white border border-muted rounded px-1.5 py-1 text-xs text-text-main focus:outline-none focus:border-primary shadow-sm"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
                 />
               </div>
             </div>
             <button 
               type="submit"
               disabled={saving || (manualHours === 0 && manualMinutes === 0)}
-              className="bg-primary hover:bg-primary-hover text-white px-2.5 py-1 rounded text-xs font-bold disabled:opacity-50 shadow-sm"
+              className="bg-primary hover:bg-primary-hover text-white h-[34px] px-4 rounded-lg text-xs font-bold disabled:opacity-50 shadow-md transform active:scale-95 transition-all"
             >
               Ok
             </button>
@@ -171,38 +235,45 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
         )}
       </div>
 
-      <div className="flex items-center justify-between text-xs mt-3 pt-3 border-t border-slate-100">
-        <div className="flex items-center text-slate-500">
-          <Clock className="h-3.5 w-3.5 mr-1" />
-          <span>Vence: {tarea.fecha_vencimiento || tarea.fecha_entrega ? format(parseISO(tarea.fecha_vencimiento || tarea.fecha_entrega), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}</span>
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
+        <div className="flex items-center text-secondary font-bold text-[11px]">
+          <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-60" />
+          <span>{tarea.fecha_vencimiento || tarea.fecha_entrega ? format(parseISO(tarea.fecha_vencimiento || tarea.fecha_entrega), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}</span>
         </div>
         
         <div className="flex items-center gap-2">
-          {tarea.tipo_tarea && (
-            <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md font-medium">
+          {!hideType && tarea.tipo_tarea && (
+            <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-sm uppercase tracking-wider">
               {tarea.tipo_tarea}
             </span>
           )}
-          <span className="bg-primary/10 text-primary-hover px-2 py-1 rounded-md font-medium">
-            {tarea.rol_destino || 'General'}
-          </span>
+          {!hideRole && (
+            <span className="bg-slate-700 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-sm uppercase tracking-wider">
+              {tarea.rol_destino || 'General'}
+            </span>
+          )}
           
           {!isCompleted && (
             <button
               onClick={handleCompleteTask}
               disabled={totalSeconds === 0 || saving}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm ${
                 totalSeconds > 0 
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95' 
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
               }`}
               title={totalSeconds === 0 ? "Debes registrar tiempo antes de completar la tarea" : "Marcar como completada"}
             >
-              <CheckCircle className="w-3.5 h-3.5" />
-              Completar
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Listo
             </button>
           )}
         </div>
+      </div>
+      <div className="mt-2 text-right">
+        <span className={`text-[10px] font-bold italic opacity-80 ${status.titleColor}`}>
+          {status.label}
+        </span>
       </div>
     </div>
   );

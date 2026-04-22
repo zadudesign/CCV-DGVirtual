@@ -469,6 +469,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     key={event.id || idx} 
                     tarea={event} 
                     onUpdate={fetchEntregas} 
+                    hideType={true}
+                    hideRole={true}
                   />
                 );
               }

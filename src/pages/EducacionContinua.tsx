@@ -287,32 +287,15 @@ export default function EducacionContinua() {
         {events.length === 0 ? (
           <p className="text-xs text-secondary italic py-2">No hay tareas</p>
         ) : (
-          events.map((tarea, idx) => {
-            const status = getTrafficLightStatus(tarea.fecha_vencimiento, tarea.estado);
-            return (
-              <div key={tarea.id || idx} className="bg-white p-3 rounded-lg border border-muted/30 shadow-sm hover:shadow-md transition-shadow">
-                <TareaTimerItem 
-                  tarea={tarea} 
-                  onUpdate={fetchAllTasks} 
-                />
-                <div className={`mt-2 p-2 rounded border ${status.color} flex flex-col gap-1`}>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase">{status.label}</span>
-                    <span className="text-[10px] opacity-80">
-                      {tarea.proyecto ? `${tarea.proyecto} • ` : ''}
-                      {tarea.fecha_vencimiento ? format(parseISO(tarea.fecha_vencimiento), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}
-                    </span>
-                  </div>
-                  {tarea.descripcion && (
-                    <div className="flex items-start gap-1 mt-1 opacity-90 border-t border-current/10 pt-1">
-                      <Bell className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                      <p className="text-[10px] leading-tight line-clamp-2">{tarea.descripcion}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })
+          events.map((tarea, idx) => (
+            <TareaTimerItem 
+              key={tarea.id || idx} 
+              tarea={tarea} 
+              onUpdate={fetchAllTasks} 
+              hideType={true}
+              hideRole={true}
+            />
+          ))
         )}
       </div>
     </div>
@@ -536,6 +519,8 @@ export default function EducacionContinua() {
                     tarea={tarea} 
                     onUpdate={fetchAllTasks}
                     customRates={hourlyRates}
+                    hideType={true}
+                    hideRole={true}
                   />
                 ))}
               </div>
