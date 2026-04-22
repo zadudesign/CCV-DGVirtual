@@ -31,6 +31,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [entregas, setEntregas] = useState<EntregaCalendario[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -244,14 +245,28 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const goToToday = () => setCurrentDate(new Date());
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(null);
+  };
 
   const renderHeader = () => {
     return (
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-text-main capitalize">
-          {format(currentDate, 'MMMM yyyy', { locale: es })}
-        </h2>
+        <div className="flex flex-col">
+          <h2 className="text-lg font-bold text-text-main capitalize">
+            {format(currentDate, 'MMMM yyyy', { locale: es })}
+          </h2>
+          {selectedDate && (
+            <button 
+              onClick={() => setSelectedDate(null)}
+              className="mt-1 text-[10px] font-bold text-primary flex items-center hover:underline"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Ver Todas las Tareas
+            </button>
+          )}
+        </div>
         <div className="flex items-center space-x-2">
           <button 
             onClick={goToToday}
@@ -280,18 +295,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   };
 
   const renderDays = () => {
-    const days = [];
-    const startDate = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
-
-    for (let i = 0; i < 7; i++) {
-      days.push(
-        <div key={i} className="py-2 text-center text-sm font-semibold text-text-main bg-background border-b border-muted/30 capitalize">
-          {format(addDays(startDate, i), 'EEEE', { locale: es })}
-        </div>
-      );
-    }
-
-    return <div className="grid grid-cols-7">{days}</div>;
+    const dayLabels = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    return (
+      <div className="grid grid-cols-7 mb-2">
+        {dayLabels.map((label, i) => (
+          <div key={i} className="py-2 text-center text-xs font-bold text-secondary uppercase tracking-widest">
+            {label}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const renderCells = () => {
@@ -329,27 +342,27 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isToday = isSameDay(day, new Date());
+        const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
         const hasTasks = dayEvents.length > 0;
 
         days.push(
           <div
             key={day.toString()}
-            className={`min-h-[80px] p-2 border-b border-r border-muted/30 transition-colors ${
-              !isCurrentMonth ? 'bg-background/30 text-slate-300' : 
-              hasTasks ? 'bg-primary/5 text-text-main' : 'bg-white text-text-main'
-            } ${isToday ? 'bg-primary/10 ring-1 ring-inset ring-primary/20' : ''}`}
+            className="aspect-square flex items-center justify-center p-1"
+            onClick={() => setSelectedDate(cloneDay)}
           >
-            <div className="flex flex-col items-center justify-center h-full">
-              <span className={`text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full transition-all ${
-                isToday ? 'bg-primary text-white shadow-sm scale-110' : 
-                hasTasks ? 'text-primary' : ''
-              }`}>
+            <div className={`relative w-full h-full flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all duration-300 ${
+              isSelected ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 z-20' :
+              isToday ? 'bg-background ring-2 ring-primary/20 text-primary z-10' : 
+              hasTasks && isCurrentMonth ? 'bg-primary/5 text-primary font-bold' : 
+              !isCurrentMonth ? 'text-slate-200' : 'text-slate-600 hover:bg-slate-50'
+            }`}>
+              <span className={`text-sm ${isSelected || isToday ? 'font-bold' : 'font-medium'}`}>
                 {formattedDate}
               </span>
-              {hasTasks && (
-                <div className="mt-1.5 flex gap-0.5 justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
-                  {dayEvents.length > 1 && <div className="w-1.5 h-1.5 rounded-full bg-primary/60"></div>}
+              {hasTasks && !isSelected && isCurrentMonth && (
+                <div className={`absolute bottom-2 flex gap-0.5 justify-center`}>
+                  <div className={`w-1 h-1 rounded-full ${isToday ? 'bg-primary' : 'bg-primary/60'}`}></div>
                 </div>
               )}
             </div>
@@ -364,7 +377,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       );
       days = [];
     }
-    return <div className="border-l border-t border-muted/30 rounded-b-xl overflow-hidden">{rows}</div>;
+    return <div className="space-y-1">{rows}</div>;
   };
 
   const renderTaskList = (title: string, events: any[], colorClass: string, bgClass: string) => {
@@ -421,6 +434,10 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     if (e.estado === 'Completado' || e.estado === 'Completada') return false;
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(e.fecha_entrega));
+    
+    // Filter by selected date if exists
+    if (selectedDate && !isSameDay(dueDate, selectedDate)) return false;
+    
     return differenceInDays(dueDate, today) < 0;
   });
 
@@ -428,6 +445,10 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     if (e.estado === 'Completado' || e.estado === 'Completada') return false;
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(e.fecha_entrega));
+    
+    // Filter by selected date if exists
+    if (selectedDate && !isSameDay(dueDate, selectedDate)) return false;
+    
     return differenceInDays(dueDate, today) >= 0;
   });
 
@@ -560,9 +581,9 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Column 1: Calendar */}
-        <div className="w-full bg-white shadow-sm rounded-xl border border-muted/30 p-6">
+        <div className="w-full bg-white shadow-xl shadow-slate-200/50 rounded-3xl border border-slate-100 p-8">
           {renderHeader()}
-          <div className="rounded-xl overflow-hidden border border-muted/30">
+          <div className="mt-6">
             {renderDays()}
             {renderCells()}
           </div>
