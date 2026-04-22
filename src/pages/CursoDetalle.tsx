@@ -4,10 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
-import { DocumentoCurso } from '../types';
+import { DocumentoCurso, NovedadCurso } from '../types';
 
 export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,18 @@ export default function CursoDetalle() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
+  
+  // Novedades state
+  const [novedades, setNovedades] = useState<NovedadCurso[]>([]);
+  const [loadingNovedades, setLoadingNovedades] = useState(false);
+  const [showNovedadModal, setShowNovedadModal] = useState(false);
+  const [submittingNovedad, setSubmittingNovedad] = useState(false);
+  const [novedadForm, setNovedadForm] = useState({
+    titulo: '',
+    comentario: '',
+    fecha: new Date().toISOString().split('T')[0],
+    estado: 'Normal' as NovedadCurso['estado']
+  });
   
   // Documentación state
   const [documentos, setDocumentos] = useState<DocumentoCurso[]>([]);
@@ -36,6 +48,7 @@ export default function CursoDetalle() {
     if (id) {
       fetchCurso();
       fetchDocumentos();
+      fetchNovedades();
 
       // Suscribirse a cambios en tiempo real en la tabla cursos para este curso específico
       const channel = supabase
@@ -123,6 +136,59 @@ export default function CursoDetalle() {
       console.error('Error fetching documentos:', err);
     } finally {
       setLoadingDocs(false);
+    }
+  };
+
+  const fetchNovedades = async () => {
+    if (!id) return;
+    try {
+      setLoadingNovedades(true);
+      const { data, error } = await supabase
+        .from('novedades_curso')
+        .select('*')
+        .eq('curso_id', id)
+        .order('fecha', { ascending: false });
+      
+      if (error && error.code !== '42P01') throw error;
+      setNovedades(data || []);
+    } catch (err) {
+      console.error('Error fetching novedades:', err);
+    } finally {
+      setLoadingNovedades(false);
+    }
+  };
+
+  const handleSaveNovedad = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !user || user.role !== 'admin') return;
+    
+    setSubmittingNovedad(true);
+    try {
+      const { error } = await supabase
+        .from('novedades_curso')
+        .insert([{
+          curso_id: id,
+          titulo: novedadForm.titulo,
+          comentario: novedadForm.comentario,
+          fecha: novedadForm.fecha,
+          estado: novedadForm.estado
+        }]);
+      
+      if (error) throw error;
+      
+      setNovedadForm({
+        titulo: '',
+        comentario: '',
+        fecha: new Date().toISOString().split('T')[0],
+        estado: 'Normal'
+      });
+      setShowNovedadModal(false);
+      fetchNovedades();
+    } catch (err: any) {
+      console.error('Error saving novedad:', err);
+      alert('Error al guardar la novedad: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setSubmittingNovedad(false);
     }
   };
 
@@ -856,12 +922,193 @@ export default function CursoDetalle() {
         )}
 
         {activeTab === 'novedades' && (
-          <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-8 text-center">
-            <Bell className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-text-main">Novedades y Actualizaciones</h3>
-            <p className="text-secondary mt-2 max-w-md mx-auto">
-              Historial de cambios, notificaciones y comentarios sobre el progreso del curso.
-            </p>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-muted/30">
+              <div>
+                <h2 className="text-xl font-bold text-text-main flex items-center">
+                  <Bell className="h-6 w-6 text-primary mr-2" />
+                  Novedades del Curso
+                </h2>
+                <p className="text-sm text-secondary mt-1">Historial de actualizaciones y comentarios importantes sobre el progreso.</p>
+              </div>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => setShowNovedadModal(true)}
+                  className="flex items-center px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Novedad
+                </button>
+              )}
+            </div>
+
+            {loadingNovedades ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              </div>
+            ) : novedades.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-muted/30 p-12 text-center">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                  <History className="h-8 w-8 text-slate-300" />
+                </div>
+                <h3 className="text-lg font-bold text-text-main">Sin novedades aún</h3>
+                <p className="text-secondary mt-2 max-w-sm mx-auto">
+                  Aún no se han registrado novedades para este curso. Las novedades ayudan al equipo a seguir el progreso y los cambios importantes.
+                </p>
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={() => setShowNovedadModal(true)}
+                    className="mt-6 text-primary font-bold text-sm hover:underline"
+                  >
+                    Registrar la primera novedad
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {novedades.map((novedad) => (
+                  <div 
+                    key={novedad.id} 
+                    className="bg-white rounded-xl shadow-sm border border-muted/30 overflow-hidden transition-all hover:shadow-md"
+                  >
+                    <div className="flex">
+                      <div className={`w-1 transition-colors ${
+                        novedad.estado === 'Crítico' ? 'bg-red-500' :
+                        novedad.estado === 'Importante' ? 'bg-amber-500' :
+                        novedad.estado === 'Completado' ? 'bg-emerald-500' :
+                        'bg-slate-300'
+                      }`} />
+                      <div className="p-6 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${
+                              novedad.estado === 'Crítico' ? 'bg-red-50 text-red-600' :
+                              novedad.estado === 'Importante' ? 'bg-amber-50 text-amber-600' :
+                              novedad.estado === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
+                              'bg-slate-50 text-slate-600'
+                            }`}>
+                              {novedad.estado === 'Crítico' ? <AlertCircle className="h-5 w-5" /> :
+                               novedad.estado === 'Importante' ? <AlertTriangle className="h-5 w-5" /> :
+                               novedad.estado === 'Completado' ? <CheckCircle2 className="h-5 w-5" /> :
+                               <MessageSquare className="h-5 w-5" />}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-text-main">{novedad.titulo}</h4>
+                              <p className="text-[10px] text-slate-400 font-mono flex items-center mt-0.5">
+                                <History className="h-3 w-3 mr-1" />
+                                {new Date(novedad.fecha).toLocaleDateString()} - {new Date(novedad.created_at || novedad.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full border self-start sm:self-center ${
+                            novedad.estado === 'Crítico' ? 'bg-red-50 text-red-700 border-red-100' :
+                            novedad.estado === 'Importante' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                            novedad.estado === 'Completado' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            'bg-slate-50 text-slate-700 border-slate-200'
+                          }`}>
+                            {novedad.estado}
+                          </span>
+                        </div>
+                        <div className="pr-4">
+                          <p className="text-sm text-text-main leading-relaxed whitespace-pre-wrap">
+                            {novedad.comentario}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Modal Nueva Novedad */}
+            {showNovedadModal && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowNovedadModal(false)} />
+                <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-muted/30 bg-white flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-text-main flex items-center">
+                      <Plus className="h-5 w-5 text-primary mr-2" />
+                      Registrar Novedad
+                    </h3>
+                    <button onClick={() => setShowNovedadModal(false)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <form onSubmit={handleSaveNovedad} className="p-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Título de la Tarea/Novedad</label>
+                        <input
+                          required
+                          type="text"
+                          value={novedadForm.titulo}
+                          onChange={(e) => setNovedadForm({ ...novedadForm, titulo: e.target.value })}
+                          className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="Ej: Cambio en cronograma de grabación"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Estado / Gravedad</label>
+                          <select
+                            value={novedadForm.estado}
+                            onChange={(e) => setNovedadForm({ ...novedadForm, estado: e.target.value as any })}
+                            className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="Normal">Normal</option>
+                            <option value="Importante">Importante</option>
+                            <option value="Crítico">Crítico</option>
+                            <option value="Completado">Completado</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Fecha</label>
+                          <input
+                            required
+                            type="date"
+                            value={novedadForm.fecha}
+                            onChange={(e) => setNovedadForm({ ...novedadForm, fecha: e.target.value })}
+                            className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">Comentario detallado</label>
+                        <textarea
+                          required
+                          rows={4}
+                          value={novedadForm.comentario}
+                          onChange={(e) => setNovedadForm({ ...novedadForm, comentario: e.target.value })}
+                          className="w-full rounded-lg border border-muted px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="Describe lo ocurrido..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowNovedadModal(false)}
+                        className="px-4 py-2 text-sm font-bold text-secondary border border-muted rounded-lg hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submittingNovedad}
+                        className="flex items-center px-6 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        {submittingNovedad && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        Guardar Novedad
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

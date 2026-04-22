@@ -109,3 +109,13 @@ export interface DocumentoCurso {
   fecha?: string;
   created_at: string;
 }
+
+export interface NovedadCurso {
+  id: string;
+  curso_id: string;
+  titulo: string;
+  comentario: string;
+  fecha: string;
+  estado: 'Normal' | 'Importante' | 'Crítico' | 'Completado';
+  created_at: string;
+}
