@@ -329,77 +329,29 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isToday = isSameDay(day, new Date());
+        const hasTasks = dayEvents.length > 0;
 
         days.push(
           <div
             key={day.toString()}
-            className={`min-h-[120px] p-2 border-b border-r border-muted/30 ${
-              !isCurrentMonth ? 'bg-background/50 text-slate-400' : 'bg-white text-text-main'
-            } ${isToday ? 'bg-primary/5' : ''}`}
+            className={`min-h-[80px] p-2 border-b border-r border-muted/30 transition-colors ${
+              !isCurrentMonth ? 'bg-background/30 text-slate-300' : 
+              hasTasks ? 'bg-primary/5 text-text-main' : 'bg-white text-text-main'
+            } ${isToday ? 'bg-primary/10 ring-1 ring-inset ring-primary/20' : ''}`}
           >
-            <div className="flex justify-end">
-              <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
-                isToday ? 'bg-primary text-white' : ''
+            <div className="flex flex-col items-center justify-center h-full">
+              <span className={`text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                isToday ? 'bg-primary text-white shadow-sm scale-110' : 
+                hasTasks ? 'text-primary' : ''
               }`}>
                 {formattedDate}
               </span>
-            </div>
-            <div className="mt-2 space-y-1.5 relative">
-              {dayEvents.map((event, idx) => {
-                const isCompleted = event.estado === 'Completado' || event.estado === 'Completada';
-                const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
-                
-                let eventStart, eventEnd;
-                if (isCompleted && event.fecha_completada) {
-                  eventEnd = parseISO(event.fecha_completada);
-                  eventStart = eventEnd;
-                } else {
-                  eventEnd = parseISO(event.fecha_entrega);
-                  eventStart = event.fecha_inicio ? parseISO(event.fecha_inicio) : eventEnd;
-                }
-                
-                const isStart = isSameDay(cloneDay, eventStart);
-                const isEnd = isSameDay(cloneDay, eventEnd);
-                
-                // Determine styling based on position in the span
-                let roundedClass = '';
-                if (isStart && isEnd) roundedClass = 'rounded-md';
-                else if (isStart) roundedClass = 'rounded-l-md border-r-0';
-                else if (isEnd) roundedClass = 'rounded-r-md border-l-0';
-                else roundedClass = 'rounded-none border-x-0';
-
-                return (
-                  <div 
-                    key={event.id || idx} 
-                    className={`px-2 py-1.5 text-xs border ${status.color} ${roundedClass} ${!isStart ? 'pl-1' : ''}`}
-                    title={`${event.curso?.nombre} - ${event.titulo}\n${status.label}`}
-                  >
-                    {isStart ? (
-                      <>
-                        <div className="font-semibold truncate">{event.titulo}</div>
-                        {event.curso_id ? (
-                          <Link to={`/cursos/${event.curso_id}`} className="truncate opacity-80 hover:underline hover:text-primary block">
-                            {event.curso?.nombre}
-                          </Link>
-                        ) : (
-                          <div className="truncate opacity-80">{event.proyecto || 'Diseño Virtual'}</div>
-                        )}
-                        {isStart && isEnd && event.detalle && (
-                          <div className="mt-1 bg-white/60 rounded px-1.5 py-1 text-[9px] text-text-main border border-black/5 flex items-start gap-1">
-                            <div className={`flex-shrink-0 w-3 h-3 rounded-full flex items-center justify-center ${status.iconBg}`}>
-                              <Bell className="w-2 h-2 text-white" />
-                            </div>
-                            <span className="truncate leading-tight">{event.detalle}</span>
-                          </div>
-                        )}
-                        <div className="text-[10px] mt-1 font-medium italic opacity-90 truncate">{status.label}</div>
-                      </>
-                    ) : (
-                      <div className="h-4"></div> // Empty space for continuous bar
-                    )}
-                  </div>
-                );
-              })}
+              {hasTasks && (
+                <div className="mt-1.5 flex gap-0.5 justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                  {dayEvents.length > 1 && <div className="w-1.5 h-1.5 rounded-full bg-primary/60"></div>}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -415,106 +367,44 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     return <div className="border-l border-t border-muted/30 rounded-b-xl overflow-hidden">{rows}</div>;
   };
 
-  const renderSidebar = () => {
-    const vencidas: any[] = [];
-    const enProgreso: any[] = [];
-    const completadas: any[] = [];
-
-    const today = startOfDay(new Date());
-
-    entregas.forEach(event => {
-      if (event.estado === 'Completado' || event.estado === 'Completada') {
-        completadas.push(event);
-        return;
-      }
-
-      const dueDate = startOfDay(parseISO(event.fecha_entrega));
-      const diffDays = differenceInDays(dueDate, today);
-
-      if (diffDays < 0) {
-        vencidas.push(event);
-      } else {
-        enProgreso.push(event);
-      }
-    });
-
+  const renderTaskList = (title: string, events: any[], colorClass: string, bgClass: string) => {
     const sortByDate = (a: any, b: any) => {
-      const dateA = (a.estado === 'Completado' || a.estado === 'Completada') && a.fecha_completada 
-        ? new Date(a.fecha_completada).getTime() 
-        : new Date(a.fecha_entrega).getTime();
-      const dateB = (b.estado === 'Completado' || b.estado === 'Completada') && b.fecha_completada 
-        ? new Date(b.fecha_completada).getTime() 
-        : new Date(b.fecha_entrega).getTime();
+      const dateA = new Date(a.fecha_entrega).getTime();
+      const dateB = new Date(b.fecha_entrega).getTime();
       return dateA - dateB;
     };
 
-    vencidas.sort(sortByDate);
-    enProgreso.sort(sortByDate);
-    completadas.sort(sortByDate);
-
-    const renderList = (title: string, events: any[], colorClass: string, bgClass: string) => (
-      <div className="mb-6 last:mb-0">
-        <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 flex items-center ${colorClass}`}>
-          <div className={`w-2 h-2 rounded-full mr-2 ${bgClass}`}></div>
-          {title} ({events.length})
-        </h3>
-        <div className="space-y-3">
-          {events.length === 0 ? (
-            <p className="text-sm text-secondary italic">No hay tareas en esta sección</p>
-          ) : (
-            events.map((event, idx) => {
-              if (event.isNotificacion && event.proyecto) {
-                return (
-                  <TareaTimerItem 
-                    key={event.id || idx} 
-                    tarea={event} 
-                    onUpdate={fetchEntregas} 
-                    hideType={true}
-                    hideRole={true}
-                  />
-                );
-              }
-
-              const status = getTrafficLightStatus(event.fecha_entrega, event.estado);
-              return (
-                <div key={event.id || idx} className={`p-3 rounded-lg border ${status.color}`}>
-                  <div className="font-semibold text-sm">{event.titulo}</div>
-                  {event.curso_id ? (
-                    <Link to={`/cursos/${event.curso_id}`} className="text-xs opacity-80 mt-0.5 hover:underline hover:text-primary block">
-                      {event.curso?.nombre}
-                    </Link>
-                  ) : (
-                    <div className="text-xs opacity-80 mt-0.5">{event.proyecto || 'Diseño Virtual'}</div>
-                  )}
-                  {event.detalle && (
-                    <div className="mt-1.5 bg-white/60 rounded px-2 py-1.5 text-[10px] text-text-main border border-black/5 flex items-start gap-1.5">
-                      <div className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${status.iconBg}`}>
-                        <Bell className="w-2.5 h-2.5 text-white" />
-                      </div>
-                      <span className="leading-tight">{event.detalle}</span>
-                    </div>
-                  )}
-                  <div className="text-xs font-medium mt-2 flex items-center justify-between">
-                    <span>
-                      {(event.estado === 'Completado' || event.estado === 'Completada') && event.fecha_completada
-                        ? `Completada: ${format(parseISO(event.fecha_completada), 'dd MMM yyyy', { locale: es })}`
-                        : format(parseISO(event.fecha_entrega), 'dd MMM yyyy', { locale: es })
-                      }
-                    </span>
-                    <span className="italic opacity-90 text-[10px] text-right ml-2">{status.label}</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    );
+    const sortedEvents = [...events].sort(sortByDate);
 
     return (
-      <div className="bg-white shadow-sm rounded-xl border border-muted/30 p-5 max-h-[calc(100vh-12rem)] overflow-y-auto sticky top-6">
-        {renderList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
-        {renderList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
+      <div className="flex flex-col h-full bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+        <div className="px-5 py-4 border-b border-muted/30 bg-background/50 sticky top-0 z-10">
+          <h3 className={`text-sm font-bold uppercase tracking-wider flex items-center ${colorClass}`}>
+            <div className={`w-2.5 h-2.5 rounded-full mr-2.5 ${bgClass} shadow-sm`}></div>
+            {title}
+            <span className="ml-auto bg-white/80 px-2 py-0.5 rounded-full border border-current/10 text-[10px]">
+              {events.length}
+            </span>
+          </h3>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-16rem)]">
+          {events.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 opacity-30">
+              <CheckCircle className="w-8 h-8 mb-2" />
+              <p className="text-xs font-bold italic">Sin tareas pendientes</p>
+            </div>
+          ) : (
+            sortedEvents.map((event, idx) => (
+              <TareaTimerItem 
+                key={event.id || idx} 
+                tarea={event} 
+                onUpdate={fetchEntregas} 
+                hideType={true}
+                hideRole={true}
+              />
+            ))
+          )}
+        </div>
       </div>
     );
   };
@@ -526,6 +416,20 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       </div>
     );
   }
+
+  const vencidas = entregas.filter(e => {
+    if (e.estado === 'Completado' || e.estado === 'Completada') return false;
+    const today = startOfDay(new Date());
+    const dueDate = startOfDay(parseISO(e.fecha_entrega));
+    return differenceInDays(dueDate, today) < 0;
+  });
+
+  const enProgreso = entregas.filter(e => {
+    if (e.estado === 'Completado' || e.estado === 'Completada') return false;
+    const today = startOfDay(new Date());
+    const dueDate = startOfDay(parseISO(e.fecha_entrega));
+    return differenceInDays(dueDate, today) >= 0;
+  });
 
   return (
     <div className="space-y-6">
@@ -654,19 +558,24 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* Sidebar */}
-        <div className="w-full lg:w-80 flex-shrink-0">
-          {renderSidebar()}
-        </div>
-
-        {/* Calendar */}
-        <div className="flex-1 w-full bg-white shadow-sm rounded-xl border border-muted/30 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Column 1: Calendar */}
+        <div className="w-full bg-white shadow-sm rounded-xl border border-muted/30 p-6">
           {renderHeader()}
           <div className="rounded-xl overflow-hidden border border-muted/30">
             {renderDays()}
             {renderCells()}
           </div>
+        </div>
+
+        {/* Column 2: Vencidas */}
+        <div className="w-full">
+          {renderTaskList('Tareas Vencidas', vencidas, 'text-red-700', 'bg-red-500')}
+        </div>
+
+        {/* Column 3: En Progreso */}
+        <div className="w-full">
+          {renderTaskList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
         </div>
       </div>
     </div>
