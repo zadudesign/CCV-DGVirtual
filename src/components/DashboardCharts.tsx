@@ -12,7 +12,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Cell 
+  Cell,
+  LabelList 
 } from 'recharts';
 import { Loader2 } from 'lucide-react';
 
@@ -35,18 +36,23 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                       ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
       
       // Filtramos por cursos con progreso (activos en construcción)
-      // Excluimos 'Publicado' y 'Planificación' (solicitudes)
-      let query = supabase.from('cursos').select('*').in('estado', ['En Desarrollo', 'Revisión']);
+      // Incluimos 'Planificación', 'En Desarrollo' y 'Revisión' (que están en la tabla cursos)
+      // Excluimos 'Publicado'
+      let query = supabase.from('cursos').select('*').neq('estado', 'Publicado');
 
       if (!isAdmin) {
         if (user.role === 'decano' && user.facultad) {
           query = query.eq('facultad', user.facultad);
-        } else if (user.programa) {
+        } else if (user.role === 'coordinador' && user.programa) {
           query = query.eq('programa', user.programa);
+        } else if (user.role === 'docente') {
+          query = query.eq('docente_id', user.id);
+        } else if (user.role === 'evaluador') {
+          query = query.eq('evaluador_id', user.id);
         }
       }
 
-      const { data, error } = await query.order('progreso', { ascending: false });
+      const { data, error } = await query.order('progreso_general', { ascending: false });
       if (error) throw error;
       setCursos(data as Curso[] || []);
     } catch (error) {
@@ -57,7 +63,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
   };
 
   const promedioGlobal = cursos.length > 0 
-    ? cursos.reduce((acc, c) => acc + (c.progreso || 0), 0) / cursos.length 
+    ? cursos.reduce((acc, c) => acc + (c.progreso_general || 0), 0) / cursos.length 
     : 0;
 
   if (loading) {
@@ -98,17 +104,6 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
             <span className="text-[10px] font-bold text-secondary uppercase mt-1 tracking-tighter">Completado</span>
           </div>
         </div>
-        
-        <div className="mt-8 grid grid-cols-2 gap-4 w-full border-t border-slate-100 pt-6">
-          <div className="text-center">
-            <p className="text-secondary text-[10px] uppercase font-bold tracking-wider">Cursos</p>
-            <p className="text-xl font-bold text-primary">{cursos.length}</p>
-          </div>
-          <div className="text-center border-l border-slate-100">
-            <p className="text-secondary text-[10px] uppercase font-bold tracking-wider">Estado</p>
-            <p className="text-xs font-bold text-emerald-600 mt-1">Activos</p>
-          </div>
-        </div>
       </div>
 
       {/* Columna 2: Progreso Individual (2/3) */}
@@ -128,7 +123,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
               <BarChart
                 layout="vertical"
                 data={cursos.slice(0, 10)} 
-                margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                margin={{ top: 5, right: 40, left: 10, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" domain={[0, 100]} hide />
@@ -163,12 +158,18 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                   labelStyle={{ fontWeight: 'bold', color: '#2d4c7c', marginBottom: '4px' }}
                 />
                 <Bar 
-                  dataKey="progreso" 
+                  dataKey="progreso_general" 
                   radius={[0, 6, 6, 0]} 
                   barSize={18}
                 >
+                  <LabelList 
+                    dataKey="progreso_general" 
+                    position="right" 
+                    formatter={(val: number) => `${val}%`} 
+                    style={{ fill: '#64748b', fontSize: '10px', fontWeight: 'bold' }} 
+                  />
                   {cursos.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.progreso >= 80 ? '#059669' : entry.progreso >= 40 ? '#2d4c7c' : '#f59e0b'} />
+                    <Cell key={`cell-${index}`} fill={entry.progreso_general >= 80 ? '#059669' : entry.progreso_general >= 40 ? '#2d4c7c' : '#f59e0b'} />
                   ))}
                 </Bar>
               </BarChart>

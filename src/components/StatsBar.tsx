@@ -50,23 +50,29 @@ export default function StatsBar({ user }: StatsBarProps) {
         }
       }
 
-      // Solo cursos en construcción (no publicados y no planificación si se consideran solicitudes?)
-      // El usuario dijo "Activos en construcción, no de las solicitudes".
-      // Asumiremos que 'En Desarrollo' y 'Revisión' son "en construcción".
-      // Si 'Planificación' es solicitud, la excluimos.
-      const coursesRes = await cursosQuery.in('estado', ['En Desarrollo', 'Revisión']);
+      // Solo cursos activos (no publicados)
+      const activeCursosStatus = ['Planificación', 'En Desarrollo', 'Revisión'];
+      const coursesRes = await cursosQuery.in('estado', activeCursosStatus);
       
       // Programas virtuales (con cursos activos)
-      const activeCourses = await supabase.from('cursos').select('programa').neq('estado', 'Publicado');
-      let filteredActiveCourses = activeCourses.data || [];
+      let activeCoursesQuery = supabase.from('cursos')
+        .select('programa, facultad, docente_id, evaluador_id')
+        .in('estado', activeCursosStatus);
+
       if (!isAdmin) {
-        if (user.role === 'decano') {
-          filteredActiveCourses = filteredActiveCourses.filter(c => c.facultad === user.facultad);
-        } else if (user.role === 'coordinador') {
-          filteredActiveCourses = filteredActiveCourses.filter(c => c.programa === user.programa);
+        if (user.role === 'decano' && user.facultad) {
+          activeCoursesQuery = activeCoursesQuery.eq('facultad', user.facultad);
+        } else if (user.programa) {
+          activeCoursesQuery = activeCoursesQuery.eq('programa', user.programa);
+        } else if (user.role === 'docente') {
+          activeCoursesQuery = activeCoursesQuery.eq('docente_id', user.id);
+        } else if (user.role === 'evaluador') {
+          activeCoursesQuery = activeCoursesQuery.eq('evaluador_id', user.id);
         }
       }
-      const uniqueProgramasVirtuales = new Set(filteredActiveCourses.map(c => c.programa)).size;
+
+      const activeCoursesRes = await activeCoursesQuery;
+      const uniqueProgramasVirtuales = new Set((activeCoursesRes.data || []).map(c => c.programa)).size;
 
       const [docentesRes, evaluadoresRes, extraRes] = await Promise.all([
         docentesQuery,
