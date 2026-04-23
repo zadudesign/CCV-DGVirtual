@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Curso } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { 
   ResponsiveContainer, 
   RadialBarChart, 
@@ -22,6 +23,7 @@ interface DashboardChartsProps {
 }
 
 export default function DashboardCharts({ user }: DashboardChartsProps) {
+  const navigate = useNavigate();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [novedades, setNovedades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,22 +161,27 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                 <YAxis 
                   type="category" 
                   dataKey="nombre" 
-                  width={140} 
+                  width={180} 
                   axisLine={false} 
                   tickLine={false} 
                   tick={(props) => {
                     const { x, y, payload } = props;
+                    const curso = cursos.find(c => c.nombre === payload.value);
                     return (
-                      <g transform={`translate(${x},${y})`}>
+                      <g 
+                        transform={`translate(${x},${y})`} 
+                        className="cursor-pointer hover:opacity-70 transition-opacity"
+                        onClick={() => curso && navigate(`/curso/${curso.id}`)}
+                      >
                         <text
                           x={-10}
                           y={0}
                           dy={4}
                           textAnchor="end"
-                          fill="#64748b"
-                          className="text-[9px] font-bold uppercase tracking-tight"
+                          fill="#2d4c7c"
+                          className="text-[9px] font-bold uppercase tracking-tight underline decoration-primary/20"
                         >
-                          {payload.value.length > 20 ? `${payload.value.substring(0, 20)}...` : payload.value}
+                          {payload.value.length > 28 ? `${payload.value.substring(0, 28)}...` : payload.value}
                         </text>
                       </g>
                     );
@@ -235,9 +242,12 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                     {novedad.comentario}
                   </p>
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[110px]">
+                    <button 
+                      onClick={() => navigate(`/curso/${novedad.curso_id}`)}
+                      className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[160px] hover:bg-primary/20 transition-colors cursor-pointer"
+                    >
                       {novedad.curso?.nombre}
-                    </span>
+                    </button>
                     <span className="text-[9px] text-slate-400 font-medium">
                       {new Date(novedad.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                     </span>
