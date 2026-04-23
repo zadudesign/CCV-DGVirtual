@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsBar from '../../components/StatsBar';
+import TasksStatsBar from '../../components/TasksStatsBar';
 import DashboardCharts from '../../components/DashboardCharts';
 
 export default function DecanoDashboard() {
@@ -18,6 +19,7 @@ export default function DecanoDashboard() {
       </div>
 
       <StatsBar user={user} />
+      <TasksStatsBar user={user} />
       <DashboardCharts user={user} />
     </div>
   );

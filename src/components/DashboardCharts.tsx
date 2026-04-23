@@ -91,7 +91,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-80 bg-white rounded-xl border border-muted/20 shadow-sm mb-10">
+      <div className="flex items-center justify-center h-[400px] bg-white rounded-xl border border-muted/20 shadow-sm mb-10">
         <div className="flex flex-col items-center">
           <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
           <p className="text-secondary text-sm font-medium">Cargando indicadores de progreso...</p>
@@ -111,13 +111,13 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
       {/* Columna 1: Promedio Global (1/4) */}
-      <div className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col items-center justify-center h-[350px]">
+      <div className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col items-center justify-center h-[400px]">
         <div className="mb-4 text-center">
           <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Indicador de Avance</h3>
           <p className="text-lg font-bold text-primary">Promedio Global</p>
         </div>
         
-        <div className="relative w-full h-44 flex items-center justify-center">
+        <div className="relative w-full h-56 flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart 
               cx="50%" cy="50%" 
@@ -138,7 +138,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
       </div>
 
       {/* Columna 2: Progreso Individual (2/4) */}
-      <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col h-[350px]">
+      <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col h-[400px]">
         <div className="mb-4">
           <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Rendimiento por Curso</h3>
           <p className="text-lg font-bold text-primary">Progreso de Cursos Activos</p>
@@ -215,7 +215,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
       </div>
 
       {/* Columna 3: Novedades Recientes (1/4) */}
-      <div className="bg-white rounded-xl border border-muted/20 shadow-md flex flex-col h-[350px] overflow-hidden">
+      <div className="bg-white rounded-xl border border-muted/20 shadow-md flex flex-col h-[400px] overflow-hidden">
         <div className="p-5 border-b border-slate-50 shrink-0">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest">Comunicación</h3>
