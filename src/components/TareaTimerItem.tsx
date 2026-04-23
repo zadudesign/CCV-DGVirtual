@@ -24,7 +24,10 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
 
   const totalSeconds = tarea.tiempo_invertido || 0;
   const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
-  const hourlyRate = (customRates && customRates[tarea.tipo_tarea as string]) || HOURLY_RATES[tarea.tipo_tarea as string] || 0;
+  
+  // Priorizar tipo_tarifa si existe, si no usar tipo_tarea
+  const tarifaKey = tarea.tipo_tarifa || tarea.tipo_tarea;
+  const hourlyRate = (customRates && customRates[tarifaKey as string]) || HOURLY_RATES[tarifaKey as string] || 0;
   const estimatedCost = (totalSeconds / 3600) * hourlyRate;
 
   const getTrafficLightStatus = (fecha: string, estado: string) => {

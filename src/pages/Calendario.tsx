@@ -23,6 +23,8 @@ import {
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 
+import { HOURLY_RATES } from '../lib/constants';
+
 const COLOMBIA_TZ = 'America/Bogota';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 
@@ -35,6 +37,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [hourlyRates, setHourlyRates] = useState<Record<string, number>>(HOURLY_RATES);
   
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
@@ -43,7 +46,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
     titulo: '',
-    tipo_tarea: 'Diseño' as 'Diseño' | 'Multimedia' | 'Transmisión' | 'Soporte',
+    tipo_tarifa: 'Diseño',
     descripcion: '',
     fecha_vencimiento: '',
     rol_destino: 'Diseño'
@@ -53,8 +56,27 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     if (user) {
       fetchEntregas();
       fetchProyectos();
+      fetchRates();
     }
   }, [user, cursoId]);
+
+  const fetchRates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('configuracion_tarifas')
+        .select('*');
+      
+      if (!error && data && data.length > 0) {
+        const ratesMap: Record<string, number> = { ...HOURLY_RATES };
+        data.forEach((r: any) => {
+          ratesMap[r.nombre_tipo] = r.tarifa_hora;
+        });
+        setHourlyRates(ratesMap);
+      }
+    } catch (e) {
+      console.error('Error fetching rates:', e);
+    }
+  };
 
   const fetchProyectos = async () => {
     try {
@@ -126,6 +148,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
             tipo_tarea: row.tipo_tarea,
+            tipo_tarifa: row.tipo_tarifa,
             descripcion: row.descripcion || '',
             curso: row.curso,
             proyecto: row.proyecto,
@@ -189,7 +212,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
       const payload = {
         titulo: formData.titulo,
-        tipo_tarea: formData.tipo_tarea,
+        tipo_tarea: formData.tipo_tarifa, // Maintaining sync with legacy field if needed
+        tipo_tarifa: formData.tipo_tarifa,
         descripcion: formData.descripcion,
         fecha_vencimiento: fechaVencimientoColombia,
         rol_destino: formData.rol_destino,
@@ -205,7 +229,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       setFormData({
         proyecto: 'Diseño Virtual',
         titulo: '',
-        tipo_tarea: 'Diseño',
+        tipo_tarifa: 'Diseño',
         descripcion: '',
         fecha_vencimiento: '',
         rol_destino: 'Diseño'
@@ -417,6 +441,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                 key={event.id || idx} 
                 tarea={event} 
                 onUpdate={fetchEntregas} 
+                customRates={hourlyRates}
                 hideType={true}
                 hideRole={false}
               />
@@ -565,18 +590,38 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-main mb-1">Tipo de Tarea</label>
-                    <select
-                      required
-                      value={formData.tipo_tarea}
-                      onChange={(e) => setFormData({...formData, tipo_tarea: e.target.value as any})}
-                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="Diseño">Diseño</option>
-                      <option value="Multimedia">Multimedia</option>
-                      <option value="Transmisión">Transmisión</option>
-                      <option value="Soporte">Soporte</option>
-                    </select>
+                    <label className="block text-sm font-bold text-text-main mb-3">Tarifa de la Tarea (Selecciona una)</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(hourlyRates).map(([tipo, tarifa]) => (
+                        <div 
+                          key={tipo}
+                          onClick={() => setFormData({...formData, tipo_tarifa: tipo})}
+                          className={`flex items-center p-3 rounded-xl border-2 transition-all cursor-pointer shadow-sm hover:shadow-md ${
+                            formData.tipo_tarifa === tipo 
+                              ? 'border-primary bg-primary/5 ring-1 ring-primary/20' 
+                              : 'border-slate-100 bg-slate-50 hover:bg-white'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center mr-3 transition-colors ${
+                            formData.tipo_tarifa === tipo 
+                              ? 'bg-primary border-primary text-white shadow-sm' 
+                              : 'bg-white border-slate-300'
+                          }`}>
+                            {formData.tipo_tarifa === tipo && (
+                              <CheckCircle className="w-3.5 h-3.5 stroke-[3]" />
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className={`text-xs font-bold uppercase tracking-tight ${formData.tipo_tarifa === tipo ? 'text-primary' : 'text-slate-600'}`}>
+                              {tipo}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-emerald-600">
+                              ${new Intl.NumberFormat('es-CO').format(tarifa as number)}/h
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-main mb-1">Tarea</label>
