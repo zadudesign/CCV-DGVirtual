@@ -167,23 +167,23 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                   tick={(props) => {
                     const { x, y, payload } = props;
                     const curso = cursos.find(c => c.nombre === payload.value);
+                    if (!curso) return null;
+                    
                     return (
-                      <g 
-                        transform={`translate(${x},${y})`} 
-                        className="cursor-pointer hover:opacity-70 transition-opacity"
-                        onClick={() => curso && navigate(`/curso/${curso.id}`)}
-                      >
-                        <text
-                          x={-10}
-                          y={0}
-                          dy={4}
-                          textAnchor="end"
-                          fill="#2d4c7c"
-                          className="text-[9px] font-bold uppercase tracking-tight underline decoration-primary/20"
-                        >
-                          {payload.value.length > 28 ? `${payload.value.substring(0, 28)}...` : payload.value}
-                        </text>
-                      </g>
+                      <foreignObject x={x - 180} y={y - 10} width={170} height={20}>
+                        <div className="flex justify-end pr-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cursos/${curso.id}`);
+                            }}
+                            className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[160px] hover:bg-primary/20 transition-colors cursor-pointer text-right uppercase tracking-tight"
+                            title={payload.value}
+                          >
+                            {payload.value.length > 25 ? `${payload.value.substring(0, 25)}...` : payload.value}
+                          </button>
+                        </div>
+                      </foreignObject>
                     );
                   }}
                 />
@@ -243,7 +243,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                   </p>
                   <div className="flex items-center justify-between mt-auto">
                     <button 
-                      onClick={() => navigate(`/curso/${novedad.curso_id}`)}
+                      onClick={() => navigate(`/cursos/${novedad.curso_id}`)}
                       className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[160px] hover:bg-primary/20 transition-colors cursor-pointer"
                     >
                       {novedad.curso?.nombre}
