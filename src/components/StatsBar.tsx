@@ -119,14 +119,7 @@ export default function StatsBar({ user }: StatsBarProps) {
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-10">
-      <StatBox 
-        title={user.role === 'admin' || user.role === 'team' ? "Facultades" : "Programas Activos"} 
-        value={stats.extraStat} 
-        icon={GraduationCap} 
-        color="text-rose-600" 
-        bg="bg-rose-50"
-      />
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
       <StatBox 
         title="Programas Virtuales" 
         value={stats.programasVirtuales} 
