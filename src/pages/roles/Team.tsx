@@ -1,153 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Shield, Users, BookOpen, AlertCircle, Clock, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { Curso } from '../../types';
-import { Link } from 'react-router-dom';
-import { getClickupUrlForRole } from '../../lib/utils';
-import { DynamicIcon } from '../../components/DynamicIcon';
 import StatsBar from '../../components/StatsBar';
 
 export default function TeamDashboard() {
   const { user } = useAuth();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      const { data: cursosData, error: cursosError } = await supabase
-        .from('cursos')
-        .select(`
-          *,
-          docente:profiles!docente_id(name)
-        `)
-        .order('created_at', { ascending: false });
-        
-      if (cursosError) throw cursosError;
-      setCursos(cursosData as Curso[] || []);
-      
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
-  }
 
   if (!user) return null;
 
-  const totalCursos = cursos.length;
-  const cursosEnDesarrollo = cursos.filter(c => c.estado === 'En Desarrollo').length;
-  const cursosRevision = cursos.filter(c => c.estado === 'Revisión').length;
-
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div>
-        <h1 className="text-2xl font-bold text-text-main">Panel de Equipo</h1>
+        <h1 className="text-2xl font-bold text-text-main">Panel de Equipo Team</h1>
         <p className="mt-1 text-sm text-secondary">
-          Bienvenido al área de {user?.team_area || user?.role || 'Trabajo'}.
+          Gestión de usuarios, facultades y programas de la plataforma CCV.
         </p>
       </div>
 
       <StatsBar user={user} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">
-          <div className="px-6 py-5 border-b border-muted/30 flex justify-between items-center bg-background">
-            <h2 className="text-lg font-medium text-text-main flex items-center">
-              <BookOpen className="mr-2 h-5 w-5 text-primary" />
-              Cursos Recientes
-            </h2>
-            <Link to="/cursos" className="text-sm font-medium text-primary hover:text-primary-hover">
-              Ver Todos
-            </Link>
-          </div>
-          <div className="flex-1 overflow-y-auto p-0">
-            {cursos.length === 0 ? (
-              <div className="p-6 text-center text-secondary text-sm">No hay cursos registrados.</div>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {cursos.slice(0, 5).map((curso) => (
-                  <li key={curso.id} className="p-6 hover:bg-background transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Link to={`/cursos/${curso.id}`} className="text-sm font-medium text-primary hover:text-primary-hover flex items-center">
-                          <DynamicIcon name={curso.icon} className="h-4 w-4 mr-1.5" />
-                          {curso.nombre}
-                        </Link>
-                        <p className="text-xs text-secondary mt-1">{curso.programa}</p>
-                        {getClickupUrlForRole(curso, user?.role) && (
-                          <a 
-                            href={getClickupUrlForRole(curso, user?.role)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center mt-2 text-xs text-secondary hover:text-primary transition-colors"
-                          >
-                            <svg className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                            </svg>
-                            Abrir Tablero ClickUp
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
-                          curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
-                          curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                          'bg-slate-100 text-text-main'
-                        }`}>
-                          {curso.estado}
-                        </span>
-                        <span className="text-xs font-medium text-secondary mt-2">{curso.progreso}% completado</span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-muted/30">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Shield className="h-6 w-6 text-orange-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-text-main">Mis Tareas</h2>
-            </div>
-            <p className="text-secondary text-sm">
-              Aquí podrás ver las tareas asignadas a tu área de {user?.team_area || user?.role}.
-            </p>
-          </div>
-
-          <Link to="/usuarios" className="block bg-white p-6 rounded-xl shadow-sm border border-muted/30 hover:bg-background transition-colors">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-lg font-semibold text-text-main">Directorio</h2>
-            </div>
-            <p className="text-secondary text-sm">
-              Accede al directorio de usuarios de la plataforma.
-            </p>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

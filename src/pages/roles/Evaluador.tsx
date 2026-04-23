@@ -1,68 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Star, MessageSquare, CheckCircle2, AlertCircle, BookOpen, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Curso } from '../../types';
-import { Link } from 'react-router-dom';
 import StatsBar from '../../components/StatsBar';
 
 export default function EvaluadorDashboard() {
   const { user } = useAuth();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
-    }
-  }, [user]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch cursos asignados al evaluador
-      const { data: cursosData, error: cursosError } = await supabase
-        .from('cursos')
-        .select(`
-          *,
-          docente:profiles!docente_id(name)
-        `)
-        .eq('evaluador_id', user?.id)
-        .order('created_at', { ascending: false });
-        
-      if (cursosError) throw cursosError;
-      setCursos(cursosData as Curso[] || []);
-      
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
-  }
 
   if (!user) return null;
 
-  const totalCursos = cursos.length;
-  const cursosRevision = cursos.filter(c => c.estado === 'Revisión').length;
-  const cursosPublicados = cursos.filter(c => c.estado === 'Publicado').length;
-
-  const filteredCursos = cursos.filter(curso => 
-    curso.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    curso.docente?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div>
         <h1 className="text-2xl font-bold text-text-main">Panel del Par Evaluador</h1>
         <p className="mt-1 text-sm text-secondary">
@@ -71,61 +17,6 @@ export default function EvaluadorDashboard() {
       </div>
 
       <StatsBar user={user} />
-
-      <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 border-b border-muted/30 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h3 className="text-lg leading-6 font-medium text-text-main">Cursos Asignados para Revisión</h3>
-          <div className="relative rounded-md shadow-sm max-w-xs w-full">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="text"
-              className="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-muted rounded-md py-2 border"
-              placeholder="Buscar curso..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <div className="divide-y divide-slate-200">
-          {filteredCursos.length === 0 ? (
-            <div className="p-6 text-center text-secondary">No se encontraron cursos asignados.</div>
-          ) : (
-            filteredCursos.map((curso) => (
-              <div key={curso.id} className="p-6 hover:bg-background transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-base font-medium text-primary">{curso.nombre}</h4>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        curso.estado === 'Publicado' ? 'bg-green-100 text-green-800' :
-                        curso.estado === 'Revisión' ? 'bg-amber-100 text-amber-800' :
-                        curso.estado === 'En Desarrollo' ? 'bg-blue-100 text-blue-800' :
-                        'bg-slate-100 text-text-main'
-                      }`}>
-                        {curso.estado}
-                      </span>
-                    </div>
-                    <p className="text-sm text-secondary mt-1">Docente: {curso.docente?.name || 'Sin asignar'} • Programa: {curso.programa}</p>
-                  </div>
-                  <div className="flex space-x-3">
-                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-muted shadow-sm text-sm font-medium rounded-md text-text-main bg-white hover:bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                      <MessageSquare className="h-4 w-4 mr-2 text-slate-400" />
-                      Feedback
-                    </Link>
-                    <Link to="/cursos" className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                      <Star className="h-4 w-4 mr-2" />
-                      Evaluar
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 }
