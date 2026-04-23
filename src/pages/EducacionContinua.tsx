@@ -178,13 +178,13 @@ export default function EducacionContinua() {
   const totalProjectSeconds = tareasDelProyecto.reduce((acc, tarea) => acc + (tarea.tiempo_invertido || 0), 0);
   
   const totalProjectCost = tareasDelProyecto.reduce((acc, tarea) => {
-    const rate = hourlyRates[(tarea.tipo_tarifa || tarea.tipo_tarea) as string] || 0;
+    const rate = hourlyRates[tarea.tipo_tarifa as string] || 0;
     const hours = (tarea.tiempo_invertido || 0) / 3600;
     return acc + (hours * rate);
   }, 0);
 
   const globalTotalCost = tareas.reduce((acc, tarea) => {
-    const rate = hourlyRates[(tarea.tipo_tarifa || tarea.tipo_tarea) as string] || 0;
+    const rate = hourlyRates[tarea.tipo_tarifa as string] || 0;
     const hours = (tarea.tiempo_invertido || 0) / 3600;
     return acc + (hours * rate);
   }, 0);
@@ -193,7 +193,7 @@ export default function EducacionContinua() {
     return tareas
       .filter(t => t.proyecto === projectName)
       .reduce((acc, tarea) => {
-        const rate = hourlyRates[(tarea.tipo_tarifa || tarea.tipo_tarea) as string] || 0;
+        const rate = hourlyRates[tarea.tipo_tarifa as string] || 0;
         const hours = (tarea.tiempo_invertido || 0) / 3600;
         return acc + (hours * rate);
       }, 0);

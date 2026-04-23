@@ -25,8 +25,8 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const totalSeconds = tarea.tiempo_invertido || 0;
   const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
   
-  // Priorizar tipo_tarifa si existe, si no usar tipo_tarea
-  const tarifaKey = tarea.tipo_tarifa || tarea.tipo_tarea;
+  // Priorizar tipo_tarifa
+  const tarifaKey = tarea.tipo_tarifa;
   const hourlyRate = (customRates && customRates[tarifaKey as string]) || HOURLY_RATES[tarifaKey as string] || 0;
   const estimatedCost = (totalSeconds / 3600) * hourlyRate;
 
@@ -245,11 +245,6 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
         </div>
         
         <div className="flex items-center gap-2">
-          {!hideType && tarea.tipo_tarea && (
-            <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-sm uppercase tracking-wider">
-              {tarea.tipo_tarea}
-            </span>
-          )}
           {!hideRole && (
             <span className="bg-slate-700 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-sm uppercase tracking-wider">
               {tarea.rol_destino || 'General'}

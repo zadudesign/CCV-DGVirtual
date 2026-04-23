@@ -147,7 +147,6 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             fecha_inicio: row.fecha_inicio, // If it exists in the future
             estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
             detalle: row.descripcion || '',
-            tipo_tarea: row.tipo_tarea,
             tipo_tarifa: row.tipo_tarifa,
             descripcion: row.descripcion || '',
             curso: row.curso,
@@ -212,7 +211,6 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
       const payload = {
         titulo: formData.titulo,
-        tipo_tarea: formData.tipo_tarifa, // Maintaining sync with legacy field if needed
         tipo_tarifa: formData.tipo_tarifa,
         descripcion: formData.descripcion,
         fecha_vencimiento: fechaVencimientoColombia,
