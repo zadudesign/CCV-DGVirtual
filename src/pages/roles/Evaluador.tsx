@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsBar from '../../components/StatsBar';
+import DashboardCharts from '../../components/DashboardCharts';
 
 export default function EvaluadorDashboard() {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function EvaluadorDashboard() {
       </div>
 
       <StatsBar user={user} />
+      <DashboardCharts user={user} />
     </div>
   );
 }
