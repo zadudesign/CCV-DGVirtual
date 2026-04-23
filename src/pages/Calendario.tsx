@@ -353,7 +353,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           >
             <div className={`relative w-full h-full flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-all duration-300 ${
               isSelected ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 z-20' :
-              isToday ? 'bg-background ring-2 ring-primary/20 text-primary z-10' : 
+              isToday ? 'bg-amber-100 ring-2 ring-amber-400 text-amber-700 z-10' : 
               hasTasks && isCurrentMonth ? 'bg-primary/5 text-primary font-bold' : 
               !isCurrentMonth ? 'text-slate-200' : 'text-slate-600 hover:bg-slate-50'
             }`}>
@@ -362,7 +362,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
               </span>
               {hasTasks && !isSelected && isCurrentMonth && (
                 <div className={`absolute bottom-2 flex gap-0.5 justify-center`}>
-                  <div className={`w-1 h-1 rounded-full ${isToday ? 'bg-primary' : 'bg-primary/60'}`}></div>
+                  <div className={`w-1 h-1 rounded-full ${isToday ? 'bg-amber-500' : 'bg-primary/60'}`}></div>
                 </div>
               )}
             </div>

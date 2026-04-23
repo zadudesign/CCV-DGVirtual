@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Curso } from '../../types';
 import { Link } from 'react-router-dom';
+import StatsBar from '../../components/StatsBar';
 
 export default function EvaluadorDashboard() {
   const { user } = useAuth();
@@ -49,6 +50,8 @@ export default function EvaluadorDashboard() {
     );
   }
 
+  if (!user) return null;
+
   const totalCursos = cursos.length;
   const cursosRevision = cursos.filter(c => c.estado === 'Revisión').length;
   const cursosPublicados = cursos.filter(c => c.estado === 'Publicado').length;
@@ -67,61 +70,7 @@ export default function EvaluadorDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-primary/20">
-                <BookOpen className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">Cursos Asignados</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{totalCursos}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-amber-100">
-                <AlertCircle className="h-6 w-6 text-amber-600" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">Pendientes de Revisión</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{cursosRevision}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-green-100">
-                <CheckCircle2 className="h-6 w-6 text-green-600" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">Cursos Aprobados</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{cursosPublicados}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatsBar user={user} />
 
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
         <div className="px-4 py-5 sm:px-6 border-b border-muted/30 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

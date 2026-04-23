@@ -6,6 +6,7 @@ import { Curso } from '../../types';
 import { Link } from 'react-router-dom';
 import { getClickupUrlForRole } from '../../lib/utils';
 import { DynamicIcon } from '../../components/DynamicIcon';
+import StatsBar from '../../components/StatsBar';
 
 export default function TeamDashboard() {
   const { user } = useAuth();
@@ -46,6 +47,8 @@ export default function TeamDashboard() {
     );
   }
 
+  if (!user) return null;
+
   const totalCursos = cursos.length;
   const cursosEnDesarrollo = cursos.filter(c => c.estado === 'En Desarrollo').length;
   const cursosRevision = cursos.filter(c => c.estado === 'Revisión').length;
@@ -59,61 +62,7 @@ export default function TeamDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-primary/20">
-                <BookOpen className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">Total Cursos</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{totalCursos}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-blue-100">
-                <Clock className="h-6 w-6 text-blue-600" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">En Desarrollo</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{cursosEnDesarrollo}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-amber-100">
-                <AlertCircle className="h-6 w-6 text-amber-600" aria-hidden="true" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-secondary truncate">En Revisión</dt>
-                  <dd>
-                    <div className="text-2xl font-bold text-text-main">{cursosRevision}</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatsBar user={user} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden flex flex-col">

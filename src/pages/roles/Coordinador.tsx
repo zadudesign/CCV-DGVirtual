@@ -4,12 +4,12 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Curso } from '../../types';
 import { Link } from 'react-router-dom';
+import StatsBar from '../../components/StatsBar';
 
 export default function CoordinadorDashboard() {
   const { user } = useAuth();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
-  const [docentesCount, setDocentesCount] = useState(0);
 
   useEffect(() => {
     if (user?.programa) {
@@ -33,17 +33,6 @@ export default function CoordinadorDashboard() {
         
       if (cursosError) throw cursosError;
       setCursos(cursosData as Curso[] || []);
-
-      // Fetch docentes del programa
-      const { count, error: countError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('programa', user?.programa)
-        .eq('role', 'docente');
-        
-      if (!countError && count !== null) {
-        setDocentesCount(count);
-      }
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -59,6 +48,8 @@ export default function CoordinadorDashboard() {
       </div>
     );
   }
+
+  if (!user) return null;
 
   const totalCursos = cursos.length;
   const cursosEnDesarrollo = cursos.filter(c => c.estado === 'En Desarrollo').length;
@@ -79,27 +70,7 @@ export default function CoordinadorDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
-          <div key={item.name} className="bg-white overflow-hidden shadow-sm rounded-xl border border-muted/30">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 p-3 rounded-lg ${item.bg}`}>
-                  <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-secondary truncate">{item.name}</dt>
-                    <dd>
-                      <div className="text-2xl font-bold text-text-main">{item.value}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StatsBar user={user} />
 
       <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
         <div className="px-6 py-5 border-b border-muted/30 flex justify-between items-center bg-background">
