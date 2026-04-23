@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -9,154 +8,17 @@ import {
   Settings, 
   LogOut,
   Menu,
-  Bell,
   CalendarDays,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   X,
   GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { NotificacionTarea } from '../types';
 import logoCCV from '../assets/logo_pccv.svg';
-import { startOfDay, parseISO, differenceInDays } from 'date-fns';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
-  const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
-  const [solicitudesCount, setSolicitudesCount] = useState(0);
-  const [activeCoursesCount, setActiveCoursesCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchTasks();
-      fetchSolicitudesCount();
-      fetchActiveCoursesCount();
-      
-      // Subscribe to task changes
-      const taskSubscription = supabase
-        .channel('notificaciones_cambios')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'notificaciones_tareas'
-        }, () => {
-          fetchTasks();
-        })
-        .subscribe();
-
-      // Subscribe to solicitudes changes
-      const solicitudesSubscription = supabase
-        .channel('solicitudes_cambios')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'solicitudes_cursos'
-        }, () => {
-          fetchSolicitudesCount();
-        })
-        .subscribe();
-
-      // Subscribe to active courses changes
-      const coursesSubscription = supabase
-        .channel('cursos_cambios')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'cursos'
-        }, () => {
-          fetchActiveCoursesCount();
-        })
-        .subscribe();
-
-      return () => {
-        taskSubscription.unsubscribe();
-        solicitudesSubscription.unsubscribe();
-        coursesSubscription.unsubscribe();
-      };
-    }
-  }, [user]);
-
-  const fetchSolicitudesCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('solicitudes_cursos')
-        .select('*', { count: 'exact', head: true })
-        .eq('estado', 'Solicitud Recibida');
-
-      if (error) throw error;
-      setSolicitudesCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching solicitudes count:', error);
-    }
-  };
-
-  const fetchActiveCoursesCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('cursos')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) throw error;
-      setActiveCoursesCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching active courses count:', error);
-    }
-  };
-
-  const fetchTasks = async () => {
-    try {
-      let query = supabase
-        .from('notificaciones_tareas')
-        .select('*, curso:cursos(nombre)')
-        .order('fecha_vencimiento', { ascending: true });
-
-      if (user?.role !== 'admin') {
-        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) {
-          const area = user?.team_area || user?.role;
-          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
-        } else {
-          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${user?.role}`);
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setAllTasks(data || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const pendingTasks = allTasks.filter(t => t.estado !== 'Completada' && t.estado !== 'Completado');
-  
-  // Calculate stats
-  const today = startOfDay(new Date());
-  let completadas = 0;
-  let enProgreso = 0;
-  let vencidas = 0;
-
-  allTasks.forEach(task => {
-    if (task.estado === 'Completada' || task.estado === 'Completado') {
-      completadas++;
-    } else {
-      if (task.fecha_vencimiento) {
-        const dueDate = startOfDay(parseISO(task.fecha_vencimiento));
-        if (differenceInDays(dueDate, today) < 0) {
-          vencidas++;
-        } else {
-          enProgreso++;
-        }
-      } else {
-        enProgreso++;
-      }
-    }
-  });
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -237,19 +99,6 @@ export default function Layout() {
                 );
               })}
             </div>
-
-            <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  signOut();
-                }}
-                className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
-              >
-                <LogOut className="mr-3 h-5 w-5" />
-                Cerrar Sesión
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -297,16 +146,6 @@ export default function Layout() {
             );
           })}
         </div>
-
-        <div className="p-4 border-t border-primary-hover bg-primary-hover/30">
-          <button
-            onClick={signOut}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-300 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
-          >
-            <LogOut className="mr-3 h-5 w-5" />
-            Cerrar Sesión
-          </button>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -321,102 +160,15 @@ export default function Layout() {
           </button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
-            {/* Cursos Stats */}
-            <div className="hidden lg:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
-              <span className="text-[10px] font-bold text-text-main uppercase tracking-widest mr-1">Cursos:</span>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200" title="Solicitudes Recibidas">
-                  <BookOpen className="w-4 h-4" />
-                  <span className="text-[11px] font-medium mr-1">Solicitudes:</span>
-                  <span className="text-sm font-bold">{solicitudesCount}</span>
-                </div>
-                <div className="flex items-center space-x-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-md border border-indigo-200" title="Cursos Activos">
-                  <GraduationCap className="w-4 h-4" />
-                  <span className="text-[11px] font-medium mr-1">Activos:</span>
-                  <span className="text-sm font-bold">{activeCoursesCount}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Tareas Stats */}
-            <div className="hidden sm:flex items-center space-x-2 bg-background px-3 py-1.5 rounded-lg border border-muted/30 shadow-sm">
-              <span className="text-xs font-bold text-text-main uppercase tracking-wider mr-1">Tareas:</span>
-              <div className="flex items-center space-x-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200" title="Completadas">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-sm font-bold">{completadas}</span>
-              </div>
-              <div className="flex items-center space-x-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200" title="En Progreso">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-bold">{enProgreso}</span>
-              </div>
-              <div className="flex items-center space-x-1 bg-red-100 text-red-800 px-2 py-0.5 rounded-md border border-red-200" title="Vencidas">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm font-bold">{vencidas}</span>
-              </div>
-            </div>
-
-            <div className="relative">
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 text-slate-400 hover:text-secondary relative focus:outline-none"
+            <div className="flex items-center border-slate-100">
+              <button
+                onClick={signOut}
+                className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-red-100 shadow-sm hover:shadow-md bg-white"
+                title="Cerrar Sesión"
               >
-                <Bell className="h-6 w-6" />
-                {pendingTasks.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 ring-2 ring-white"></span>
-                  </span>
-                )}
+                <LogOut className="mr-2.5 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                <span>Cerrar Sesión</span>
               </button>
-
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-muted/30 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-background flex justify-between items-center">
-                    <h3 className="text-sm font-semibold text-text-main">Notificaciones</h3>
-                    <span className="text-xs font-medium bg-primary/20 text-primary-hover px-2 py-0.5 rounded-full">
-                      {pendingTasks.length} pendientes
-                    </span>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {pendingTasks.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-secondary">
-                        No tienes tareas pendientes. ¡Buen trabajo!
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-slate-100">
-                        {pendingTasks.slice(0, 5).map((task) => (
-                          <Link 
-                            key={task.id} 
-                            to="/calendario"
-                            onClick={() => setShowNotifications(false)}
-                            className="block px-4 py-3 hover:bg-background transition-colors"
-                          >
-                            <p className="text-sm font-medium text-text-main truncate">{task.titulo}</p>
-                            {task.curso?.nombre && (
-                              <p className="text-xs text-secondary truncate mt-0.5">{task.curso.nombre}</p>
-                            )}
-                            {task.fecha_vencimiento && (
-                              <p className="text-xs text-primary mt-1 font-medium">
-                                Vence: {new Date(task.fecha_vencimiento).toLocaleDateString()}
-                              </p>
-                            )}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-4 py-2 border-t border-slate-100 bg-background">
-                    <Link 
-                      to="/calendario" 
-                      onClick={() => setShowNotifications(false)}
-                      className="text-xs font-medium text-primary hover:text-primary-hover block text-center"
-                    >
-                      Ver todas mis tareas
-                    </Link>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </header>
