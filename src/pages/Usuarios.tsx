@@ -351,6 +351,15 @@ export default function Usuarios() {
                         </select>
                       </div>
                     )}
+                    {rolesUnicos.length > 1 && (
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-text-main mb-1">Rol:</label>
+                        <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                          <option value="">Todos los roles</option>
+                          {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                    )}
                   </div>
                </div>
                <div className="overflow-x-auto">
