@@ -35,6 +35,11 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Filtros
+  const [filtroEncargado, setFiltroEncargado] = useState<string>('');
+  const [filtroOrigen, setFiltroOrigen] = useState<string>(''); // Para Curso/Proyecto
+
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
     titulo: '',
@@ -413,7 +418,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                 tarea={event} 
                 onUpdate={fetchEntregas} 
                 hideType={true}
-                hideRole={true}
+                hideRole={false}
               />
             ))
           )}
@@ -432,6 +437,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   const vencidas = entregas.filter(e => {
     if (e.estado === 'Completado' || e.estado === 'Completada') return false;
+    
+    // Aplicar Filtros
+    if (filtroEncargado && e.rol_destino !== filtroEncargado) return false;
+    
+    const origenTarea = e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual';
+    if (filtroOrigen && origenTarea !== filtroOrigen) return false;
+
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(e.fecha_entrega));
     
@@ -443,6 +455,13 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   const enProgreso = entregas.filter(e => {
     if (e.estado === 'Completado' || e.estado === 'Completada') return false;
+
+    // Aplicar Filtros
+    if (filtroEncargado && e.rol_destino !== filtroEncargado) return false;
+    
+    const origenTarea = e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual';
+    if (filtroOrigen && origenTarea !== filtroOrigen) return false;
+
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(e.fecha_entrega));
     
@@ -452,20 +471,68 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     return differenceInDays(dueDate, today) >= 0;
   });
 
+  const rolesDisponibles = Array.from(new Set(entregas.map(e => e.rol_destino).filter(Boolean))).sort();
+  const origenesDisponibles = Array.from(new Set(entregas.map(e => e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual').filter(Boolean))).sort();
+
   return (
     <div className="space-y-6">
-      {!cursoId && (
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
           <h1 className="text-2xl font-bold text-text-main">Calendario de Trabajo</h1>
+          <p className="text-sm text-secondary">Planificación y seguimiento de tareas académicas y de producción.</p>
+        </div>
+        
+        {!cursoId && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary whitespace-nowrap self-start"
           >
             <Plus className="h-5 w-5 mr-2" />
             Agregar Tarea
           </button>
+        )}
+      </div>
+
+      {/* Barra de Filtros */}
+      <div className="bg-white p-4 rounded-xl border border-muted/20 shadow-sm flex flex-wrap gap-4">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Encargado:</label>
+          <select 
+            value={filtroEncargado}
+            onChange={(e) => setFiltroEncargado(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+          >
+            <option value="">Todos los Roles / Teams</option>
+            {rolesDisponibles.map(rol => (
+              <option key={rol} value={rol}>{rol}</option>
+            ))}
+          </select>
         </div>
-      )}
+
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Curso / Proyecto:</label>
+          <select 
+            value={filtroOrigen}
+            onChange={(e) => setFiltroOrigen(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+          >
+            <option value="">Todos los Orígenes</option>
+            {origenesDisponibles.map(origen => (
+              <option key={origen} value={origen}>{origen}</option>
+            ))}
+          </select>
+        </div>
+
+        {(filtroEncargado || filtroOrigen) && (
+          <button 
+            onClick={() => { setFiltroEncargado(''); setFiltroOrigen(''); }}
+            className="self-end px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-100 mb-0.5"
+          >
+            <X className="w-3.5 h-3.5" />
+            Limpiar Filtros
+          </button>
+        )}
+      </div>
 
       {/* Modal Agregar Tarea */}
       {isModalOpen && (
