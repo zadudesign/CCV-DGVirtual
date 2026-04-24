@@ -64,7 +64,7 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-muted/20 p-4 flex flex-col sm:flex-row items-center relative z-10 gap-6">
-      <span className="text-sm font-bold text-text-main uppercase tracking-widest border-b sm:border-b-0 sm:border-r border-slate-100 pb-2 sm:pb-0 sm:pr-6 leading-tight flex items-center justify-center text-center sm:text-left whitespace-nowrap">
+      <span className="text-sm font-black text-rose-600 uppercase tracking-widest border-b sm:border-b-0 sm:border-r border-slate-100 pb-2 sm:pb-0 sm:pr-8 leading-tight flex items-center justify-center text-center whitespace-nowrap min-w-[120px]">
         NUEVAS TAREAS
       </span>
       
