@@ -145,7 +145,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             fecha_entrega: row.fecha_vencimiento,
             fecha_completada: row.fecha_completada,
             fecha_inicio: row.fecha_inicio, // If it exists in the future
-            estado: row.estado === 'Completada' ? 'Completado' : 'Pendiente',
+            estado: row.estado,
             detalle: row.descripcion || '',
             tipo_tarifa: row.tipo_tarifa,
             descripcion: row.descripcion || '',
