@@ -45,16 +45,6 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
       };
     }
 
-    if (estado === 'En Revisión') {
-      return {
-        color: 'bg-purple-50 text-purple-700 border-purple-100',
-        iconBg: 'bg-purple-500',
-        label: 'En Revisión',
-        titleColor: 'text-purple-700',
-        icon: <Eye className="h-4 w-4" />
-      };
-    }
-
     if (!fecha) return { 
       color: 'bg-yellow-50 text-yellow-700 border-yellow-100', 
       iconBg: 'bg-yellow-500', 
@@ -204,13 +194,13 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
               onClick={handleReviewTask}
               disabled={saving}
               title={tarea.estado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-1.5 transition-all ${
                 tarea.estado === 'En Revisión' 
-                  ? 'bg-purple-100 text-purple-700 shadow-sm border border-purple-200' 
-                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700/50 rounded-full' 
+                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg'
               }`}
             >
-              <Eye className="w-4 h-4" />
+              <AlertCircle className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -305,6 +295,12 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
               <>
                 {' - '}
                 <span className={status.titleColor}>{status.label}</span>
+              </>
+            )}
+            {tarea.estado === 'En Revisión' && (
+              <>
+                {' - '}
+                <span className="text-slate-800 font-bold ml-1">En Revisión</span>
               </>
             )}
           </span>
