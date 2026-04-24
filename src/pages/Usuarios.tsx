@@ -332,40 +332,50 @@ export default function Usuarios() {
             </div>
           ) : (
             <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-               <div className="px-4 py-5 sm:px-6 border-b border-muted/30 bg-slate-100 flex flex-col space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <div className="p-4 border-b border-muted/30 flex justify-between items-center bg-white">
+                  <h3 className="text-lg font-bold text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
+                </div>
+                
+                <div className="p-4 bg-slate-50/50 border-b border-muted/30">
+                  <div className="flex flex-wrap gap-4 w-full bg-white p-4 rounded-xl border border-muted/20 shadow-sm">
                     {facultadesUnicas.length > 1 && (
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-text-main mb-1">Facultad:</label>
-                        <select value={filtroFacultad} onChange={(e) => setFiltroFacultad(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Facultad:</label>
+                        <select value={filtroFacultad} onChange={(e) => setFiltroFacultad(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
                           <option value="">Todas las facultades</option>
                           {facultadesUnicas.map(f => <option key={f} value={f}>{f}</option>)}
                         </select>
                       </div>
                     )}
                     {programasUnicos.length > 1 && (
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-text-main mb-1">Programa:</label>
-                        <select value={filtroPrograma} onChange={(e) => setFiltroPrograma(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Programa:</label>
+                        <select value={filtroPrograma} onChange={(e) => setFiltroPrograma(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
                           <option value="">Todos los programas</option>
                           {programasUnicos.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </div>
                     )}
                     {rolesUnicos.length > 1 && (
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-text-main mb-1">Rol:</label>
-                        <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} className="block w-full rounded-md border border-muted px-3 py-1.5 text-sm shadow-sm focus:ring-1 focus:ring-primary">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Rol:</label>
+                        <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
                           <option value="">Todos los roles</option>
                           {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                       </div>
                     )}
+                    {(filtroFacultad || filtroPrograma || filtroRol) && (
+                      <button 
+                        onClick={() => { setFiltroFacultad(''); setFiltroPrograma(''); setFiltroRol(''); }}
+                        className="self-end px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-100 mb-[2px]"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        Limpiar Filtros
+                      </button>
+                    )}
                   </div>
-               </div>
+                </div>
                <div className="overflow-x-auto">
                  <table className="min-w-full divide-y divide-slate-200">
                    <thead className="bg-background">

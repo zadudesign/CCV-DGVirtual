@@ -459,16 +459,16 @@ export default function Cursos() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-muted/30 shadow-sm">
-        <div className="flex-1">
-          <label htmlFor="filtroPrograma" className="block text-sm font-medium text-text-main mb-1">
-            Filtrar por Programa
+      <div className="bg-white p-4 rounded-xl border border-muted/20 shadow-sm flex flex-wrap gap-4 mb-6 mt-4">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">
+            Filtrar por Programa:
           </label>
           <select
             id="filtroPrograma"
             value={filtroPrograma}
             onChange={(e) => setFiltroPrograma(e.target.value)}
-            className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+            className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
           >
             <option value="">Todos los programas</option>
             {programasUnicos.map(p => (
@@ -477,15 +477,15 @@ export default function Cursos() {
           </select>
         </div>
         {activeTab !== 'solicitudes' && (
-          <div className="flex-1">
-            <label htmlFor="filtroPeriodo" className="block text-sm font-medium text-text-main mb-1">
-              Filtrar por Periodo
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">
+              Filtrar por Periodo:
             </label>
             <select
               id="filtroPeriodo"
               value={filtroPeriodo}
               onChange={(e) => setFiltroPeriodo(e.target.value)}
-              className="block w-full rounded-md border border-muted px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+              className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
             >
               <option value="">Todos los periodos</option>
               {periodosUnicos.map(p => (
@@ -493,6 +493,16 @@ export default function Cursos() {
               ))}
             </select>
           </div>
+        )}
+        
+        {(filtroPrograma || filtroPeriodo) && (
+          <button 
+            onClick={() => { setFiltroPrograma(''); setFiltroPeriodo(''); }}
+            className="self-end px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-100 mb-[2px]"
+          >
+            <X className="w-3.5 h-3.5" />
+            Limpiar Filtros
+          </button>
         )}
       </div>
 
