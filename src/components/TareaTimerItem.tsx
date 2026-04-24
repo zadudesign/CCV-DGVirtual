@@ -25,6 +25,9 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const totalSeconds = tarea.tiempo_invertido || 0;
   const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
   
+  // Solo habilitar registro de tiempo para Educación Continua y Diseño Virtual (tareas con proyecto definido)
+  const isTimeTrackingEnabled = !!tarea.proyecto;
+
   // Priorizar tipo_tarifa
   const tarifaKey = tarea.tipo_tarifa;
   const hourlyRate = (customRates && customRates[tarifaKey as string]) || HOURLY_RATES[tarifaKey as string] || 0;
@@ -116,7 +119,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   };
 
   const handleCompleteTask = async () => {
-    if (totalSeconds === 0) return;
+    if (isTimeTrackingEnabled && totalSeconds === 0) return;
     try {
       setSaving(true);
       const { data, error } = await supabase
@@ -170,73 +173,75 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
       )}
       
       {/* Time Tracking Section */}
-      <div className="mt-4 p-3 bg-white/60 border border-white rounded-xl shadow-inner backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100">
-              <Clock className="w-4 h-4 text-primary" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-secondary uppercase tracking-widest leading-none mb-0.5 pointer-events-none">Tiempo Registrado</span>
-              <span className="text-sm font-mono font-bold text-text-main leading-none">{formatTime(totalSeconds)}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {estimatedCost > 0 && (
-              <div className="flex flex-col items-end">
-                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter leading-none mb-0.5 pointer-events-none">Eco. Estimado</span>
-                <span className="text-xs font-bold text-emerald-600 leading-none">
-                  ${estimatedCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                </span>
+      {isTimeTrackingEnabled && (
+        <div className="mt-4 p-3 bg-white/60 border border-white rounded-xl shadow-inner backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-100">
+                <Clock className="w-4 h-4 text-primary" />
               </div>
-            )}
-            {!isCompleted && (
-              <button 
-                onClick={() => setShowManualInput(!showManualInput)}
-                className="text-[10px] font-bold text-primary hover:bg-primary hover:text-white flex items-center gap-1 transition-all bg-white px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" /> 
-                {showManualInput ? 'Cerrar' : 'Añadir'}
-              </button>
-            )}
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-secondary uppercase tracking-widest leading-none mb-0.5 pointer-events-none">Tiempo Registrado</span>
+                <span className="text-sm font-mono font-bold text-text-main leading-none">{formatTime(totalSeconds)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {estimatedCost > 0 && (
+                <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter leading-none mb-0.5 pointer-events-none">Eco. Estimado</span>
+                  <span className="text-xs font-bold text-emerald-600 leading-none">
+                    ${estimatedCost.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              )}
+              {!isCompleted && (
+                <button 
+                  onClick={() => setShowManualInput(!showManualInput)}
+                  className="text-[10px] font-bold text-primary hover:bg-primary hover:text-white flex items-center gap-1 transition-all bg-white px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> 
+                  {showManualInput ? 'Cerrar' : 'Añadir'}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        {showManualInput && !isCompleted && (
-          <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-3 pt-3 border-t border-slate-200/40">
-            <div className="flex-1 grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Horas</label>
-                <input 
-                  type="number" 
-                  min="0" 
-                  value={manualHours} 
-                  onChange={(e) => setManualHours(Number(e.target.value))}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
-                />
+          {showManualInput && !isCompleted && (
+            <form onSubmit={handleAddManualTime} className="flex items-end gap-2 mt-3 pt-3 border-t border-slate-200/40">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Horas</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    value={manualHours} 
+                    onChange={(e) => setManualHours(Number(e.target.value))}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Minutos</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="59"
+                    value={manualMinutes} 
+                    onChange={(e) => setManualMinutes(Number(e.target.value))}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-[9px] font-extrabold text-slate-500 mb-1 uppercase tracking-tight">Minutos</label>
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="59"
-                  value={manualMinutes} 
-                  onChange={(e) => setManualMinutes(Number(e.target.value))}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
-                />
-              </div>
-            </div>
-            <button 
-              type="submit"
-              disabled={saving || (manualHours === 0 && manualMinutes === 0)}
-              className="bg-primary hover:bg-primary-hover text-white h-[34px] px-4 rounded-lg text-xs font-bold disabled:opacity-50 shadow-md transform active:scale-95 transition-all"
-            >
-              Ok
-            </button>
-          </form>
-        )}
-      </div>
+              <button 
+                type="submit"
+                disabled={saving || (manualHours === 0 && manualMinutes === 0)}
+                className="bg-primary hover:bg-primary-hover text-white h-[34px] px-4 rounded-lg text-xs font-bold disabled:opacity-50 shadow-md transform active:scale-95 transition-all"
+              >
+                Ok
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
         <div className="flex items-center text-secondary font-bold text-[11px]">
@@ -251,16 +256,16 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             </span>
           )}
           
-          {!isCompleted && (
+          {!isCompleted && isTimeTrackingEnabled && (
             <button
               onClick={handleCompleteTask}
-              disabled={totalSeconds === 0 || saving}
+              disabled={saving || (isTimeTrackingEnabled && totalSeconds === 0)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all shadow-sm ${
-                totalSeconds > 0 
+                (!isTimeTrackingEnabled || totalSeconds > 0)
                   ? 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95' 
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
               }`}
-              title={totalSeconds === 0 ? "Debes registrar tiempo antes de completar la tarea" : "Marcar como completada"}
+              title={isTimeTrackingEnabled && totalSeconds === 0 ? "Debes registrar tiempo antes de completar la tarea" : "Marcar como completada"}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Listo
