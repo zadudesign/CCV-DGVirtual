@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Clock, CheckCircle, Bell, AlertCircle, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Bell, AlertCircle, AlertTriangle, CheckCircle2, Calendar, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+import { Link } from 'react-router-dom';
 import { HOURLY_RATES } from '../lib/constants';
 
 const COLOMBIA_TZ = 'America/Bogota';
@@ -41,6 +42,16 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
         label: 'Completada',
         titleColor: 'text-green-700',
         icon: <CheckCircle2 className="h-4 w-4" />
+      };
+    }
+
+    if (estado === 'En Revisión') {
+      return {
+        color: 'bg-purple-50 text-purple-700 border-purple-100',
+        iconBg: 'bg-purple-500',
+        label: 'En Revisión',
+        titleColor: 'text-purple-700',
+        icon: <Eye className="h-4 w-4" />
       };
     }
 
@@ -145,6 +156,31 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     }
   };
 
+  const handleReviewTask = async () => {
+    try {
+      setSaving(true);
+      const newStatus = tarea.estado === 'En Revisión' ? 'Pendiente' : 'En Revisión';
+      const { data, error } = await supabase
+        .from('notificaciones_tareas')
+        .update({ 
+          estado: newStatus 
+        })
+        .eq('id', tarea.id)
+        .select();
+      
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("No se pudo actualizar la tarea.");
+      }
+      onUpdate();
+    } catch (err: any) {
+      console.error('Error updating task status:', err);
+      alert(`Error al actualizar el estado de la tarea: ${err.message || JSON.stringify(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className={`p-4 rounded-xl border-2 transition-all hover:shadow-md ${status.color}`}>
       <div className="flex justify-between items-start mb-1">
@@ -152,15 +188,32 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
           <h4 className={`text-base font-bold truncate leading-tight ${status.titleColor}`}>
             {tarea.titulo}
           </h4>
-          <p className="text-xs opacity-80 truncate font-medium mt-0.5 text-secondary italic">
-            {tarea.proyecto || (tarea.curso && tarea.curso.nombre) || 'Diseño Virtual'}
-          </p>
+          {tarea.curso_id ? (
+            <Link to={`/cursos/${tarea.curso_id}`} className="text-xs truncate font-medium mt-0.5 text-primary hover:underline hover:text-primary-hover block">
+              {tarea.curso?.nombre || 'Curso sin nombre'}
+            </Link>
+          ) : (
+            <p className="text-xs truncate font-medium mt-0.5 text-primary">
+              {tarea.proyecto || (tarea.curso && tarea.curso.nombre) || 'Diseño Virtual'}
+            </p>
+          )}
         </div>
-        <div className="flex-shrink-0">
-          <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider bg-white/60 border border-black/5 ${status.titleColor}`}>
-            {tarea.estado === 'Completada' || tarea.estado === 'Completado' ? 'Completado' : 'Pendiente'}
-          </span>
-        </div>
+        {isTimeTrackingEnabled && !isCompleted && (
+          <div className="flex-shrink-0">
+            <button
+              onClick={handleReviewTask}
+              disabled={saving}
+              title={tarea.estado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
+              className={`p-1.5 rounded-lg transition-all ${
+                tarea.estado === 'En Revisión' 
+                  ? 'bg-purple-100 text-purple-700 shadow-sm border border-purple-200' 
+                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {tarea.descripcion && (
@@ -246,7 +299,15 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
         <div className="flex items-center text-secondary font-bold text-[11px]">
           <Calendar className="h-3.5 w-3.5 mr-1.5 opacity-60" />
-          <span>{tarea.fecha_vencimiento || tarea.fecha_entrega ? format(parseISO(tarea.fecha_vencimiento || tarea.fecha_entrega), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}</span>
+          <span>
+            {tarea.fecha_vencimiento || tarea.fecha_entrega ? format(parseISO(tarea.fecha_vencimiento || tarea.fecha_entrega), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'}
+            {status.label !== 'En Progreso' && (
+              <>
+                {' - '}
+                <span className={status.titleColor}>{status.label}</span>
+              </>
+            )}
+          </span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -272,11 +333,6 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             </button>
           )}
         </div>
-      </div>
-      <div className="mt-2 text-right">
-        <span className={`text-[10px] font-bold italic opacity-80 ${status.titleColor}`}>
-          {status.label}
-        </span>
       </div>
     </div>
   );
