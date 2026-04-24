@@ -129,7 +129,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
             {novedades.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-secondary p-4 text-center">
                 <Clock className="h-6 w-6 text-slate-200 mb-2" />
-                <p className="text-[10px] italic">No hay novedades registradas recientemente.</p>
+                <p className="text-sm italic">No hay novedades registradas recientemente.</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-50">
@@ -137,19 +137,19 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
                   <div key={novedad.id} className="p-3 hover:bg-slate-50 transition-colors">
                     <div className="flex items-start gap-2 mb-1">
                       {getUrgencyIcon(novedad.estado)}
-                      <span className="text-[11px] font-bold text-text-main leading-tight line-clamp-1">{novedad.titulo}</span>
+                      <span className="text-sm font-bold text-text-main leading-tight line-clamp-1">{novedad.titulo}</span>
                     </div>
-                    <p className="text-[9px] text-secondary line-clamp-2 mb-1.5 leading-relaxed">
+                    <p className="text-xs text-secondary line-clamp-2 mb-1.5 leading-relaxed">
                       {novedad.comentario}
                     </p>
                     <div className="flex items-center justify-between mt-auto">
                       <button 
                         onClick={() => navigate(`/cursos/${novedad.curso_id}`)}
-                        className="text-[8px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[130px] hover:bg-primary/20 transition-colors cursor-pointer"
+                        className="text-[10px] sm:text-xs font-bold text-primary bg-primary/5 px-2 py-0.5 rounded truncate max-w-[130px] hover:bg-primary/10 transition-colors cursor-pointer"
                       >
                         {novedad.curso?.nombre}
                       </button>
-                      <span className="text-[8px] text-slate-400 font-medium">
+                      <span className="text-[10px] text-slate-400 font-medium">
                         {new Date(novedad.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                       </span>
                     </div>
