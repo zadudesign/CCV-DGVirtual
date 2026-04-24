@@ -222,25 +222,29 @@ export default function Usuarios() {
         </div>
       </div>
 
-      <div className="border-b border-muted/30">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('inscribir')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
-              activeTab === 'inscribir' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
-            }`}
-          >
-            <UserPlus className="h-5 w-5 mr-2" /> Inscribir Usuarios
-          </button>
-          <button
-            onClick={() => setActiveTab('facultades')}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
-              activeTab === 'facultades' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
-            }`}
-          >
-            <Library className="h-5 w-5 mr-2" /> Facultades y Programas
-          </button>
-        </nav>
+      <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
+        <button
+          onClick={() => setActiveTab('inscribir')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'inscribir'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <UserPlus className={`mr-2 h-4 w-4 ${activeTab === 'inscribir' ? 'text-primary' : 'text-slate-400'}`} />
+          Inscribir Usuarios
+        </button>
+        <button
+          onClick={() => setActiveTab('facultades')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'facultades'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <Library className={`mr-2 h-4 w-4 ${activeTab === 'facultades' ? 'text-primary' : 'text-slate-400'}`} />
+          Facultades y Programas
+        </button>
       </div>
 
       {activeTab === 'inscribir' && (

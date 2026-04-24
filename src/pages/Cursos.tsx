@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -432,29 +432,29 @@ export default function Cursos() {
       </div>
 
       {isTeamOrAdmin && (
-        <div className="border-b border-muted/30">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('activos')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'activos'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
-              }`}
-            >
-              Activos
-            </button>
-            <button
-              onClick={() => setActiveTab('solicitudes')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'solicitudes'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
-              }`}
-            >
-              Solicitudes
-            </button>
-          </nav>
+        <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
+          <button
+            onClick={() => setActiveTab('activos')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'activos'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <MonitorPlay className={`mr-2 h-4 w-4 ${activeTab === 'activos' ? 'text-primary' : 'text-slate-400'}`} />
+            Activos
+          </button>
+          <button
+            onClick={() => setActiveTab('solicitudes')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'solicitudes'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <ClipboardList className={`mr-2 h-4 w-4 ${activeTab === 'solicitudes' ? 'text-primary' : 'text-slate-400'}`} />
+            Solicitudes
+          </button>
         </div>
       )}
 
