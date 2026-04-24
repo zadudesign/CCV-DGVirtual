@@ -24,7 +24,13 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const [saving, setSaving] = useState(false);
 
   const totalSeconds = tarea.tiempo_invertido || 0;
-  const isCompleted = tarea.estado === 'Completada' || tarea.estado === 'Completado';
+  const [localEstado, setLocalEstado] = useState(tarea.estado);
+
+  React.useEffect(() => {
+    setLocalEstado(tarea.estado);
+  }, [tarea.estado]);
+
+  const isCompleted = localEstado === 'Completada' || localEstado === 'Completado';
   
   // Solo habilitar registro de tiempo para Educación Continua y Diseño Virtual (tareas con proyecto definido)
   const isTimeTrackingEnabled = !!tarea.proyecto;
@@ -77,7 +83,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     }
   };
 
-  const status = getTrafficLightStatus(tarea.fecha_vencimiento || tarea.fecha_entrega, tarea.estado);
+  const status = getTrafficLightStatus(tarea.fecha_vencimiento || tarea.fecha_entrega, localEstado);
 
   const formatTime = (totalSecs: number) => {
     const h = Math.floor(totalSecs / 3600);
@@ -146,10 +152,16 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     }
   };
 
-  const handleReviewTask = async () => {
+  const handleReviewTask = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newStatus = localEstado === 'En Revisión' ? 'Pendiente' : 'En Revisión';
+    
+    // UI Update (Optimistic)
+    setLocalEstado(newStatus);
+    
     try {
       setSaving(true);
-      const newStatus = tarea.estado === 'En Revisión' ? 'Pendiente' : 'En Revisión';
       const { data, error } = await supabase
         .from('notificaciones_tareas')
         .update({ 
@@ -165,6 +177,8 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
       onUpdate();
     } catch (err: any) {
       console.error('Error updating task status:', err);
+      // Revert optimistic update
+      setLocalEstado(tarea.estado);
       alert(`Error al actualizar el estado de la tarea: ${err.message || JSON.stringify(err)}`);
     } finally {
       setSaving(false);
@@ -193,9 +207,9 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             <button
               onClick={handleReviewTask}
               disabled={saving}
-              title={tarea.estado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
+              title={localEstado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
               className={`p-1.5 transition-all ${
-                tarea.estado === 'En Revisión' 
+                localEstado === 'En Revisión' 
                   ? 'bg-slate-800 text-white shadow-sm border border-slate-700/50 rounded-full' 
                   : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg'
               }`}
@@ -297,7 +311,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
                 <span className={status.titleColor}>{status.label}</span>
               </>
             )}
-            {tarea.estado === 'En Revisión' && (
+            {localEstado === 'En Revisión' && (
               <>
                 {' - '}
                 <span className="text-slate-800 font-bold ml-1">En Revisión</span>
