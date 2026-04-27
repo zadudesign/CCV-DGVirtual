@@ -407,6 +407,16 @@ export default function EducacionContinua() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Banner de diagnóstico temporal */}
+      <div className="bg-slate-800 text-white p-3 rounded-lg text-xs space-y-1 font-mono">
+        <div>USUARIO: {user?.email}</div>
+        <div>ROL: {user?.role}</div>
+        <div>PROYECTOS: {proyectos.length} (Loading: {String(loadingData)})</div>
+        <div>TAREAS: {tareas.length} (Loading: {String(loadingTareas)})</div>
+        <div>IS_EC: {String(isEducacionContinua)}</div>
+        {error && <div className="text-red-400">ERROR: {error}</div>}
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold text-text-main flex items-center">
           <GraduationCap className="mr-3 h-8 w-8 text-primary" />

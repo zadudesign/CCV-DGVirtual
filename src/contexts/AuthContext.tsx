@@ -55,7 +55,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Extraemos el resto de datos de user_metadata
     const meta = authUser.user_metadata || {};
     
-    // Configuramos el usuario inicial
+    // 1. Obtenemos el perfil completo (incluyendo el ROL real de la DB) ANTES de terminar el loading
+    let dbProfile = null;
+    try {
+      const now = new Date().toISOString();
+      
+      // Actualizar último acceso (sin bloquear si falla)
+      supabase.from('profiles').update({ last_access: now }).eq('id', authUser.id).then();
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('photoURL, last_access, role')
+        .eq('id', authUser.id)
+        .single();
+      
+      dbProfile = data;
+    } catch (e) {
+      console.error('Error fetching profile data (pre-loading):', e);
+    }
+
+    // Si tenemos datos de la DB, priorizamos ese rol
+    if (dbProfile?.role) {
+      role = dbProfile.role;
+    }
+
+    // Configuramos el usuario final
     setUser({
       id: authUser.id,
       email: authUser.email || '',
@@ -65,41 +89,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       facultad: meta.facultad || '',
       programa: meta.programa || '',
       team_area: meta.team_area || '',
-      photoURL: '',
-      last_access: ''
+      photoURL: dbProfile?.photoURL || '',
+      last_access: dbProfile?.last_access || ''
     });
+    
     setAuthError(null);
     setLoading(false);
-
-    // Actualizamos el último acceso y obtenemos el perfil completo (incluyendo el ROL real de la DB)
-    (async () => {
-      try {
-        const now = new Date().toISOString();
-        
-        // Actualizar último acceso
-        await supabase
-          .from('profiles')
-          .update({ last_access: now })
-          .eq('id', authUser.id);
-
-        const { data } = await supabase
-          .from('profiles')
-          .select('photoURL, last_access, role')
-          .eq('id', authUser.id)
-          .single();
-          
-        if (data) {
-          setUser(prev => prev ? { 
-            ...prev, 
-            photoURL: data.photoURL || prev.photoURL,
-            last_access: data.last_access || now,
-            role: (data.role || prev.role) as Role
-          } : null);
-        }
-      } catch (e) {
-        console.error('Error fetching profile data:', e);
-      }
-    })();
   };
 
   useEffect(() => {
