@@ -206,7 +206,7 @@ export default function Layout() {
                   {pageTitle}
                 </h1>
                 <p className="hidden sm:block text-[10px] font-bold text-secondary uppercase tracking-[0.2em] opacity-60">
-                  Sistema de Gestión Académica &bull; <span className="text-accent underline decoration-accent/30 underline-offset-2">CCV</span>
+                  Creación de Cursos Virtuales &bull; <span className="text-accent underline decoration-accent/30 underline-offset-2">CCV</span>
                 </p>
               </div>
             </div>
