@@ -131,7 +131,7 @@ export default function EducacionContinua() {
         .select('*')
         .in('proyecto', pNames);
 
-      if (user?.role !== 'admin') {
+      if (user?.role !== 'admin' && user?.role !== 'EducacionContinua') {
         const area = user?.team_area || user?.role;
         query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
       }
