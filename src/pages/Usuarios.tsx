@@ -24,8 +24,7 @@ import { User, Role } from '../types';
 export default function Usuarios() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [activeTab, setActiveTab] = useState<'inscribir' | 'facultades'>('inscribir');
-  const [activeSubTab, setActiveSubTab] = useState<'form' | 'lista'>('lista');
+  const [activeTab, setActiveTab] = useState<'registrados' | 'inscribir' | 'facultades'>('registrados');
   
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [facultades, setFacultades] = useState<any[]>([]);
@@ -161,7 +160,7 @@ export default function Usuarios() {
         telefono: '', facultad: '', programa: ''
       });
       fetchData();
-      setActiveSubTab('lista');
+      setActiveTab('registrados');
     } catch (err: any) {
       alert('Error al inscribir usuario: ' + err.message);
     } finally {
@@ -217,6 +216,17 @@ export default function Usuarios() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
         <button
+          onClick={() => setActiveTab('registrados')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'registrados'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <UsersIcon className={`mr-2 h-4 w-4 ${activeTab === 'registrados' ? 'text-primary' : 'text-slate-400'}`} />
+          Usuarios Registrados
+        </button>
+        <button
           onClick={() => setActiveTab('inscribir')}
           className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
             activeTab === 'inscribir'
@@ -238,236 +248,227 @@ export default function Usuarios() {
           <Library className={`mr-2 h-4 w-4 ${activeTab === 'facultades' ? 'text-primary' : 'text-slate-400'}`} />
           Facultades y Programas
         </button>
-      </div>
-
-      {activeTab === 'inscribir' && (
-        <div className="space-y-6">
-          <div className="flex space-x-4 mb-4">
-            <button onClick={() => setActiveSubTab('lista')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'lista' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Lista de Usuarios</button>
-            <button onClick={() => setActiveSubTab('form')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'form' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Inscribir Nuevo Usuario</button>
+      </div>      {activeTab === 'registrados' && (
+        <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+          <div className="p-4 border-b border-muted/30 flex justify-between items-center bg-white">
+            <h3 className="text-lg font-bold text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
           </div>
-
-          {activeSubTab === 'form' ? (
-            <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
-              <div className="p-8">
-                <div className="flex items-center mb-6">
-                  <UserPlus className="h-6 w-6 text-primary mr-3" />
-                  <div>
-                    <h2 className="text-xl font-bold text-text-main">Inscribir Nuevo Usuario</h2>
-                    <p className="text-sm text-secondary">Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.</p>
-                  </div>
+          
+          <div className="p-4 bg-slate-50/50 border-b border-muted/30">
+            <div className="flex flex-wrap gap-4 w-full bg-white p-4 rounded-xl border border-muted/20 shadow-sm">
+              {facultadesUnicas.length > 1 && (
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Facultad:</label>
+                  <select value={filtroFacultad} onChange={(e) => setFiltroFacultad(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
+                    <option value="">Todas las facultades</option>
+                    {facultadesUnicas.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
                 </div>
-                <form onSubmit={handleInscribir} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-semibold text-text-main mb-2">Rol a inscribir</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
-                        <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
-                          <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-semibold text-text-main mb-2">Nombre Completo</label>
-                      <input type="text" required value={formInscribir.nombre} onChange={(e) => setFormInscribir({...formInscribir, nombre: e.target.value})} className="block w-full px-4 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. Juan Pérez" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-main mb-2">Correo Institucional</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-slate-400" /></div>
-                        <input type="email" required value={formInscribir.email} onChange={(e) => setFormInscribir({...formInscribir, email: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="juan.perez@universidad.edu" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-main mb-2">Número de Documento</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IdCard className="h-5 w-5 text-slate-400" /></div>
-                        <input type="text" required value={formInscribir.documento} onChange={(e) => setFormInscribir({...formInscribir, documento: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 1020304050" />
-                      </div>
-                      <p className="mt-1 text-[11px] text-primary font-medium">Este número será usado como contraseña inicial.</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-main mb-2">Número de Contacto</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-5 w-5 text-slate-400" /></div>
-                        <input type="tel" value={formInscribir.telefono} onChange={(e) => setFormInscribir({...formInscribir, telefono: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 3001234567" />
-                      </div>
-                    </div>
-                    {['decano','coordinador','docente','evaluador'].includes(formInscribir.role) && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-semibold text-text-main mb-2">Facultad</label>
-                          <select required value={formInscribir.facultad} onChange={(e) => setFormInscribir({...formInscribir, facultad: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
-                            <option value="">Seleccione Facultad</option>
-                            {facultades.map(f => (<option key={f.id} value={f.nombre}>{f.nombre}</option>))}
-                          </select>
-                        </div>
-                        {formInscribir.role !== 'decano' && (
-                          <div>
-                            <label className="block text-sm font-semibold text-text-main mb-2">Programa</label>
-                            <select required value={formInscribir.programa} onChange={(e) => setFormInscribir({...formInscribir, programa: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
-                              <option value="">Seleccione Programa</option>
-                              {programas.filter(p => !formInscribir.facultad || p.facultades?.nombre === formInscribir.facultad).map(p => (<option key={p.id} value={p.nombre}>{p.nombre}</option>))}
-                            </select>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <div className="pt-4">
-                    <button type="submit" disabled={submitting} className="w-full flex justify-center items-center px-4 py-3 bg-primary text-white rounded-xl shadow-lg hover:bg-primary-hover disabled:opacity-50">
-                      {submitting ? <><Loader2 className="animate-spin h-5 w-5 mr-3" /> Inscribiendo...</> : <><UserPlus className="h-5 w-5 mr-3" /> Inscribir Nuevo Usuario</>}
-                    </button>
-                  </div>
-                </form>
-              </div>
+              )}
+              {programasUnicos.length > 1 && (
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Programa:</label>
+                  <select value={filtroPrograma} onChange={(e) => setFiltroPrograma(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
+                    <option value="">Todos los programas</option>
+                    {programasUnicos.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              )}
+              {rolesUnicos.length > 1 && (
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Rol:</label>
+                  <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
+                    <option value="">Todos los roles</option>
+                    {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              )}
+              {(filtroFacultad || filtroPrograma || filtroRol) && (
+                <button 
+                  onClick={() => { setFiltroFacultad(''); setFiltroPrograma(''); setFiltroRol(''); }}
+                  className="self-end px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-100 mb-[2px]"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Limpiar Filtros
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-                <div className="p-4 border-b border-muted/30 flex justify-between items-center bg-white">
-                  <h3 className="text-lg font-bold text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
-                </div>
-                
-                <div className="p-4 bg-slate-50/50 border-b border-muted/30">
-                  <div className="flex flex-wrap gap-4 w-full bg-white p-4 rounded-xl border border-muted/20 shadow-sm">
-                    {facultadesUnicas.length > 1 && (
-                      <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Facultad:</label>
-                        <select value={filtroFacultad} onChange={(e) => setFiltroFacultad(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
-                          <option value="">Todas las facultades</option>
-                          {facultadesUnicas.map(f => <option key={f} value={f}>{f}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    {programasUnicos.length > 1 && (
-                      <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Programa:</label>
-                        <select value={filtroPrograma} onChange={(e) => setFiltroPrograma(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
-                          <option value="">Todos los programas</option>
-                          {programasUnicos.map(p => <option key={p} value={p}>{p}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    {rolesUnicos.length > 1 && (
-                      <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Rol:</label>
-                        <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium">
-                          <option value="">Todos los roles</option>
-                          {rolesUnicos.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    {(filtroFacultad || filtroPrograma || filtroRol) && (
-                      <button 
-                        onClick={() => { setFiltroFacultad(''); setFiltroPrograma(''); setFiltroRol(''); }}
-                        className="self-end px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-100 mb-[2px]"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        Limpiar Filtros
-                      </button>
-                    )}
-                  </div>
-                </div>
-               <div className="overflow-x-auto">
-                 <table className="min-w-full divide-y divide-slate-200">
-                   <thead className="bg-background">
-                     <tr>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>Perfil y Contacto {getSortIcon('name')}</th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('role')}>Rol y Ubicación {getSortIcon('role')}</th>
-                       {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_access')}>Actividad {getSortIcon('last_access')}</th>}
-                     </tr>
-                   </thead>
-                   <tbody className="bg-white divide-y divide-slate-200">
-                     {loading ? (<tr><td colSpan={isAdmin?3:2} className="py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></td></tr>) : 
-                      usuariosFiltrados.length === 0 ? (<tr><td colSpan={isAdmin?3:2} className="py-8 text-center text-sm text-secondary">No hay usuarios.</td></tr>) :
-                      usuariosFiltrados.map(user => (
-                        <tr key={user.id} className="hover:bg-background">
-                          <td className="px-6 py-4">
-                            <div className="flex items-start">
-                              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20">
-                                {user.photoURL ? <img src={user.photoURL} className="h-full w-full object-cover" /> : user.name?.charAt(0)}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-background">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>Perfil y Contacto {getSortIcon('name')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('role')}>Rol y Ubicación {getSortIcon('role')}</th>
+                  {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_access')}>Actividad {getSortIcon('last_access')}</th>}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {loading ? (<tr><td colSpan={isAdmin?3:2} className="py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></td></tr>) : 
+                usuariosFiltrados.length === 0 ? (<tr><td colSpan={isAdmin?3:2} className="py-8 text-center text-sm text-secondary">No hay usuarios.</td></tr>) :
+                usuariosFiltrados.map(user => (
+                  <tr key={user.id} className="hover:bg-background">
+                    <td className="px-6 py-4">
+                      <div className="flex items-start">
+                        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20">
+                          {user.photoURL ? <img src={user.photoURL} className="h-full w-full object-cover" /> : user.name?.charAt(0)}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-bold text-text-main leading-tight">{user.name}</div>
+                          <div className="text-[11px] text-secondary mt-0.5">{user.email}</div>
+                          {isAdmin && (
+                            <div className="mt-1.5 flex flex-col space-y-0.5">
+                              <div className="flex items-center text-[10px] text-slate-500">
+                                <IdCard className="h-3 w-3 mr-1" /> {user.documento || 'Sin doc.'}
                               </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-bold text-text-main leading-tight">{user.name}</div>
-                                <div className="text-[11px] text-secondary mt-0.5">{user.email}</div>
-                                {isAdmin && (
-                                  <div className="mt-1.5 flex flex-col space-y-0.5">
-                                    <div className="flex items-center text-[10px] text-slate-500">
-                                      <IdCard className="h-3 w-3 mr-1" /> {user.documento || 'Sin doc.'}
-                                    </div>
-                                    <div className="flex items-center text-[10px] text-slate-500">
-                                      <Phone className="h-3 w-3 mr-1" /> {user.telefono || 'Sin tel.'}
-                                    </div>
-                                  </div>
+                              <div className="flex items-center text-[10px] text-slate-500">
+                                <Phone className="h-3 w-3 mr-1" /> {user.telefono || 'Sin tel.'}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-blue-50 text-blue-700 border border-blue-100">{user.role}</span>
+                          </div>
+                          <div className="text-[11px] text-secondary font-medium">{user.facultad} {user.programa && `• ${user.programa}`}</div>
+                          
+                          {/* Cursos Asignados */}
+                          {(user.role === 'docente' || user.role === 'evaluador') && (
+                            <div className="pt-1">
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1">Cursos asignados:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {cursos
+                                  .filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id))
+                                  .map(c => (
+                                    <span key={c.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                      {c.nombre}
+                                    </span>
+                                  ))
+                                }
+                                {cursos.filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id)).length === 0 && (
+                                  <span className="text-[10px] italic text-slate-400">Ninguno</span>
                                 )}
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                             <div className="space-y-2">
-                               <div className="flex items-center space-x-2">
-                                 <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-blue-50 text-blue-700 border border-blue-100">{user.role}</span>
-                               </div>
-                               <div className="text-[11px] text-secondary font-medium">{user.facultad} {user.programa && `• ${user.programa}`}</div>
-                               
-                               {/* Cursos Asignados */}
-                               {(user.role === 'docente' || user.role === 'evaluador') && (
-                                 <div className="pt-1">
-                                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1">Cursos asignados:</div>
-                                   <div className="flex flex-wrap gap-1">
-                                     {cursos
-                                       .filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id))
-                                       .map(c => (
-                                         <span key={c.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                           {c.nombre}
-                                         </span>
-                                       ))
-                                     }
-                                     {cursos.filter(c => (user.role === 'docente' && c.docente_id === user.id) || (user.role === 'evaluador' && c.evaluador_id === user.id)).length === 0 && (
-                                       <span className="text-[10px] italic text-slate-400">Ninguno</span>
-                                     )}
-                                   </div>
-                                 </div>
-                               )}
-                             </div>
-                          </td>
-                          {isAdmin && (
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <div className="text-xs font-medium text-text-main">
-                                {user.last_access ? (
-                                  new Date(user.last_access).toLocaleDateString('es-ES', { 
-                                    day: '2-digit', month: 'short', year: 'numeric' 
-                                  }) + ' ' + new Date(user.last_access).toLocaleTimeString('es-ES', { 
-                                    hour: '2-digit', minute: '2-digit', hour12: true 
-                                  })
-                                ) : '-'}
-                              </div>
-                              {user.last_access && (
-                                <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-extrabold uppercase tracking-tighter border ${
-                                  (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 
-                                    ? 'bg-red-50 text-red-600 border-red-100' :
-                                  (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 
-                                    ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                    'bg-green-50 text-green-700 border-green-100'
-                                }`}>
-                                  {getDiasDesdeUltimoAcceso(user.last_access) === 0 ? (
-                                    <><span className="mr-1">●</span> Activo hoy</>
-                                  ) : (
-                                    `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`
-                                  )}
-                                </div>
-                              )}
-                            </td>
                           )}
-                        </tr>
-                      ))
-                     }
-                   </tbody>
-                 </table>
-               </div>
+                        </div>
+                    </td>
+                    {isAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="text-xs font-medium text-text-main">
+                          {user.last_access ? (
+                            new Date(user.last_access).toLocaleDateString('es-ES', { 
+                              day: '2-digit', month: 'short', year: 'numeric' 
+                            }) + ' ' + new Date(user.last_access).toLocaleTimeString('es-ES', { 
+                              hour: '2-digit', minute: '2-digit', hour12: true 
+                            })
+                          ) : '-'}
+                        </div>
+                        {user.last_access && (
+                          <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-extrabold uppercase tracking-tighter border ${
+                            (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 30 
+                              ? 'bg-red-50 text-red-600 border-red-100' :
+                            (getDiasDesdeUltimoAcceso(user.last_access) || 0) > 7 
+                              ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                              'bg-green-50 text-green-700 border-green-100'
+                          }`}>
+                            {getDiasDesdeUltimoAcceso(user.last_access) === 0 ? (
+                              <><span className="mr-1">●</span> Activo hoy</>
+                            ) : (
+                              `Hace ${getDiasDesdeUltimoAcceso(user.last_access)} días`
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'inscribir' && (
+        <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
+          <div className="p-8">
+            <div className="flex items-center mb-6">
+              <UserPlus className="h-6 w-6 text-primary mr-3" />
+              <div>
+                <h2 className="text-xl font-bold text-text-main">Inscribir Nuevo Usuario</h2>
+                <p className="text-sm text-secondary">Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.</p>
+              </div>
             </div>
-          )}
+            <form onSubmit={handleInscribir} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-text-main mb-2">Rol a inscribir</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
+                    <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
+                      <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-text-main mb-2">Nombre Completo</label>
+                  <input type="text" required value={formInscribir.nombre} onChange={(e) => setFormInscribir({...formInscribir, nombre: e.target.value})} className="block w-full px-4 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. Juan Pérez" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-main mb-2">Correo Institucional</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-5 w-5 text-slate-400" /></div>
+                    <input type="email" required value={formInscribir.email} onChange={(e) => setFormInscribir({...formInscribir, email: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="juan.perez@universidad.edu" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-main mb-2">Número de Documento</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IdCard className="h-5 w-5 text-slate-400" /></div>
+                    <input type="text" required value={formInscribir.documento} onChange={(e) => setFormInscribir({...formInscribir, documento: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 1020304050" />
+                  </div>
+                  <p className="mt-1 text-[11px] text-primary font-medium">Este número será usado como contraseña inicial.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-main mb-2">Número de Contacto</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-5 w-5 text-slate-400" /></div>
+                    <input type="tel" value={formInscribir.telefono} onChange={(e) => setFormInscribir({...formInscribir, telefono: e.target.value})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Ej. 3001234567" />
+                  </div>
+                </div>
+                {['decano','coordinador','docente','evaluador'].includes(formInscribir.role) && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-text-main mb-2">Facultad</label>
+                      <select required value={formInscribir.facultad} onChange={(e) => setFormInscribir({...formInscribir, facultad: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
+                        <option value="">Seleccione Facultad</option>
+                        {facultades.map(f => (<option key={f.id} value={f.nombre}>{f.nombre}</option>))}
+                      </select>
+                    </div>
+                    {formInscribir.role !== 'decano' && (
+                      <div>
+                        <label className="block text-sm font-semibold text-text-main mb-2">Programa</label>
+                        <select required value={formInscribir.programa} onChange={(e) => setFormInscribir({...formInscribir, programa: e.target.value})} className="block w-full px-3 py-2.5 border border-muted rounded-xl bg-white focus:ring-2 focus:ring-primary sm:text-sm">
+                          <option value="">Seleccione Programa</option>
+                          {programas.filter(p => !formInscribir.facultad || p.facultades?.nombre === formInscribir.facultad).map(p => (<option key={p.id} value={p.nombre}>{p.nombre}</option>))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="pt-4">
+                <button type="submit" disabled={submitting} className="w-full flex justify-center items-center px-4 py-3 bg-primary text-white rounded-xl shadow-lg hover:bg-primary-hover disabled:opacity-50">
+                  {submitting ? <><Loader2 className="animate-spin h-5 w-5 mr-3" /> Inscribiendo...</> : <><UserPlus className="h-5 w-5 mr-3" /> Inscribir Nuevo Usuario</>}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

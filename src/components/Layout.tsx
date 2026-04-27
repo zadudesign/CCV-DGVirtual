@@ -41,34 +41,42 @@ export default function Layout() {
     { name: 'Configuración', href: '/configuracion', icon: Settings },
   ];
 
-  // Map paths to titles
-  const getPageTitle = () => {
+  // Map paths to titles and icons
+  const getPageInfo = () => {
+    let icon = LayoutDashboard;
+    let title = 'Plataforma CCV';
+
     if (location.pathname === '/') {
+      icon = LayoutDashboard;
       switch (user.role) {
-        case 'admin': return 'Panel de Administración';
-        case 'decano': return 'Dashboard Decano';
-        case 'coordinador': return 'Dashboard Coordinador';
-        case 'docente': return 'Panel del Docente';
-        case 'evaluador': return 'Panel del Evaluador';
+        case 'admin': title = 'Panel de Administración'; break;
+        case 'decano': title = 'Dashboard Decano'; break;
+        case 'coordinador': title = 'Dashboard Coordinador'; break;
+        case 'docente': title = 'Panel del Docente'; break;
+        case 'evaluador': title = 'Panel del Evaluador'; break;
         case 'team':
         case 'Soporte':
         case 'Multimedia':
         case 'Diseño':
         case 'Pedagogía':
-          return 'Dashboard de Operaciones';
-        default: return 'Dashboard';
+          title = 'Dashboard de Operaciones'; break;
+        default: title = 'Dashboard'; break;
+      }
+    } else {
+      const navItem = navigation.find(item => item.href === location.pathname);
+      if (navItem) {
+        title = navItem.name;
+        icon = navItem.icon;
+      } else if (location.pathname.startsWith('/cursos/')) {
+        title = 'Detalle del Curso';
+        icon = BookOpen;
       }
     }
     
-    const navItem = navigation.find(item => item.href === location.pathname);
-    if (navItem) return navItem.name;
-    
-    if (location.pathname.startsWith('/cursos/')) return 'Detalle del Curso';
-    
-    return 'Plataforma CCV';
+    return { title, icon };
   };
 
-  const pageTitle = getPageTitle();
+  const { title: pageTitle, icon: PageIcon } = getPageInfo();
 
   return (
     <div className="min-h-screen bg-background flex text-text-main">
@@ -189,16 +197,18 @@ export default function Layout() {
               <Menu className="h-6 w-6" />
             </button>
             
-            <div className="flex flex-col">
-              <div className="flex items-center space-x-2">
-                <div className="hidden sm:block h-6 w-1 bg-accent rounded-full mr-1"></div>
-                <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 shadow-sm">
+                <PageIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight leading-none mb-1">
                   {pageTitle}
                 </h1>
+                <p className="hidden sm:block text-[10px] font-bold text-secondary uppercase tracking-[0.2em] opacity-60">
+                  Sistema de Gestión Académica &bull; <span className="text-accent underline decoration-accent/30 underline-offset-2">CCV</span>
+                </p>
               </div>
-              <p className="hidden sm:block text-[11px] font-bold text-secondary uppercase tracking-[0.15em] ml-4 mt-0.5 opacity-70">
-                Plataforma CCV &bull; Gestión Académica
-              </p>
             </div>
           </div>
           
