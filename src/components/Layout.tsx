@@ -24,12 +24,25 @@ export default function Layout() {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.role === 'EducacionContinua' && (
+      location.pathname === '/' || 
+      location.pathname.startsWith('/cursos') || 
+      location.pathname.startsWith('/calendario') || 
+      location.pathname.startsWith('/usuarios')
+  )) {
+    return <Navigate to="/educacion-continua" replace />;
+  }
+
   const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Cursos', href: '/cursos', icon: BookOpen },
-    { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+    ...(user.role !== 'EducacionContinua' 
+      ? [
+          { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+          { name: 'Cursos', href: '/cursos', icon: BookOpen },
+          { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+        ] 
+      : []),
     // Educación Continua is for Team roles, admin, and EducacionContinua
     ...(isTeamRole || user.role === 'admin' || user.role === 'EducacionContinua'
       ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
