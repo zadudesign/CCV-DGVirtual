@@ -16,7 +16,7 @@ import {
   Cell,
   LabelList 
 } from 'recharts';
-import { Loader2, Bell, AlertTriangle, AlertCircle, Info, Clock } from 'lucide-react';
+import { Loader2, Bell, AlertTriangle, AlertCircle, Info, Clock, ClipboardList } from 'lucide-react';
 
 import TasksStatsBar from './TasksStatsBar';
 
@@ -28,17 +28,20 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
   const navigate = useNavigate();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [novedades, setNovedades] = useState<any[]>([]);
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [solicitudesCount, setSolicitudesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, [user.id, user.facultad, user.programa]);
 
+  const isAdmin = user.role === 'admin' || user.role === 'team' || 
+                  ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const isAdmin = user.role === 'admin' || user.role === 'team' || 
-                      ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
       
       // 1. Fetch Cursos Activos
       let cursosQuery = supabase.from('cursos').select('*').neq('estado', 'Publicado');
@@ -78,6 +81,27 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
         setNovedades(novedadesData || []);
       } else {
         setNovedades([]);
+      }
+
+      // 3. Fetch Solicitudes si es admin o team
+      if (isAdmin) {
+        const { count, error: countError } = await supabase
+          .from('solicitudes_cursos')
+          .select('*', { count: 'exact', head: true });
+        
+        if (!countError) {
+          setSolicitudesCount(count || 0);
+        }
+
+        const { data: solData, error: solError } = await supabase
+          .from('solicitudes_cursos')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (!solError) {
+          setSolicitudes(solData || []);
+        }
       }
 
     } catch (error) {
@@ -237,31 +261,80 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
         </div>
       </div>
 
-      {/* Columna 3: Promedio Global (1/4) */}
-      <div className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col items-center justify-center h-[480px]">
-        <div className="mb-4 text-center">
-          <p className="text-lg font-bold text-primary">Promedio Global</p>
-        </div>
-        
-        <div className="relative w-full h-56 flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart 
-              cx="50%" cy="50%" 
-              innerRadius="80%" outerRadius="100%" 
-              barSize={16} 
-              data={[{ name: 'Global', value: promedioGlobal, fill: '#2d4c7c' }]} 
-              startAngle={90} endAngle={-270}
-            >
-              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-              <RadialBar background={{ fill: '#f1f5f9' }} dataKey="value" cornerRadius={10} />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center flex-col">
-            <span className="text-4xl font-extrabold text-primary">{promedioGlobal.toFixed(0)}%</span>
-            <span className="text-[9px] font-bold text-secondary uppercase mt-0.5 tracking-tighter">Completado</span>
+      {/* Columna 3: Promedio Global & Solicitudes (1/4) */}
+      {isAdmin ? (
+        <div className="flex flex-col gap-6 h-[480px]">
+          {/* Superior: Solicitudes (Botón compacto tipo 'Nuevas Tareas') */}
+          <div 
+            onClick={() => navigate('/cursos', { state: { tab: 'solicitudes' } })}
+            className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex items-center justify-center cursor-pointer group hover:bg-slate-50 transition-all"
+          >
+            <div className="flex items-center gap-6">
+              <span className="text-sm font-black text-rose-600 uppercase tracking-widest border-r border-slate-100 pr-6 leading-tight flex items-center justify-center text-center">
+                SOLICITUDES
+              </span>
+              <div className="relative p-1 rounded-full transition-all text-slate-400 group-hover:text-primary group-hover:scale-110">
+                <Bell className="h-7 w-7" />
+                {solicitudesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-bold px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none shadow-sm ring-2 ring-white">
+                    {solicitudesCount > 9 ? '9+' : solicitudesCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Inferior: Promedio Global (Más prominente) */}
+          <div className="flex-1 bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col items-center justify-center">
+             <div className="mb-4 text-center">
+               <p className="text-lg font-bold text-primary">Promedio Global</p>
+             </div>
+             <div className="relative w-full h-56 flex items-center justify-center">
+               <ResponsiveContainer width="100%" height="100%">
+                 <RadialBarChart 
+                   cx="50%" cy="50%" 
+                   innerRadius="80%" outerRadius="100%" 
+                   barSize={16} 
+                   data={[{ name: 'Global', value: promedioGlobal, fill: '#2d4c7c' }]} 
+                   startAngle={90} endAngle={-270}
+                 >
+                   <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                   <RadialBar background={{ fill: '#f1f5f9' }} dataKey="value" cornerRadius={10} />
+                 </RadialBarChart>
+               </ResponsiveContainer>
+               <div className="absolute inset-0 flex items-center justify-center flex-col">
+                 <span className="text-4xl font-extrabold text-primary">{promedioGlobal.toFixed(0)}%</span>
+                 <span className="text-[9px] font-bold text-secondary uppercase mt-0.5 tracking-tighter">Completado</span>
+               </div>
+             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex flex-col items-center justify-center h-[480px]">
+          <div className="mb-4 text-center">
+            <p className="text-lg font-bold text-primary">Promedio Global</p>
+          </div>
+          
+          <div className="relative w-full h-56 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart 
+                cx="50%" cy="50%" 
+                innerRadius="80%" outerRadius="100%" 
+                barSize={16} 
+                data={[{ name: 'Global', value: promedioGlobal, fill: '#2d4c7c' }]} 
+                startAngle={90} endAngle={-270}
+              >
+                <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                <RadialBar background={{ fill: '#f1f5f9' }} dataKey="value" cornerRadius={10} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center flex-col">
+              <span className="text-4xl font-extrabold text-primary">{promedioGlobal.toFixed(0)}%</span>
+              <span className="text-[9px] font-bold text-secondary uppercase mt-0.5 tracking-tighter">Completado</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

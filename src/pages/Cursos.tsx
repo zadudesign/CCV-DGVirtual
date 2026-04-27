@@ -6,7 +6,7 @@ import { Curso, User } from '../types';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const ESTADOS_SOLICITUD = [
   'Solicitud Recibida',
@@ -18,6 +18,7 @@ const ESTADOS_SOLICITUD = [
 
 export default function Cursos() {
   const { user } = useAuth();
+  const location = useLocation();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -50,7 +51,9 @@ export default function Cursos() {
   // Filters
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>('activos');
+  const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>(() => {
+    return (location.state as any)?.tab === 'solicitudes' ? 'solicitudes' : 'activos';
+  });
 
   // Options
   const [docentes, setDocentes] = useState<User[]>([]);
