@@ -143,24 +143,33 @@ export default function Usuarios() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('profiles').insert([{
-        id: crypto.randomUUID(), 
-        name: formInscribir.nombre,
-        email: formInscribir.email,
-        role: formInscribir.role,
-        documento: formInscribir.documento,
-        telefono: formInscribir.telefono,
-        facultad: formInscribir.facultad || null,
-        programa: formInscribir.programa || null
-      }]);
-      if (error) throw error;
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formInscribir.email,
+          password: formInscribir.documento, // Default password
+          role: formInscribir.role,
+          name: formInscribir.nombre,
+          documento: formInscribir.documento,
+          telefono: formInscribir.telefono,
+          facultad: formInscribir.facultad || null,
+          programa: formInscribir.programa || null
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Error al inscribir usuario');
+      }
+
       alert('Usuario inscrito correctamente.');
       setFormInscribir({
         nombre: '', email: '', role: 'docente', documento: '',
         telefono: '', facultad: '', programa: ''
       });
       fetchData();
-      setActiveSubTab('lista');
+      setActiveTab('registrados');
     } catch (err: any) {
       alert('Error al inscribir usuario: ' + err.message);
     } finally {
