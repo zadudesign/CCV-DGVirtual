@@ -49,13 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setUserFromSession = async (authUser: any) => {
-    // Extraemos el rol de app_metadata (seguro, no modificable por el usuario)
-    const role = authUser.app_metadata?.role || 'docente';
+    // Extraemos el rol de app_metadata como respaldo inicial
+    let role = authUser.app_metadata?.role || 'docente';
     
     // Extraemos el resto de datos de user_metadata
     const meta = authUser.user_metadata || {};
     
-    // Configuramos el usuario inicial sin foto para no bloquear el login
+    // Configuramos el usuario inicial
     setUser({
       id: authUser.id,
       email: authUser.email || '',
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthError(null);
     setLoading(false);
 
-    // Actualizamos el último acceso y obtenemos la foto de perfil en segundo plano
+    // Actualizamos el último acceso y obtenemos el perfil completo (incluyendo el ROL real de la DB)
     (async () => {
       try {
         const now = new Date().toISOString();
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const { data } = await supabase
           .from('profiles')
-          .select('photoURL, last_access')
+          .select('photoURL, last_access, role')
           .eq('id', authUser.id)
           .single();
           
@@ -92,11 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(prev => prev ? { 
             ...prev, 
             photoURL: data.photoURL || prev.photoURL,
-            last_access: data.last_access || now
+            last_access: data.last_access || now,
+            role: (data.role || prev.role) as Role
           } : null);
         }
       } catch (e) {
-        console.error('Error fetching profile photo:', e);
+        console.error('Error fetching profile data:', e);
       }
     })();
   };

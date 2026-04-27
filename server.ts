@@ -123,6 +123,55 @@ async function startServer() {
     }
   });
 
+  // Education Continua Proxy Endpoints (Bypass RLS for this specific role)
+  app.get("/api/educacion-continua/proyectos", async (req, res) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('proyectos_ec')
+        .select('*')
+        .order('nombre', { ascending: true });
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/educacion-continua/tareas", async (req, res) => {
+    try {
+      // Get all EC project names first
+      const { data: pData } = await supabaseAdmin.from('proyectos_ec').select('nombre');
+      const pNames = pData?.map(p => p.nombre) || [];
+
+      if (pNames.length === 0) return res.json([]);
+
+      const { data, error } = await supabaseAdmin
+        .from('notificaciones_tareas')
+        .select('*')
+        .in('proyecto', pNames)
+        .order('fecha_vencimiento', { ascending: true });
+
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/educacion-continua/rates", async (req, res) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('configuracion_tarifas')
+        .select('*');
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.post("/api/auth/get-email", async (req, res) => {
     try {
       const { documento } = req.body;

@@ -26,7 +26,7 @@ export default function EducacionContinua() {
   
   const canSeeTareas = isAdmin || isTeam || isEducacionContinua;
   const canSeeProyectos = isAdmin || isEducacionContinua;
-  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(canSeeTareas ? 'tareas' : 'proyectos');
+  const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(isEducacionContinua ? 'proyectos' : (canSeeTareas ? 'tareas' : 'proyectos'));
 
   // Sólo roles admin y team pueden editar/modificar tareas. EducacionContinua es solo lectura.
   const canEdit = isAdmin || isTeam;
@@ -49,9 +49,19 @@ export default function EducacionContinua() {
 
   const fetchRates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('configuracion_tarifas')
-        .select('*');
+      let data, error;
+      
+      if (isEducacionContinua) {
+        const response = await fetch('/api/educacion-continua/rates');
+        if (!response.ok) throw new Error('API Error');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('configuracion_tarifas')
+          .select('*');
+        data = result.data;
+        error = result.error;
+      }
       
       if (!error && data && data.length > 0) {
         const ratesMap: Record<string, number> = { ...HOURLY_RATES };
@@ -97,16 +107,27 @@ export default function EducacionContinua() {
     try {
       setLoadingData(true);
       setError('');
-      const { data, error: supabaseError } = await supabase
-        .from('proyectos_ec')
-        .select('*')
-        .order('nombre', { ascending: true });
-
-      if (supabaseError) {
-        if (supabaseError.code !== '42P01') {
-          console.error('Supabase Error fetching proyectos:', supabaseError);
-          setError(`Error al obtener proyectos: ${supabaseError.message}`);
-          throw supabaseError;
+      
+      let data, error;
+      
+      if (isEducacionContinua) {
+        const response = await fetch('/api/educacion-continua/proyectos');
+        if (!response.ok) throw new Error('API Error fetching proyectos');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('proyectos_ec')
+          .select('*')
+          .order('nombre', { ascending: true });
+        data = result.data;
+        error = result.error;
+      }
+      
+      if (error) {
+        if (error.code !== '42P01') {
+          console.error('Supabase Error fetching proyectos:', error);
+          setError(`Error al obtener proyectos: ${error.message}`);
+          throw error;
         }
       } else {
         setProyectos(data || []);
@@ -122,26 +143,36 @@ export default function EducacionContinua() {
     try {
       setLoadingTareas(true);
       
-      // Obtenemos los nombres de todos los proyectos de EC para filtrar
-      const { data: pData } = await supabase.from('proyectos_ec').select('nombre');
-      const pNames = pData?.map(p => p.nombre) || [];
-      
-      if (pNames.length === 0) {
-        setTareas([]);
-        return;
+      let data, error;
+
+      if (isEducacionContinua) {
+        const response = await fetch('/api/educacion-continua/tareas');
+        if (!response.ok) throw new Error('API Error fetching tasks');
+        data = await response.json();
+      } else {
+        // Obtenemos los nombres de todos los proyectos de EC para filtrar
+        const { data: pData } = await supabase.from('proyectos_ec').select('nombre');
+        const pNames = pData?.map(p => p.nombre) || [];
+        
+        if (pNames.length === 0) {
+          setTareas([]);
+          return;
+        }
+
+        let query = supabase
+          .from('notificaciones_tareas')
+          .select('*')
+          .in('proyecto', pNames);
+
+        if (user?.role !== 'admin' && user?.role !== 'EducacionContinua') {
+          const area = user?.team_area || user?.role;
+          query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
+        }
+
+        const result = await query.order('fecha_vencimiento', { ascending: true });
+        data = result.data;
+        error = result.error;
       }
-
-      let query = supabase
-        .from('notificaciones_tareas')
-        .select('*')
-        .in('proyecto', pNames);
-
-      if (user?.role !== 'admin' && user?.role !== 'EducacionContinua') {
-        const area = user?.team_area || user?.role;
-        query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
-      }
-
-      const { data, error } = await query.order('fecha_vencimiento', { ascending: true });
 
       if (error) {
         if (error.code !== '42P01') throw error;
