@@ -499,12 +499,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-main">Calendario de Trabajo</h1>
-          <p className="text-sm text-secondary">Planificación y seguimiento de tareas académicas y de producción.</p>
-        </div>
-        
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
         {!cursoId && (
           <button
             onClick={() => setIsModalOpen(true)}

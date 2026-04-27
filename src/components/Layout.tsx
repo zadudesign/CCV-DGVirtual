@@ -24,27 +24,14 @@ export default function Layout() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role === 'EducacionContinua' && (
-      location.pathname === '/' || 
-      location.pathname.startsWith('/cursos') || 
-      location.pathname.startsWith('/calendario') || 
-      location.pathname.startsWith('/usuarios')
-  )) {
-    return <Navigate to="/educacion-continua" replace />;
-  }
-
   const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
 
   const navigation = [
-    ...(user.role !== 'EducacionContinua' 
-      ? [
-          { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-          { name: 'Cursos', href: '/cursos', icon: BookOpen },
-          { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
-        ] 
-      : []),
-    // Educación Continua is for Team roles, admin, and EducacionContinua
-    ...(isTeamRole || user.role === 'admin' || user.role === 'EducacionContinua'
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Cursos', href: '/cursos', icon: BookOpen },
+    { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+    // Educación Continua is for Team roles and admin
+    ...(isTeamRole || user.role === 'admin'
       ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
       : []),
     // Usuarios is for admin, decano, and coordinador
@@ -53,6 +40,35 @@ export default function Layout() {
       : []),
     { name: 'Configuración', href: '/configuracion', icon: Settings },
   ];
+
+  // Map paths to titles
+  const getPageTitle = () => {
+    if (location.pathname === '/') {
+      switch (user.role) {
+        case 'admin': return 'Panel de Administración';
+        case 'decano': return 'Dashboard Decano';
+        case 'coordinador': return 'Dashboard Coordinador';
+        case 'docente': return 'Panel del Docente';
+        case 'evaluador': return 'Panel del Evaluador';
+        case 'team':
+        case 'Soporte':
+        case 'Multimedia':
+        case 'Diseño':
+        case 'Pedagogía':
+          return 'Dashboard de Operaciones';
+        default: return 'Dashboard';
+      }
+    }
+    
+    const navItem = navigation.find(item => item.href === location.pathname);
+    if (navItem) return navItem.name;
+    
+    if (location.pathname.startsWith('/cursos/')) return 'Detalle del Curso';
+    
+    return 'Plataforma CCV';
+  };
+
+  const pageTitle = getPageTitle();
 
   return (
     <div className="min-h-screen bg-background flex text-text-main">
@@ -164,25 +180,44 @@ export default function Layout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-muted/50 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm z-10">
-          <button 
-            className="md:hidden p-2 text-slate-400 hover:text-secondary"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          
-          <div className="flex-1 flex justify-end items-center space-x-4">
-            <div className="flex items-center border-slate-100">
-              <button
-                onClick={signOut}
-                className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-red-100 shadow-sm hover:shadow-md bg-white"
-                title="Cerrar Sesión"
-              >
-                <LogOut className="mr-2.5 h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                <span>Cerrar Sesión</span>
-              </button>
+        <header className="h-20 bg-white border-b border-muted/30 flex items-center justify-between px-4 sm:px-6 lg:px-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] z-10">
+          <div className="flex items-center space-x-4">
+            <button 
+              className="md:hidden p-2 text-slate-400 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-lg"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-2">
+                <div className="hidden sm:block h-6 w-1 bg-accent rounded-full mr-1"></div>
+                <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
+                  {pageTitle}
+                </h1>
+              </div>
+              <p className="hidden sm:block text-[11px] font-bold text-secondary uppercase tracking-[0.15em] ml-4 mt-0.5 opacity-70">
+                Plataforma CCV &bull; Gestión Académica
+              </p>
             </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="hidden lg:flex items-center px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse mr-2"></div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sistema Activo</span>
+            </div>
+            
+            <div className="h-8 w-px bg-slate-100 hidden sm:block mx-2"></div>
+            
+            <button
+              onClick={signOut}
+              className="flex items-center px-4 py-2 text-sm font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-red-100 shadow-sm hover:shadow-md bg-white overflow-hidden"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="mr-2.5 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
           </div>
         </header>
 

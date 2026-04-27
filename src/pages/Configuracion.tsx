@@ -104,13 +104,6 @@ export default function Configuracion() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-main">Configuración de Perfil</h1>
-        <p className="mt-1 text-sm text-secondary">
-          Gestiona tu información personal y firma digital.
-        </p>
-      </div>
-
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="p-6 space-y-6">
           

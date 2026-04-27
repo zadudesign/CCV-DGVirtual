@@ -9,14 +9,7 @@ export default function DecanoDashboard() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div>
-        <h1 className="text-2xl font-bold text-text-main">Panel del Decano</h1>
-        <p className="mt-1 text-sm text-secondary">
-          Vista general del progreso de construcción de cursos virtuales en la facultad de {user.facultad}.
-        </p>
-      </div>
-
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <StatsBar user={user} />
       <DashboardCharts user={user} />
     </div>

@@ -24,7 +24,8 @@ import { User, Role } from '../types';
 export default function Usuarios() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [activeTab, setActiveTab] = useState<'registrados' | 'inscribir' | 'facultades'>('registrados');
+  const [activeTab, setActiveTab] = useState<'inscribir' | 'facultades'>('inscribir');
+  const [activeSubTab, setActiveSubTab] = useState<'form' | 'lista'>('lista');
   
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [facultades, setFacultades] = useState<any[]>([]);
@@ -143,33 +144,24 @@ export default function Usuarios() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formInscribir.email,
-          password: formInscribir.documento, // Default password
-          role: formInscribir.role,
-          name: formInscribir.nombre,
-          documento: formInscribir.documento,
-          telefono: formInscribir.telefono,
-          facultad: formInscribir.facultad || null,
-          programa: formInscribir.programa || null
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Error al inscribir usuario');
-      }
-
+      const { error } = await supabase.from('profiles').insert([{
+        id: crypto.randomUUID(), 
+        name: formInscribir.nombre,
+        email: formInscribir.email,
+        role: formInscribir.role,
+        documento: formInscribir.documento,
+        telefono: formInscribir.telefono,
+        facultad: formInscribir.facultad || null,
+        programa: formInscribir.programa || null
+      }]);
+      if (error) throw error;
       alert('Usuario inscrito correctamente.');
       setFormInscribir({
         nombre: '', email: '', role: 'docente', documento: '',
         telefono: '', facultad: '', programa: ''
       });
       fetchData();
-      setActiveTab('registrados');
+      setActiveSubTab('lista');
     } catch (err: any) {
       alert('Error al inscribir usuario: ' + err.message);
     } finally {
@@ -223,28 +215,10 @@ export default function Usuarios() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-text-main">Panel de Administración</h1>
-          <p className="mt-1 text-sm text-secondary">Gestión de usuarios, facultades y programas de la plataforma CCV.</p>
-        </div>
-      </div>
-
-      <div className="flex border-b border-muted/30 -mb-px relative top-[1px] overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('registrados')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-shrink-0 items-center ${
-            activeTab === 'registrados'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <UsersIcon className={`mr-2 h-4 w-4 ${activeTab === 'registrados' ? 'text-primary' : 'text-slate-400'}`} />
-          Usuarios Registrados
-        </button>
+      <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
         <button
           onClick={() => setActiveTab('inscribir')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-shrink-0 items-center ${
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
             activeTab === 'inscribir'
               ? 'border-primary text-primary bg-primary/5'
               : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
@@ -255,7 +229,7 @@ export default function Usuarios() {
         </button>
         <button
           onClick={() => setActiveTab('facultades')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex flex-shrink-0 items-center ${
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
             activeTab === 'facultades'
               ? 'border-primary text-primary bg-primary/5'
               : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
@@ -268,10 +242,16 @@ export default function Usuarios() {
 
       {activeTab === 'inscribir' && (
         <div className="space-y-6">
-          <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
-            <div className="p-8">
-              <div className="flex items-center mb-6">
-                <UserPlus className="h-6 w-6 text-primary mr-3" />
+          <div className="flex space-x-4 mb-4">
+            <button onClick={() => setActiveSubTab('lista')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'lista' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Lista de Usuarios</button>
+            <button onClick={() => setActiveSubTab('form')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeSubTab === 'form' ? 'bg-primary text-white shadow-sm' : 'bg-white text-secondary border border-muted/30 hover:bg-slate-50'}`}>Inscribir Nuevo Usuario</button>
+          </div>
+
+          {activeSubTab === 'form' ? (
+            <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
+              <div className="p-8">
+                <div className="flex items-center mb-6">
+                  <UserPlus className="h-6 w-6 text-primary mr-3" />
                   <div>
                     <h2 className="text-xl font-bold text-text-main">Inscribir Nuevo Usuario</h2>
                     <p className="text-sm text-secondary">Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.</p>
@@ -284,7 +264,7 @@ export default function Usuarios() {
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
                         <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
-                          <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option><option value="EducacionContinua">Educación Continua</option>
+                          <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
                         </select>
                       </div>
                     </div>
@@ -343,10 +323,7 @@ export default function Usuarios() {
                 </form>
               </div>
             </div>
-        </div>
-      )}
-
-      {activeTab === 'registrados' && (
+          ) : (
             <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
                 <div className="p-4 border-b border-muted/30 flex justify-between items-center bg-white">
                   <h3 className="text-lg font-bold text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
@@ -490,6 +467,8 @@ export default function Usuarios() {
                  </table>
                </div>
             </div>
+          )}
+        </div>
       )}
 
       {activeTab === 'facultades' && (

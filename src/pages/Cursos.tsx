@@ -402,13 +402,8 @@ export default function Cursos() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-text-main">Gestión de Cursos</h1>
-          <p className="mt-1 text-sm text-secondary">
-            Solicita y administra los cursos virtuales de la plataforma.
-          </p>
-        </div>
+      <div className="flex justify-between items-center -mb-2">
+        <div></div>
         {canCreate && (
           <div className="flex space-x-3">
             {user?.role === 'admin' && activeTab === 'solicitudes' && (

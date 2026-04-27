@@ -9,14 +9,7 @@ export default function AdminDashboard() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div>
-        <h1 className="text-2xl font-bold text-text-main">Panel de Administración</h1>
-        <p className="mt-1 text-sm text-secondary">
-          Gestión de usuarios, facultades y programas de la plataforma CCV.
-        </p>
-      </div>
-
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <StatsBar user={user} />
       <DashboardCharts user={user} />
     </div>

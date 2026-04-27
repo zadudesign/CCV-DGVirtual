@@ -9,14 +9,7 @@ export default function EvaluadorDashboard() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div>
-        <h1 className="text-2xl font-bold text-text-main">Panel del Par Evaluador</h1>
-        <p className="mt-1 text-sm text-secondary">
-          Revisa cursos, evalúa la calidad del contenido y proporciona retroalimentación.
-        </p>
-      </div>
-
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <StatsBar user={user} />
       <DashboardCharts user={user} />
     </div>
