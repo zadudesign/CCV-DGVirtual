@@ -96,13 +96,18 @@ export default function EducacionContinua() {
   const fetchProyectos = async () => {
     try {
       setLoadingData(true);
-      const { data, error } = await supabase
+      setError('');
+      const { data, error: supabaseError } = await supabase
         .from('proyectos_ec')
         .select('*')
         .order('nombre', { ascending: true });
 
-      if (error) {
-        if (error.code !== '42P01') throw error;
+      if (supabaseError) {
+        if (supabaseError.code !== '42P01') {
+          console.error('Supabase Error fetching proyectos:', supabaseError);
+          setError(`Error al obtener proyectos: ${supabaseError.message}`);
+          throw supabaseError;
+        }
       } else {
         setProyectos(data || []);
       }
@@ -375,7 +380,7 @@ export default function EducacionContinua() {
 
       {activeTab === 'proyectos' && (
         <>
-          {isAdmin && (
+          {(isAdmin || isEducacionContinua) && (
             <div className="bg-emerald-600 rounded-xl p-6 text-white shadow-lg mb-6 flex flex-col md:flex-row justify-between items-center gap-4 transition-all hover:shadow-xl border border-emerald-500/50">
               <div className="flex items-center gap-4">
                 <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
@@ -535,6 +540,61 @@ export default function EducacionContinua() {
             )}
           </div>
         </div>
+
+        {(isAdmin || isEducacionContinua) && (
+          <div className="mt-8 bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
+            <div className="px-6 py-5 border-b border-muted/30 bg-slate-50 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-bold text-text-main flex items-center">
+                  <Clock className="mr-2 h-5 w-5 text-primary" />
+                  Configuración de Tarifas por Hora
+                </h3>
+                <p className="text-xs text-secondary mt-1">
+                  {isAdmin 
+                    ? 'Define el valor de la hora para cada tipo de tarea en Educación Continua.' 
+                    : 'Tarifas por hora vigentes para Educación Continua (Solo lectura).'}
+                </p>
+              </div>
+              {loadingRates && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {Object.keys(HOURLY_RATES).map((tipo) => (
+                  <div key={tipo} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-slate-700">{tipo}</span>
+                      <span className="text-[10px] uppercase font-bold text-primary bg-primary/5 px-2 py-1 rounded">Valor / Hora</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                      <input
+                        type="text"
+                        readOnly={!isAdmin}
+                        className={`w-full pl-7 pr-3 py-2 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold text-slate-600 outline-none transition-all ${!isAdmin ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                        defaultValue={hourlyRates[tipo]?.toLocaleString('es-CO')}
+                        onBlur={(e) => isAdmin && handleUpdateRoleRate(tipo, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && isAdmin) {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {isAdmin && (
+                <div className="mt-6 flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-[10px] text-blue-700 leading-relaxed">
+                    Los cambios realizados aquí se aplicarán a todos los cálculos de "Inversión Estimada" de forma inmediata tanto en proyectos existentes como en tareas nuevas. 
+                    <strong> Presiona Enter o haz clic fuera del campo para guardar los cambios.</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       </>
       )}
@@ -554,53 +614,6 @@ export default function EducacionContinua() {
         </div>
       )}
 
-      {activeTab === 'proyectos' && isAdmin && (
-        <div className="mt-8 bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-          <div className="px-6 py-5 border-b border-muted/30 bg-slate-50 flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-bold text-text-main flex items-center">
-                <Clock className="mr-2 h-5 w-5 text-primary" />
-                Configuración de Tarifas por Hora
-              </h3>
-              <p className="text-xs text-secondary mt-1">Define el valor de la hora para cada tipo de tarea en Educación Continua.</p>
-            </div>
-            {loadingRates && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.keys(HOURLY_RATES).map((tipo) => (
-                <div key={tipo} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700">{tipo}</span>
-                    <span className="text-[10px] uppercase font-bold text-primary bg-primary/5 px-2 py-1 rounded">Valor / Hora</span>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                    <input
-                      type="text"
-                      className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold text-slate-600 outline-none transition-all"
-                      defaultValue={hourlyRates[tipo]?.toLocaleString('es-CO')}
-                      onBlur={(e) => handleUpdateRoleRate(tipo, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          (e.target as HTMLInputElement).blur();
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p className="text-[10px] text-blue-700 leading-relaxed">
-                Los cambios realizados aquí se aplicarán a todos los cálculos de "Inversión Estimada" de forma inmediata tanto en proyectos existentes como en tareas nuevas. 
-                <strong> Presiona Enter o haz clic fuera del campo para guardar los cambios.</strong>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
