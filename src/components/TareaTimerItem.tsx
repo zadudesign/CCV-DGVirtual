@@ -7,6 +7,8 @@ import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { HOURLY_RATES } from '../lib/constants';
 
+import { useAuth } from '../contexts/AuthContext';
+
 const COLOMBIA_TZ = 'America/Bogota';
 
 interface TareaTimerItemProps {
@@ -19,6 +21,7 @@ interface TareaTimerItemProps {
 }
 
 export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates, hideType, hideRole, readOnly }) => {
+  const { user } = useAuth();
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -96,11 +99,25 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const saveTime = async (newTotalSeconds: number) => {
     try {
       setSaving(true);
-      const { data, error } = await supabase
-        .from('notificaciones_tareas')
-        .update({ tiempo_invertido: newTotalSeconds })
-        .eq('id', tarea.id)
-        .select();
+      
+      let data, error;
+      if (user?.role === 'EducacionContinua') {
+        const response = await fetch(`/api/educacion-continua/tareas/${tarea.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tiempo_invertido: newTotalSeconds })
+        });
+        if (!response.ok) throw new Error('API update error');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('notificaciones_tareas')
+          .update({ tiempo_invertido: newTotalSeconds })
+          .eq('id', tarea.id)
+          .select();
+        data = result.data;
+        error = result.error;
+      }
       
       if (error) throw error;
       if (!data || data.length === 0) {
@@ -130,15 +147,31 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     if (isTimeTrackingEnabled && totalSeconds === 0) return;
     try {
       setSaving(true);
-      const { data, error } = await supabase
-        .from('notificaciones_tareas')
-        .update({ 
-          estado: 'Completada', 
-          fecha_completada: formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX"),
-          tiempo_invertido: totalSeconds
-        })
-        .eq('id', tarea.id)
-        .select();
+      
+      let data, error;
+      const updatePayload = { 
+        estado: 'Completada', 
+        fecha_completada: formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+        tiempo_invertido: totalSeconds
+      };
+
+      if (user?.role === 'EducacionContinua') {
+        const response = await fetch(`/api/educacion-continua/tareas/${tarea.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePayload)
+        });
+        if (!response.ok) throw new Error('API update error');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('notificaciones_tareas')
+          .update(updatePayload)
+          .eq('id', tarea.id)
+          .select();
+        data = result.data;
+        error = result.error;
+      }
       
       if (error) throw error;
       if (!data || data.length === 0) {
@@ -163,13 +196,27 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     
     try {
       setSaving(true);
-      const { data, error } = await supabase
-        .from('notificaciones_tareas')
-        .update({ 
-          estado: newStatus 
-        })
-        .eq('id', tarea.id)
-        .select();
+      
+      let data, error;
+      if (user?.role === 'EducacionContinua') {
+        const response = await fetch(`/api/educacion-continua/tareas/${tarea.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: newStatus })
+        });
+        if (!response.ok) throw new Error('API update error');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('notificaciones_tareas')
+          .update({ 
+            estado: newStatus 
+          })
+          .eq('id', tarea.id)
+          .select();
+        data = result.data;
+        error = result.error;
+      }
       
       if (error) throw error;
       if (!data || data.length === 0) {

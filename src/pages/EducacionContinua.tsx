@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle, Bell, AlertCircle } from 'lucide-react';
+import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle, Bell, AlertCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,9 +28,9 @@ export default function EducacionContinua() {
   const canSeeProyectos = isAdmin || isEducacionContinua;
   const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(isEducacionContinua ? 'proyectos' : (canSeeTareas ? 'tareas' : 'proyectos'));
 
-  // Sólo roles admin y team pueden editar/modificar tareas. EducacionContinua es solo lectura.
-  const canEdit = isAdmin || isTeam;
-  const canEditProyectos = isAdmin;
+  // Sólo roles admin y team pueden editar/modificar tareas. EducacionContinua es ahora también con privilegios.
+  const canEdit = isAdmin || isTeam || isEducacionContinua;
+  const canEditProyectos = isAdmin || isEducacionContinua;
 
   useEffect(() => {
     if (!canSeeTareas && canSeeProyectos && activeTab === 'tareas') {
@@ -79,12 +79,24 @@ export default function EducacionContinua() {
     const numValue = parseInt(value.replace(/\D/g, '')) || 0;
     try {
       setLoadingRates(true);
-      const { error } = await supabase
-        .from('configuracion_tarifas')
-        .upsert({ 
-          nombre_tipo: tipo, 
-          tarifa_hora: numValue 
-        }, { onConflict: 'nombre_tipo' });
+      
+      let error;
+      if (isEducacionContinua) {
+        const response = await fetch('/api/educacion-continua/rates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo, valor: numValue })
+        });
+        if (!response.ok) throw new Error('API Error updating rates');
+      } else {
+        const result = await supabase
+          .from('configuracion_tarifas')
+          .upsert({ 
+            nombre_tipo: tipo, 
+            tarifa_hora: numValue 
+          }, { onConflict: 'nombre_tipo' });
+        error = result.error;
+      }
       
       if (error) throw error;
       setHourlyRates(prev => ({ ...prev, [tipo]: numValue }));
@@ -195,11 +207,25 @@ export default function EducacionContinua() {
     setSubmitting(true);
     
     try {
-      const { data, error } = await supabase
-        .from('proyectos_ec')
-        .insert([{ nombre: newProyectoName.trim() }])
-        .select()
-        .single();
+      let data, error;
+      
+      if (isEducacionContinua) {
+        const response = await fetch('/api/educacion-continua/proyectos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre: newProyectoName.trim() })
+        });
+        if (!response.ok) throw new Error('API Error adding proyecto');
+        data = await response.json();
+      } else {
+        const result = await supabase
+          .from('proyectos_ec')
+          .insert([{ nombre: newProyectoName.trim() }])
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
 
@@ -210,7 +236,42 @@ export default function EducacionContinua() {
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al agregar proyecto. Asegúrate de haber creado la tabla en Supabase.');
+      setError(err.message || 'Error al agregar proyecto.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteProyecto = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('¿Estás seguro de eliminar este proyecto?')) return;
+    
+    try {
+      setError('');
+      setSubmitting(true);
+      
+      if (isEducacionContinua) {
+        const response = await fetch(`/api/educacion-continua/proyectos/${id}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('API Error deleting proyecto');
+      } else {
+        const { error } = await supabase
+          .from('proyectos_ec')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+      }
+      
+      if (selectedProyecto === proyectos.find(p => p.id === id)?.nombre) {
+        setSelectedProyecto(null);
+      }
+      
+      await fetchProyectos();
+      setSuccess('Proyecto eliminado con éxito');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar proyecto.');
     } finally {
       setSubmitting(false);
     }
@@ -500,6 +561,15 @@ export default function EducacionContinua() {
                        </div>
                        <div className="flex items-center text-xs text-secondary">
                          <span className="mr-2">{new Date(proyecto.created_at).toLocaleDateString()}</span>
+                         {canEditProyectos && (
+                           <button
+                             onClick={(e) => handleDeleteProyecto(proyecto.id, e)}
+                             className="p-1 hover:bg-red-50 hover:text-red-600 rounded mr-1 transition-colors"
+                             title="Eliminar proyecto"
+                           >
+                             <Trash2 className="h-3.5 w-3.5" />
+                           </button>
+                         )}
                          <ChevronRight className={`h-4 w-4 ${selectedProyecto === proyecto.nombre ? 'text-primary' : 'text-slate-300'}`} />
                        </div>
                      </li>
@@ -600,12 +670,12 @@ export default function EducacionContinua() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                       <input
                         type="text"
-                        readOnly={!isAdmin}
-                        className={`w-full pl-7 pr-3 py-2 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold text-slate-600 outline-none transition-all ${!isAdmin ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                        readOnly={!canEditProyectos}
+                        className={`w-full pl-7 pr-3 py-2 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary text-sm font-bold text-slate-600 outline-none transition-all ${!canEditProyectos ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                         defaultValue={hourlyRates[tipo]?.toLocaleString('es-CO')}
-                        onBlur={(e) => isAdmin && handleUpdateRoleRate(tipo, e.target.value)}
+                        onBlur={(e) => canEditProyectos && handleUpdateRoleRate(tipo, e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && isAdmin) {
+                          if (e.key === 'Enter' && canEditProyectos) {
                             (e.target as HTMLInputElement).blur();
                           }
                         }}
@@ -614,7 +684,7 @@ export default function EducacionContinua() {
                   </div>
                 ))}
               </div>
-              {isAdmin && (
+              {canEditProyectos && (
                 <div className="mt-6 flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
                   <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   <p className="text-[10px] text-blue-700 leading-relaxed">

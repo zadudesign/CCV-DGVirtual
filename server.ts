@@ -172,6 +172,70 @@ async function startServer() {
     }
   });
 
+  app.post("/api/educacion-continua/tareas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const { data, error } = await supabaseAdmin
+        .from('notificaciones_tareas')
+        .update(updateData)
+        .eq('id', id)
+        .select();
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/educacion-continua/proyectos", async (req, res) => {
+    try {
+      const { nombre } = req.body;
+      const { data, error } = await supabaseAdmin
+        .from('proyectos_ec')
+        .insert([{ nombre }])
+        .select()
+        .single();
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/educacion-continua/proyectos/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { error } = await supabaseAdmin
+        .from('proyectos_ec')
+        .delete()
+        .eq('id', id);
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/educacion-continua/rates", async (req, res) => {
+    try {
+      const { tipo, valor } = req.body;
+      const { data, error } = await supabaseAdmin
+        .from('configuracion_tarifas')
+        .upsert({ tipo, valor }, { onConflict: 'tipo' })
+        .select()
+        .single();
+      
+      if (error) return res.status(400).json({ error: error.message });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.post("/api/auth/get-email", async (req, res) => {
     try {
       const { documento } = req.body;
