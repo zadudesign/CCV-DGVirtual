@@ -15,9 +15,10 @@ interface TareaTimerItemProps {
   customRates?: Record<string, number>;
   hideType?: boolean;
   hideRole?: boolean;
+  readOnly?: boolean;
 }
 
-export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates, hideType, hideRole }) => {
+export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate, customRates, hideType, hideRole, readOnly }) => {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -202,7 +203,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             </p>
           )}
         </div>
-        {isTimeTrackingEnabled && !isCompleted && (
+        {isTimeTrackingEnabled && !isCompleted && !readOnly && (
           <div className="flex-shrink-0">
             <button
               onClick={handleReviewTask}
@@ -251,7 +252,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
                   </span>
                 </div>
               )}
-              {!isCompleted && (
+              {!isCompleted && !readOnly && (
                 <button 
                   onClick={() => setShowManualInput(!showManualInput)}
                   className="text-[10px] font-bold text-primary hover:bg-primary hover:text-white flex items-center gap-1 transition-all bg-white px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm"
@@ -327,7 +328,7 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             </span>
           )}
           
-          {!isCompleted && isTimeTrackingEnabled && (
+          {!isCompleted && isTimeTrackingEnabled && !readOnly && (
             <button
               onClick={handleCompleteTask}
               disabled={saving || (isTimeTrackingEnabled && totalSeconds === 0)}

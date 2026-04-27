@@ -30,8 +30,8 @@ export default function Layout() {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Cursos', href: '/cursos', icon: BookOpen },
     { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
-    // Educación Continua is for Team roles and admin
-    ...(isTeamRole || user.role === 'admin'
+    // Educación Continua is for Team roles, admin, and EducacionContinua
+    ...(isTeamRole || user.role === 'admin' || user.role === 'EducacionContinua'
       ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
       : []),
     // Usuarios is for admin, decano, and coordinador

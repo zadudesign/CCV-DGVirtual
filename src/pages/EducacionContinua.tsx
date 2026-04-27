@@ -22,9 +22,15 @@ export default function EducacionContinua() {
   const [loadingRates, setLoadingRates] = useState(false);
   const isAdmin = user?.role === 'admin';
   const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
-  const canSeeTareas = isAdmin || isTeam;
-  const canSeeProyectos = isAdmin;
+  const isEducacionContinua = user?.role === 'EducacionContinua';
+  
+  const canSeeTareas = isAdmin || isTeam || isEducacionContinua;
+  const canSeeProyectos = isAdmin || isEducacionContinua;
   const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(canSeeTareas ? 'tareas' : 'proyectos');
+
+  // Sólo roles admin y team pueden editar/modificar tareas. EducacionContinua es solo lectura.
+  const canEdit = isAdmin || isTeam;
+  const canEditProyectos = isAdmin;
 
   useEffect(() => {
     if (!canSeeTareas && canSeeProyectos && activeTab === 'tareas') {
@@ -294,6 +300,7 @@ export default function EducacionContinua() {
               onUpdate={fetchAllTasks} 
               hideType={true}
               hideRole={true}
+              readOnly={!canEdit}
             />
           ))
         )}
@@ -403,12 +410,12 @@ export default function EducacionContinua() {
               Proyectos
             </h3>
             <p className="mt-1 text-xs text-secondary">
-              {user?.role === 'admin' 
+              {canEditProyectos
                 ? 'Agrega los proyectos que se trabajarán en Educación Continua.'
                 : 'Proyectos disponibles en Educación Continua.'}
             </p>
           </div>
-          {user?.role === 'admin' && (
+          {canEditProyectos && (
             <div className="p-4 border-b border-slate-100">
               <form onSubmit={handleAddProyecto} className="flex gap-2">
                 <input
@@ -521,6 +528,7 @@ export default function EducacionContinua() {
                     customRates={hourlyRates}
                     hideType={true}
                     hideRole={true}
+                    readOnly={!canEdit}
                   />
                 ))}
               </div>
