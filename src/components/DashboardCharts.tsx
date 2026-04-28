@@ -85,9 +85,11 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
 
       // 3. Fetch Solicitudes si es admin o team
       if (isAdmin) {
+        // Contamos solo las solicitudes en estado 'Solicitud Recibida' (o null)
         const { count, error: countError } = await supabase
           .from('solicitudes_cursos')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .or('estado.eq.Solicitud Recibida,estado.is.null');
         
         if (!countError) {
           setSolicitudesCount(count || 0);
