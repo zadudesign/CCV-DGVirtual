@@ -304,7 +304,7 @@ export default function EducacionContinua() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Navegación por pestañas */}
-      <div className="flex border-b border-muted/30 -mb-px">
+      <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
         {canSeeTareas && (
           <button
             onClick={() => setActiveTab('tareas')}
@@ -332,6 +332,9 @@ export default function EducacionContinua() {
           </button>
         )}
       </div>
+
+      {/* Espaciador explícito solicitado por el usuario */}
+      <div className="h-4"></div>
 
       {success && (
         <div className="rounded-md bg-green-50 p-4 border border-green-200">
