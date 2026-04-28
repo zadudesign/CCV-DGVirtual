@@ -248,12 +248,13 @@ export default function Usuarios() {
           <Library className={`mr-2 h-4 w-4 ${activeTab === 'facultades' ? 'text-primary' : 'text-slate-400'}`} />
           Facultades y Programas
         </button>
-      </div>      {activeTab === 'registrados' && (
+      </div>
+      
+      {/* Espaciador explícito solicitado por el usuario */}
+      <div className="h-4"></div>
+
+      {activeTab === 'registrados' && (
         <div className="bg-white shadow-sm rounded-xl border border-muted/30 overflow-hidden">
-          <div className="p-4 border-b border-muted/30 flex justify-between items-center bg-white">
-            <h3 className="text-lg font-bold text-text-main flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Usuarios Registrados</h3>
-          </div>
-          
           <div className="p-4 bg-slate-50/50 border-b border-muted/30">
             <div className="flex flex-wrap gap-4 w-full bg-white p-4 rounded-xl border border-muted/20 shadow-sm">
               {facultadesUnicas.length > 1 && (
@@ -397,13 +398,6 @@ export default function Usuarios() {
       {activeTab === 'inscribir' && (
         <div className="bg-white shadow-xl rounded-2xl border border-muted/30 overflow-hidden">
           <div className="p-8">
-            <div className="flex items-center mb-6">
-              <UserPlus className="h-6 w-6 text-primary mr-3" />
-              <div>
-                <h2 className="text-xl font-bold text-text-main">Inscribir Nuevo Usuario</h2>
-                <p className="text-sm text-secondary">Complete los datos para dar acceso a un nuevo Decano, Coordinador o Miembro del Equipo.</p>
-              </div>
-            </div>
             <form onSubmit={handleInscribir} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
