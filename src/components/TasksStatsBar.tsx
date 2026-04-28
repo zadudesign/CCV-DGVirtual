@@ -63,32 +63,30 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-muted/20 p-4 flex flex-col sm:flex-row items-center relative z-10 gap-6">
-      <span className="text-sm font-black text-rose-600 uppercase tracking-widest border-b sm:border-b-0 sm:border-r border-slate-100 pb-2 sm:pb-0 sm:pr-8 leading-tight flex items-center justify-center text-center whitespace-nowrap min-w-[120px]">
-        NUEVAS TAREAS
-      </span>
-      
-      {loading ? (
-        <div className="flex items-center space-x-4">
-          <Loader2 className="w-5 h-5 animate-spin text-primary/30" />
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
-          {/* Notificaciones Bell */}
-          <button 
-            onClick={() => navigate('/calendario')}
-            className="group relative p-2 rounded-full transition-all hover:bg-slate-50 text-slate-400 hover:text-primary hover:scale-110 active:scale-95"
-            title="Ver Tareas en Calendario"
-          >
+    <div 
+      onClick={() => navigate('/calendario')}
+      className="bg-white p-6 rounded-xl border border-muted/20 shadow-md flex items-center justify-center cursor-pointer group hover:bg-slate-50 transition-all relative z-10"
+    >
+      <div className="flex items-center gap-6">
+        <span className="text-sm font-black text-rose-600 uppercase tracking-widest border-r border-slate-100 pr-6 leading-tight flex items-center justify-center text-center">
+          NUEVAS TAREAS
+        </span>
+        
+        {loading ? (
+          <div className="flex items-center space-x-4">
+            <Loader2 className="w-5 h-5 animate-spin text-primary/30" />
+          </div>
+        ) : (
+          <div className="relative p-1 rounded-full transition-all text-slate-400 group-hover:text-primary group-hover:scale-110">
             <Bell className="h-7 w-7" />
             {pendingTasks.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-bold px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none shadow-sm ring-2 ring-white">
-                {pendingTasks.length}
+                {pendingTasks.length > 9 ? '9+' : pendingTasks.length}
               </span>
             )}
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

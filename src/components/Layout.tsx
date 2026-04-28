@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -19,6 +19,12 @@ export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -215,7 +221,16 @@ export default function Layout() {
           <div className="flex items-center space-x-4">
             <div className="hidden lg:flex items-center px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse mr-2"></div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sistema Activo</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                Sistema Activo &bull; <span className="ml-1 text-slate-400 font-medium tracking-normal">{currentTime.toLocaleString('es-ES', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }).replace(',', '')}</span>
+              </span>
             </div>
             
             <div className="h-8 w-px bg-slate-100 hidden sm:block mx-2"></div>
