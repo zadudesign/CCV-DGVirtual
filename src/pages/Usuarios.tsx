@@ -193,9 +193,25 @@ export default function Usuarios() {
     if (!error) fetchFacultadesYProgramas();
   };
 
-  const facultadesUnicas = Array.from(new Set(usuarios.map(u => u.facultad).filter(Boolean))).sort() as string[];
-  const programasUnicos = Array.from(new Set(usuarios.map(u => u.programa).filter(Boolean))).sort() as string[];
-  const rolesUnicos = Array.from(new Set(usuarios.map(u => u.role).filter(Boolean))).sort() as string[];
+  const getFilteredOptions = (field: 'facultad' | 'programa' | 'role') => {
+    return Array.from(new Set(usuarios.filter(u => {
+      let match = true;
+      if (field !== 'facultad' && filtroFacultad && u.facultad !== filtroFacultad) match = false;
+      if (field !== 'programa' && filtroPrograma && u.programa !== filtroPrograma) match = false;
+      if (field !== 'role' && filtroRol && u.role !== filtroRol) match = false;
+      return match;
+    }).map(u => u[field]).filter(Boolean))).sort() as string[];
+  };
+
+  const facultadesUnicas = getFilteredOptions('facultad');
+  const programasUnicos = getFilteredOptions('programa');
+  const rolesUnicos = getFilteredOptions('role');
+
+  useEffect(() => {
+    if (filtroFacultad && !facultadesUnicas.includes(filtroFacultad)) setFiltroFacultad('');
+    if (filtroPrograma && !programasUnicos.includes(filtroPrograma)) setFiltroPrograma('');
+    if (filtroRol && !rolesUnicos.includes(filtroRol)) setFiltroRol('');
+  }, [filtroFacultad, facultadesUnicas, filtroPrograma, programasUnicos, filtroRol, rolesUnicos]);
   
   const usuariosFiltrados = usuarios
     .filter(u => {
