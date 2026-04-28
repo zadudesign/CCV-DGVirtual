@@ -15,7 +15,8 @@ import {
   Trash2,
   Edit,
   Save,
-  X
+  X,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -468,47 +469,146 @@ export default function Usuarios() {
 
       {activeTab === 'facultades' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30">
-            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center"><Library className="mr-2 h-5 w-5 text-primary" /> Facultades</div>
-            <div className="p-6">
-              <div className="flex space-x-2 mb-4">
-                <input type="text" value={newFacultad} onChange={e => setNewFacultad(e.target.value)} className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Nueva..." />
-                <button onClick={handleAddFacultad} className="p-2 bg-primary text-white rounded-lg"><Plus className="h-5 w-5"/></button>
-              </div>
-              <div className="space-y-2">
-                {facultades.map(f => (
-                  <div key={f.id} className="flex justify-between p-2 border rounded-lg hover:bg-slate-50">
-                    <span className="text-sm font-medium">{f.nombre}</span>
-                    <button onClick={() => handleDeleteFacultad(f.id, f.nombre)} className="text-slate-300 hover:text-red-500"><Trash2 className="h-4 w-4"/></button>
-                  </div>
-                ))}
+          {/* Columna Izquierda: Facultades */}
+          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30 flex flex-col h-[600px]">
+            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center shrink-0">
+              <Library className="mr-2 h-5 w-5 text-primary" /> 
+              <div>
+                <h3 className="text-lg font-bold text-text-main">Facultades</h3>
+                <p className="text-xs text-secondary mt-0.5 font-normal">Agrega las facultades de la institución.</p>
               </div>
             </div>
+            <div className="p-4 shrink-0 border-b border-muted/20">
+              <div className="flex bg-slate-50 p-2 rounded-xl border border-slate-100">
+                <input 
+                  type="text" 
+                  value={newFacultad} 
+                  onChange={e => setNewFacultad(e.target.value)} 
+                  className="flex-1 bg-transparent border-none focus:ring-0 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 font-medium" 
+                  placeholder="Nombre de la nueva facultad..." 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleAddFacultad();
+                  }}
+                />
+                <button 
+                  onClick={handleAddFacultad} 
+                  className="bg-primary/10 hover:bg-primary/20 text-primary p-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                >
+                  <Plus className="h-5 w-5"/>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              {facultades.map(f => (
+                <div 
+                  key={f.id} 
+                  onClick={() => setSelectedFacultadId(f.id)}
+                  className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group ${
+                    selectedFacultadId === f.id
+                      ? 'bg-slate-50 border-primary/30 ring-1 ring-primary/20 scale-[1.02] shadow-sm' 
+                      : 'bg-white border-muted/20 hover:border-primary/20 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center flex-1 min-w-0 pr-4">
+                    <span className="text-sm font-bold text-slate-700 truncate">{f.nombre}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ChevronRight className={`h-4 w-4 shrink-0 transition-colors ${
+                      selectedFacultadId === f.id ? 'text-primary' : 'text-slate-300 group-hover:text-primary/50'
+                    }`} />
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteFacultad(f.id, f.nombre);
+                      }} 
+                      className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${
+                        selectedFacultadId === f.id ? 'hover:bg-red-100' : 'hover:bg-red-50'
+                      }`}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {facultades.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <Library className="h-12 w-12 text-slate-200 mb-3" />
+                  <p className="text-sm text-secondary">No hay facultades registradas.</p>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30">
-            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center"><UsersIcon className="mr-2 h-5 w-5 text-primary" /> Programas</div>
-            <div className="p-6">
-              <div className="space-y-2 mb-4">
-                <select value={selectedFacultadId} onChange={e => setSelectedFacultadId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
-                  <option value="">Facultad...</option>
-                  {facultades.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
-                </select>
-                <div className="flex space-x-2">
-                  <input type="text" value={newPrograma} onChange={e => setNewPrograma(e.target.value)} className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Nuevo..." />
-                  <button onClick={handleAddPrograma} className="p-2 bg-primary text-white rounded-lg"><Plus className="h-5 w-5"/></button>
+
+          {/* Columna Derecha: Programas */}
+          <div className="bg-white shadow rounded-xl overflow-hidden border border-muted/30 flex flex-col h-[600px]">
+            <div className="px-6 py-4 bg-slate-50 border-b border-muted/30 font-bold flex items-center justify-between shrink-0">
+              <div className="flex items-center">
+                <UsersIcon className="mr-2 h-5 w-5 text-primary" /> 
+                <div>
+                  <h3 className="text-lg font-bold text-text-main">Programas de la Facultad</h3>
+                  {selectedFacultadId ? (
+                    <p className="text-xs text-secondary mt-0.5 font-normal">
+                      Mostrando programas de: <span className="font-bold text-slate-700">{facultades.find(f => f.id === selectedFacultadId)?.nombre}</span>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-secondary mt-0.5 font-normal">Selecciona una facultad para ver sus programas.</p>
+                  )}
                 </div>
               </div>
-              <div className="space-y-1">
-                {programas.filter(p => !selectedFacultadId || p.facultad_id === selectedFacultadId).map(p => (
-                  <div key={p.id} className="flex justify-between p-2 border rounded-lg hover:bg-slate-50">
-                    <div>
-                      <div className="text-sm font-medium">{p.nombre}</div>
-                      <div className="text-[10px] text-secondary font-bold uppercase">{p.facultades?.nombre}</div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto bg-slate-50/30">
+              {!selectedFacultadId ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12 p-6">
+                  <Library className="h-12 w-12 text-slate-300 mb-3" />
+                  <p className="text-sm text-secondary">Selecciona una facultad de la lista<br/>para ver y gestionar sus programas.</p>
+                </div>
+              ) : (
+                <div className="p-4 flex flex-col h-full">
+                  <div className="shrink-0 mb-4">
+                    <div className="flex bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                      <input 
+                        type="text" 
+                        value={newPrograma} 
+                        onChange={e => setNewPrograma(e.target.value)} 
+                        className="flex-1 bg-transparent border-none focus:ring-0 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 font-medium" 
+                        placeholder="Nombre del nuevo programa..." 
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleAddPrograma();
+                        }}
+                      />
+                      <button 
+                        onClick={handleAddPrograma} 
+                        className="bg-primary/10 hover:bg-primary/20 text-primary p-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                      >
+                        <Plus className="h-5 w-5"/>
+                      </button>
                     </div>
-                    <button onClick={() => handleDeletePrograma(p.id, p.nombre)} className="text-slate-300 hover:text-red-500"><Trash2 className="h-4 w-4"/></button>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    {programas.filter(p => p.facultad_id === selectedFacultadId).map(p => (
+                      <div key={p.id} className="flex justify-between items-center p-3 bg-white border border-slate-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
+                        <div className="min-w-0 flex-1 pr-4">
+                          <div className="text-sm font-bold text-slate-700 truncate">{p.nombre}</div>
+                        </div>
+                        <button 
+                          onClick={() => handleDeletePrograma(p.id, p.nombre)} 
+                          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-400 hover:text-red-600"/>
+                        </button>
+                      </div>
+                    ))}
+                    {programas.filter(p => p.facultad_id === selectedFacultadId).length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-xl border border-dashed border-slate-200">
+                        <UsersIcon className="h-8 w-8 text-slate-300 mb-2" />
+                        <p className="text-sm text-secondary">No hay programas registrados<br/>en esta facultad.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
