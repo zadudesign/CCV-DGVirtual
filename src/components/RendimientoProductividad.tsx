@@ -87,7 +87,7 @@ export default function RendimientoProductividad({ cursoId }: { cursoId: string 
 
 const DumbbellChart = ({ tasks }: { tasks: TareaRendimiento[] }) => {
   // Configuración de escalas de fecha
-  const allDates = tasks.map(t => new Date(t.fecha_inicial || t.fecha_vencimiento).getTime());
+  const allDates = tasks.map(t => new Date(t.fecha_vencimiento).getTime());
   tasks.forEach(t => {
     if (t.fecha_completada) {
       allDates.push(new Date(t.fecha_completada).getTime());
@@ -143,7 +143,7 @@ const DumbbellChart = ({ tasks }: { tasks: TareaRendimiento[] }) => {
         </div>
 
         {tasks.map((task, idx) => {
-          const proposedDateRaw = task.fecha_inicial || task.fecha_vencimiento;
+          const proposedDateRaw = task.fecha_vencimiento;
           const propPos = getPosition(proposedDateRaw) || 0;
           const realPos = task.fecha_completada ? getPosition(task.fecha_completada) : getTodayPosition();
           
