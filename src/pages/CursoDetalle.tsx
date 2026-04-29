@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare, Filter, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare, Filter, ArrowUpDown, BarChart2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
+import RendimientoProductividad from '../components/RendimientoProductividad';
 import { DocumentoCurso, NovedadCurso } from '../types';
 
 export default function CursoDetalle() {
@@ -15,7 +16,7 @@ export default function CursoDetalle() {
   const { user } = useAuth();
   const [curso, setCurso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario'>('construccion');
+  const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario' | 'rendimiento'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
   
   // Novedades state
@@ -590,11 +591,25 @@ export default function CursoDetalle() {
             <CalendarDays className="h-4 w-4 mr-2" />
             Calendario de Trabajo
           </button>
+          <button
+            onClick={() => setActiveTab('rendimiento')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+              activeTab === 'rendimiento'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-secondary hover:text-text-main hover:border-muted'
+            }`}
+          >
+            <BarChart2 className="h-4 w-4 mr-2" />
+            Rendimiento y Productividad
+          </button>
         </nav>
       </div>
 
       {/* Tab Content */}
       <div className="mt-6">
+        {activeTab === 'rendimiento' && (
+          <RendimientoProductividad cursoId={id!} />
+        )}
         {activeTab === 'construccion' && (
           <div className="space-y-8">
             <div className="bg-[#222631] rounded-2xl shadow-lg border border-slate-800 p-8 max-w-5xl mx-auto">

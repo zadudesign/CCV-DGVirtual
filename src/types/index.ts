@@ -53,6 +53,7 @@ export interface NotificacionTarea {
   tipo_tarifa?: string;
   descripcion?: string;
   estado: string;
+  fecha_inicial?: string;
   fecha_vencimiento?: string;
   fecha_completada?: string;
   clickup_task_id?: string;

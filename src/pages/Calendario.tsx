@@ -48,6 +48,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     titulo: '',
     tipo_tarifa: 'Diseño',
     descripcion: '',
+    fecha_inicial: '',
     fecha_vencimiento: '',
     rol_destino: 'Diseño'
   });
@@ -142,6 +143,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             id: row.id,
             curso_id: row.curso_id,
             titulo: row.titulo,
+            fecha_inicial: row.fecha_inicial,
             fecha_entrega: row.fecha_vencimiento,
             fecha_completada: row.fecha_completada,
             fecha_inicio: row.fecha_inicio, // If it exists in the future
@@ -208,17 +210,23 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       // Ensure date is stored with Colombia timezone offset
       // If user picks 2023-10-27, we store it as 2023-10-27T00:00:00-05:00
       const fechaVencimientoColombia = `${formData.fecha_vencimiento}T00:00:00-05:00`;
+      const fechaInicialColombia = formData.fecha_inicial ? `${formData.fecha_inicial}T00:00:00-05:00` : null;
 
-      const payload = {
+      const payload: any = {
         titulo: formData.titulo,
         tipo_tarifa: formData.tipo_tarifa,
         descripcion: formData.descripcion,
+        fecha_inicial: fechaInicialColombia,
         fecha_vencimiento: fechaVencimientoColombia,
         rol_destino: formData.rol_destino,
         estado: 'Pendiente',
         usuario_id: user?.id,
         proyecto: formData.proyecto
       };
+
+      if (cursoId) {
+        payload.curso_id = cursoId;
+      }
 
       const { error } = await supabase.from('notificaciones_tareas').insert([payload]);
       if (error) throw error;
@@ -229,6 +237,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         titulo: '',
         tipo_tarifa: 'Diseño',
         descripcion: '',
+        fecha_inicial: '',
         fecha_vencimiento: '',
         rol_destino: 'Diseño'
       });
@@ -568,20 +577,22 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                 </button>
               </div>
                 <form onSubmit={handleAddTarea} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-main mb-1">Proyecto</label>
-                    <select
-                      required
-                      value={formData.proyecto}
-                      onChange={(e) => setFormData({...formData, proyecto: e.target.value})}
-                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="Diseño Virtual">Diseño Virtual</option>
-                      {proyectos.map((p, idx) => (
-                        <option key={idx} value={p.nombre}>{p.nombre}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {!cursoId && (
+                    <div>
+                      <label className="block text-sm font-medium text-text-main mb-1">Proyecto</label>
+                      <select
+                        required
+                        value={formData.proyecto}
+                        onChange={(e) => setFormData({...formData, proyecto: e.target.value})}
+                        className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="Diseño Virtual">Diseño Virtual</option>
+                        {proyectos.map((p, idx) => (
+                          <option key={idx} value={p.nombre}>{p.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-bold text-text-main mb-3">Tarifa de la Tarea (Selecciona una)</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -638,7 +649,16 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                     ></textarea>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-main mb-1">Fecha de Entrega</label>
+                    <label className="block text-sm font-medium text-text-main mb-1">Fecha Inicial (Propuesta)</label>
+                    <input
+                      type="date"
+                      value={formData.fecha_inicial}
+                      onChange={(e) => setFormData({...formData, fecha_inicial: e.target.value})}
+                      className="w-full rounded-md border border-muted px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-main mb-1">Fecha de Entrega (Vencimiento)</label>
                     <input
                       type="date"
                       required
