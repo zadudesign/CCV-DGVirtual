@@ -192,14 +192,14 @@ const DumbbellChart = ({ tasks }: { tasks: TareaRendimiento[] }) => {
                 <div 
                   className={`absolute w-3 h-3 rounded-full ${dotPropColor} top-1/2 -translate-y-1/2 shadow-sm`}
                   style={{ left: `calc(${propPos}% - 6px)` }}
-                  title={`Propuesta: ${format(parseISO(proposedDateRaw), 'dd MMM yvy', { locale: es })}`}
+                  title={`Propuesta: ${format(parseISO(proposedDateRaw), 'dd MMM yyyy', { locale: es })}`}
                 />
 
                 {/* Fecha Real Dot */}
                 <div 
                   className={`absolute w-3 h-3 rounded-full ${dotRealColor} ring-2 ring-white z-20 top-1/2 -translate-y-1/2 shadow-sm ${isPending ? 'animate-pulse' : ''}`}
                   style={{ left: `calc(${realPos}% - 6px)` }}
-                  title={`${isPending ? 'Hoy/Pendiente' : 'Real'}: ${format(task.fecha_completada ? parseISO(task.fecha_completada) : new Date(), 'dd MMM yvy', { locale: es })}`}
+                  title={`${isPending ? 'Hoy/Pendiente' : 'Real'}: ${format(task.fecha_completada ? parseISO(task.fecha_completada) : new Date(), 'dd MMM yyyy', { locale: es })}`}
                 />
                 
                 {/* Differential Label */}
