@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { RealtimeNotifications } from './RealtimeNotifications';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -86,6 +87,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex text-text-main">
+      <RealtimeNotifications />
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">

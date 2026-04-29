@@ -34,6 +34,23 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
 
   useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime updates for updates in dashboard data
+    const unsubscribe = supabase.channel('dashboard_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'novedades_curso' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_cursos' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cursos' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(unsubscribe);
+    };
   }, [user.id, user.facultad, user.programa]);
 
   const isAdmin = user.role === 'admin' || user.role === 'team' || 

@@ -58,6 +58,21 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       fetchEntregas();
       fetchProyectos();
       fetchRates();
+
+      const taskSubscription = supabase
+        .channel('calendario_tasks')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'notificaciones_tareas'
+        }, () => {
+          fetchEntregas();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(taskSubscription);
+      };
     }
   }, [user, cursoId]);
 
