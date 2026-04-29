@@ -80,8 +80,8 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
           <div className="relative p-1 rounded-full transition-all text-slate-400 group-hover:text-primary group-hover:scale-110">
             <Bell className="h-7 w-7" />
             {pendingTasks.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-bold px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none shadow-sm ring-2 ring-white">
-                {pendingTasks.length > 9 ? '9+' : pendingTasks.length}
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-bold px-2 min-w-[20px] h-[20px] flex items-center justify-center rounded-full leading-none shadow-sm ring-2 ring-white">
+                {pendingTasks.length}
               </span>
             )}
           </div>
