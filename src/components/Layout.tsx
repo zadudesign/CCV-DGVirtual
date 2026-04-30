@@ -31,32 +31,20 @@ export default function Layout() {
     return <Navigate to="/login" replace />;
   }
 
-  const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'educacion_continua'].includes(user.role || '');
+  const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
 
   const navigation = [
-    // Dashboard is hidden for educacion_continua
-    ...(user.role !== 'educacion_continua' 
-      ? [{ name: 'Dashboard', href: '/', icon: LayoutDashboard }] 
-      : []),
-    
-    // Cursos and Calendario are hidden for educacion_continua
-    ...(user.role !== 'educacion_continua' 
-      ? [
-          { name: 'Cursos', href: '/cursos', icon: BookOpen },
-          { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays }
-        ] 
-      : []),
-
-    // Educación Continua is for Team roles and admin, including educacion_continua
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Cursos', href: '/cursos', icon: BookOpen },
+    { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
+    // Educación Continua is for Team roles and admin
     ...(isTeamRole || user.role === 'admin'
       ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
       : []),
-      
     // Usuarios is for admin, decano, and coordinador
     ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
       ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 
       : []),
-      
     { name: 'Configuración', href: '/configuracion', icon: Settings },
   ];
 
@@ -74,7 +62,6 @@ export default function Layout() {
         case 'docente': title = 'Panel del Docente'; break;
         case 'evaluador': title = 'Panel del Evaluador'; break;
         case 'team':
-        case 'educacion_continua':
         case 'Soporte':
         case 'Multimedia':
         case 'Diseño':

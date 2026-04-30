@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'decano' | 'coordinador' | 'docente' | 'evaluador' | 'Soporte' | 'Multimedia' | 'Diseño' | 'Pedagogía' | 'team' | 'educacion_continua';
+export type Role = 'admin' | 'decano' | 'coordinador' | 'docente' | 'evaluador' | 'Soporte' | 'Multimedia' | 'Diseño' | 'Pedagogía' | 'team';
 
 export interface User {
   id: string;

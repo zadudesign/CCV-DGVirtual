@@ -1,5 +1,4 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminDashboard from './roles/Admin';
 import DecanoDashboard from './roles/Decano';
@@ -12,10 +11,6 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   if (!user) return null;
-
-  if (user.role === 'educacion_continua') {
-    return <Navigate to="/educacion-continua" replace />;
-  }
 
   switch (user.role) {
     case 'admin':

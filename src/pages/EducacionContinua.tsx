@@ -21,7 +21,7 @@ export default function EducacionContinua() {
   const [hourlyRates, setHourlyRates] = useState<Record<string, number>>(HOURLY_RATES);
   const [loadingRates, setLoadingRates] = useState(false);
   const isAdmin = user?.role === 'admin';
-  const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user?.role || '');
+  const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
   const canSeeTareas = isAdmin || isTeam;
   const canSeeProyectos = isAdmin;
   const [activeTab, setActiveTab] = useState<'tareas' | 'proyectos'>(canSeeTareas ? 'tareas' : 'proyectos');

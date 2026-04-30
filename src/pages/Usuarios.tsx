@@ -144,35 +144,17 @@ export default function Usuarios() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formInscribir.email,
-          password: formInscribir.documento, // Use documento as initial password
-          name: formInscribir.nombre,
-          role: formInscribir.role,
-          documento: formInscribir.documento,
-          telefono: formInscribir.telefono,
-          facultad: formInscribir.facultad || undefined,
-          programa: formInscribir.programa || undefined,
-          // If the role is one of the team roles, maybe we need to specify team_area?
-          // We can just rely on the backend handling it or set team_area based on role.
-          team_area: ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'educacion_continua'].includes(formInscribir.role) ? formInscribir.role : undefined
-        })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        if (data.error && data.error.includes('Database error creating new user')) {
-           throw new Error('Error en Supabase: Existe un Trigger en auth.users que está fallando (probablemente referenciando un tipo Enum o "user_role" que no existe o una restricción de Check). Por favor, ve al Dashboard de Supabase -> Database -> Triggers y revisa/desactiva el trigger de creación de usuarios.');
-        }
-        throw new Error(data.error || 'Error al crear usuario en el servidor');
-      }
-
+      const { error } = await supabase.from('profiles').insert([{
+        id: crypto.randomUUID(), 
+        name: formInscribir.nombre,
+        email: formInscribir.email,
+        role: formInscribir.role,
+        documento: formInscribir.documento,
+        telefono: formInscribir.telefono,
+        facultad: formInscribir.facultad || null,
+        programa: formInscribir.programa || null
+      }]);
+      if (error) throw error;
       alert('Usuario inscrito correctamente.');
       setFormInscribir({
         nombre: '', email: '', role: 'docente', documento: '',
@@ -440,7 +422,7 @@ export default function Usuarios() {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
                     <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
-                      <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="team">Equipo Team</option><option value="educacion_continua">Educación Continua</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
+                      <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
                     </select>
                   </div>
                 </div>

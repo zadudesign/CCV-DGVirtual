@@ -126,7 +126,7 @@ export default function Configuracion() {
               <div>
                 <label className="block text-sm font-medium text-text-main">Rol</label>
                 <div className="mt-1 p-2 bg-background border border-muted/30 rounded-md text-text-main capitalize">
-                  {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user?.role || '') ? `Miembro del Equipo (${(user?.role === 'team' || user?.role === 'educacion_continua') ? (user.team_area || 'Educación Continua') : user?.role})` : user?.role}
+                  {['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '') ? `Miembro del Equipo (${user?.role === 'team' ? user?.team_area : user?.role})` : user?.role}
                 </div>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function Configuracion() {
           <hr className="border-muted/30" />
 
           {/* Firma Digital */}
-          {!['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user?.role || '') && (
+          {!['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '') && (
             <div>
               <h3 className="text-lg font-medium text-text-main mb-4">Firma Digital</h3>
               <p className="text-sm text-secondary mb-4">
