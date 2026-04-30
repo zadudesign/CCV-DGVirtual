@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminDashboard from './roles/Admin';
 import DecanoDashboard from './roles/Decano';
@@ -12,6 +13,10 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  if (user.role === 'educacion_continua') {
+    return <Navigate to="/educacion-continua" replace />;
+  }
+
   switch (user.role) {
     case 'admin':
       return <AdminDashboard />;
@@ -24,7 +29,6 @@ export default function Dashboard() {
     case 'evaluador':
       return <EvaluadorDashboard />;
     case 'team':
-    case 'educacion_continua':
     case 'Soporte':
     case 'Multimedia':
     case 'Diseño':

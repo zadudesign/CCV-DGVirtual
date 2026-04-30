@@ -144,17 +144,32 @@ export default function Usuarios() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('profiles').insert([{
-        id: crypto.randomUUID(), 
-        name: formInscribir.nombre,
-        email: formInscribir.email,
-        role: formInscribir.role,
-        documento: formInscribir.documento,
-        telefono: formInscribir.telefono,
-        facultad: formInscribir.facultad || null,
-        programa: formInscribir.programa || null
-      }]);
-      if (error) throw error;
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formInscribir.email,
+          password: formInscribir.documento, // Use documento as initial password
+          name: formInscribir.nombre,
+          role: formInscribir.role,
+          documento: formInscribir.documento,
+          telefono: formInscribir.telefono,
+          facultad: formInscribir.facultad || undefined,
+          programa: formInscribir.programa || undefined,
+          // If the role is one of the team roles, maybe we need to specify team_area?
+          // We can just rely on the backend handling it or set team_area based on role.
+          team_area: ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'educacion_continua'].includes(formInscribir.role) ? formInscribir.role : undefined
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al crear usuario en el servidor');
+      }
+
       alert('Usuario inscrito correctamente.');
       setFormInscribir({
         nombre: '', email: '', role: 'docente', documento: '',
