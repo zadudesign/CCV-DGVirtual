@@ -167,6 +167,9 @@ export default function Usuarios() {
       const data = await response.json();
       
       if (!response.ok) {
+        if (data.error && data.error.includes('Database error creating new user')) {
+           throw new Error('Error en Supabase: Existe un Trigger en auth.users que está fallando (probablemente referenciando un tipo Enum o "user_role" que no existe o una restricción de Check). Por favor, ve al Dashboard de Supabase -> Database -> Triggers y revisa/desactiva el trigger de creación de usuarios.');
+        }
         throw new Error(data.error || 'Error al crear usuario en el servidor');
       }
 
