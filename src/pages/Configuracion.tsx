@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { FileSignature, Loader2, Save, CheckCircle2, UserCircle } from 'lucide-react';
+import { RolePermissionsEditor } from '../components/RolePermissionsEditor';
 
 export default function Configuracion() {
   const { user, refreshSession } = useAuth();
@@ -244,6 +245,13 @@ export default function Configuracion() {
           )}
         </div>
       </div>
+
+      {/* Editor de permisos de roles (Solo Admin) */}
+      {user?.role === 'admin' && (
+        <div className="bg-white shadow rounded-lg overflow-hidden p-6">
+          <RolePermissionsEditor />
+        </div>
+      )}
     </div>
   );
 }
