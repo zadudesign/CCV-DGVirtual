@@ -24,6 +24,7 @@ export default function Dashboard() {
     case 'evaluador':
       return <EvaluadorDashboard />;
     case 'team':
+    case 'educacion_continua':
     case 'Soporte':
     case 'Multimedia':
     case 'Diseño':
