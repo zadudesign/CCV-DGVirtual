@@ -681,6 +681,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                       <option value="Soporte">Soporte</option>
                       <option value="Pedagogía">Pedagogía</option>
                       <option value="Multimedia">Multimedia</option>
+                      <option value="educacion_continua">Educación Continua</option>
                     </select>
                   </div>
                   <div className="pt-4 flex justify-end gap-3">

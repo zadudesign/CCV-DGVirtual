@@ -23,6 +23,7 @@ export function getClickupUrlForRole(curso: Curso, role?: Role): string | undefi
     case 'coordinador':
     case 'decano':
     case 'team':
+    case 'educacion_continua':
       // Admin/coordinators can see the first available one, or we can just return the general one
       return curso.clickup_pedagogia_url || curso.clickup_multimedia_url || curso.clickup_diseno_url || curso.clickup_soporte_url || curso.clickup_url;
     default:

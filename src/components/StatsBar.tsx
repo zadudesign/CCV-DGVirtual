@@ -25,7 +25,7 @@ export default function StatsBar({ user }: StatsBarProps) {
     try {
       setLoading(true);
       
-      const isAdmin = user.role === 'admin' || user.role === 'team' || 
+      const isAdmin = user.role === 'admin' || user.role === 'team' || user.role === 'educacion_continua' || 
                       ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
       
       // Queries base

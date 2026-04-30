@@ -395,7 +395,7 @@ export default function Cursos() {
     return colors[index];
   };
 
-  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
+  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user?.role || '');
 
   const cursosFiltrados = cursos.filter(curso => {
     const matchPeriodo = (activeTab === 'activos' && filtroPeriodo) ? curso.periodo === filtroPeriodo : true;

@@ -53,7 +53,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
     };
   }, [user.id, user.facultad, user.programa]);
 
-  const isAdmin = user.role === 'admin' || user.role === 'team' || 
+  const isAdmin = user.role === 'admin' || user.role === 'team' || user.role === 'educacion_continua' || 
                   ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
 
   const fetchData = async () => {

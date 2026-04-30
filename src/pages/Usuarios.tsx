@@ -422,7 +422,7 @@ export default function Usuarios() {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Shield className="h-5 w-5 text-slate-400" /></div>
                     <select required value={formInscribir.role} onChange={(e) => setFormInscribir({...formInscribir, role: e.target.value as Role})} className="block w-full pl-10 pr-3 py-2.5 border border-muted rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-primary sm:text-sm">
-                      <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
+                      <option value="docente">Docente</option><option value="evaluador">Par Evaluador</option><option value="coordinador">Coordinador</option><option value="decano">Decano</option><option value="admin">Administrador</option><option value="team">Equipo Team</option><option value="educacion_continua">Educación Continua</option><option value="Diseño">Equipo - Diseño</option><option value="Multimedia">Equipo - Multimedia</option><option value="Pedagogía">Equipo - Pedagogía</option><option value="Soporte">Equipo - Soporte</option>
                     </select>
                   </div>
                 </div>

@@ -39,7 +39,7 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
         .order('fecha_vencimiento', { ascending: true });
 
       if (user.role !== 'admin') {
-        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user.role || '')) {
+        if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user.role || '')) {
           const area = user.team_area || user.role;
           query = query.or(`usuario_id.eq.${user.id},rol_destino.eq.${area}`);
         } else {

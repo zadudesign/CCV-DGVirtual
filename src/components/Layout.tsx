@@ -31,7 +31,7 @@ export default function Layout() {
     return <Navigate to="/login" replace />;
   }
 
-  const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
+  const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'educacion_continua'].includes(user.role || '');
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -62,6 +62,7 @@ export default function Layout() {
         case 'docente': title = 'Panel del Docente'; break;
         case 'evaluador': title = 'Panel del Evaluador'; break;
         case 'team':
+        case 'educacion_continua':
         case 'Soporte':
         case 'Multimedia':
         case 'Diseño':

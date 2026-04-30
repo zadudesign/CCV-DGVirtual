@@ -98,7 +98,7 @@ export default function CursoDetalle() {
         else if (user?.role === 'coordinador' && data.programa === user.programa) hasAccess = true;
         else if (user?.role === 'docente' && data.docente_id === user.id) hasAccess = true;
         else if (user?.role === 'evaluador' && data.evaluador_id === user.id) hasAccess = true;
-        else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) hasAccess = true;
+        else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team', 'educacion_continua'].includes(user?.role || '')) hasAccess = true;
 
         if (!hasAccess) {
           navigate('/cursos');
