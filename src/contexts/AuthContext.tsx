@@ -74,6 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Actualizamos el último acceso y obtenemos la foto de perfil en segundo plano
     (async () => {
       try {
+        // Sincronizar permisos de la BD al frontend
+        const { data: permData, error: permError } = await supabase.from('role_permissions').select('*');
+        if (!permError && permData && permData.length > 0) {
+          const { getStoredRolePermissions, saveLocalPermissions } = await import('../lib/permissions');
+          const mergedPolicies = { ...getStoredRolePermissions() };
+          permData.forEach(row => {
+            if (row.role && row.permissions) mergedPolicies[row.role] = { ...mergedPolicies[row.role], ...row.permissions };
+          });
+          saveLocalPermissions(mergedPolicies);
+          window.dispatchEvent(new Event('permissionsUpdated'));
+        }
+
         const now = new Date().toISOString();
         
         // Actualizar último acceso

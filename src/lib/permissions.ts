@@ -85,15 +85,26 @@ export const DEFAULT_ROLE_PERMISSIONS: RolePolicies = {
 };
 
 /**
- * Obtiene los permisos actuales, combinando los almacenados con los por defecto.
+ * Obtiene los permisos guardados. Para integrarse con Supabase de forma síncrona
+ * en el primer render, usaremos una caché en localStorage.
+ * Pero se provee `fetchPermissionsFromDB` para actualizar esta caché y
+ * `saveRolePermissionsToDB` para guardarlos.
  */
-export function getRolePermissions(): RolePolicies {
+export function getStoredRolePermissions(): RolePolicies {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      // Usamos los guardados, pero podemos hacer "merge" con default por si hay roles nuevos
       const parsed = JSON.parse(stored);
-      return { ...DEFAULT_ROLE_PERMISSIONS, ...parsed };
+      // Hacemos merge con DEFAULT por si hay roles o campos nuevos que no estaban guardados
+      const merged: RolePolicies = { ...DEFAULT_ROLE_PERMISSIONS };
+      for (const role in parsed) {
+        if (merged[role]) {
+          merged[role] = { ...merged[role], ...parsed[role] };
+        } else {
+          merged[role] = parsed[role];
+        }
+      }
+      return merged;
     }
   } catch (e) {
     console.error("Error reading role permissions", e);
@@ -102,10 +113,17 @@ export function getRolePermissions(): RolePolicies {
 }
 
 /**
- * Guarda los permisos actualizados en el almacenamiento local.
+ * Guarda los permisos localmente (uso síncrono rápido y fallback)
  */
-export function saveRolePermissions(permissions: RolePolicies) {
+export function saveLocalPermissions(permissions: RolePolicies) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(permissions));
+}
+
+/**
+ * Función legacy/actual para compatibilidad con código existente
+ */
+export function getRolePermissions(): RolePolicies {
+  return getStoredRolePermissions();
 }
 
 /**
@@ -119,8 +137,8 @@ export function saveRolePermissions(permissions: RolePolicies) {
 export function hasPermission(user: User | null | undefined, module: AppModule, action: Action): boolean {
   if (!user || !user.role) return false;
   
-  const policies = getRolePermissions();
-  const userPermissions = policies[user.role];
+  const policies = getStoredRolePermissions();
+  const userPermissions = policies[user.role] || DEFAULT_ROLE_PERMISSIONS[user.role];
   if (!userPermissions) return false;
   
   const modulePermissions = userPermissions[module];

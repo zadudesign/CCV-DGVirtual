@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, CheckCircle2, AlertCircle } from 'lucide-react';
-import { getRolePermissions, saveRolePermissions, RolePolicies, Action, AppModule } from '../lib/permissions';
+import { Shield, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { getStoredRolePermissions, saveLocalPermissions, RolePolicies, Action, AppModule, DEFAULT_ROLE_PERMISSIONS } from '../lib/permissions';
+import { supabase } from '../lib/supabase';
 
 const ALL_MODULES: AppModule[] = [
   'courses',
@@ -17,13 +18,57 @@ const ALL_ACTIONS: Action[] = ['view', 'create', 'edit', 'delete'];
 export function RolePermissionsEditor() {
   const [policies, setPolicies] = useState<RolePolicies>({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Cargar permisos desde localStorage
-    setPolicies(getRolePermissions());
+    // Inicialmente cargar de caché local para evitar pantalla en blanco si hay conexión lenta
+    const cached = getStoredRolePermissions();
+    if (Object.keys(cached).length > 0) {
+      setPolicies(cached);
+    } else {
+      setPolicies(DEFAULT_ROLE_PERMISSIONS);
+    }
+    
+    // Y luego sincronizar inmediatamente con Supabase DB
+    fetchFromSupabase();
   }, []);
+
+  const fetchFromSupabase = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('role_permissions').select('*');
+      
+      if (error) {
+        console.error('Error fetching role_permissions from Supabase:', error);
+        setErrorMessage('No se pudieron cargar los permisos de la base de datos.');
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const mergedPolicies: RolePolicies = { ...getStoredRolePermissions() };
+        
+        // Asume tabla: { id?, role: string, permissions: JSON | PermissionsMap }
+        data.forEach(row => {
+          if (row.role && row.permissions) {
+             mergedPolicies[row.role] = {
+               ...mergedPolicies[row.role],
+               ...row.permissions
+             };
+          }
+        });
+        
+        setPolicies(mergedPolicies);
+        saveLocalPermissions(mergedPolicies);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTogglePermission = (role: string, module: AppModule, action: Action) => {
     setPolicies(prev => {
@@ -48,18 +93,39 @@ export function RolePermissionsEditor() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
+    setErrorMessage('');
+    
     try {
-      saveRolePermissions(policies);
-      setSuccessMessage('Permisos actualizados correctamente. Los cambios ya están activos.');
+      // Guardar localmente primero
+      saveLocalPermissions(policies);
+      
+      // Luego actualizar o insertar en la base de datos rol por rol
+      const rolesToSave = Object.keys(policies);
+      for (const role of rolesToSave) {
+        const permObj = policies[role];
+        
+        // Revisar si existe
+        const { data: existingRow } = await supabase.from('role_permissions').select('id').eq('role', role).maybeSingle();
+        
+        if (existingRow?.id) {
+          // Update
+          await supabase.from('role_permissions').update({ permissions: permObj }).eq('id', existingRow.id);
+        } else {
+          // Insert
+          await supabase.from('role_permissions').insert([{ role, permissions: permObj }]);
+        }
+      }
+      
+      setSuccessMessage('Permisos sincronizados globalmente y activos.');
       setTimeout(() => setSuccessMessage(''), 5000);
       
-      // Emitir evento para que otros componentes que dependan de permisos se enteren (opcional, 
-      // normalmente basta con recargar la página o navegar)
+      // Emitir evento para que la UI de permisos detecte el cambio en toda la app de forma reactiva
       window.dispatchEvent(new Event('permissionsUpdated'));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMessage(err.message || 'Error guardando permisos en Supabase.');
     } finally {
       setSaving(false);
     }
@@ -95,12 +161,24 @@ export function RolePermissionsEditor() {
 
       {successMessage && (
         <div className="mb-4 bg-green-50 border border-green-200 p-4 rounded-md flex items-center">
-          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
           <p className="text-sm text-green-700">{successMessage}</p>
         </div>
       )}
 
-      {/* Lista de roles como acordeón para no saturar la vista */}
+      {errorMessage && (
+        <div className="mb-4 bg-red-50 border border-red-200 p-4 rounded-md flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+          <p className="text-sm text-red-700">{errorMessage}</p>
+        </div>
+      )}
+
+      {loading && Object.keys(policies).length === 0 ? (
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        </div>
+      ) : (
+      /* Lista de roles como acordeón para no saturar la vista */
       <div className="space-y-4">
         {Object.keys(policies).map((role) => (
           <div key={role} className="border border-muted/30 rounded-lg overflow-hidden bg-white">
@@ -138,7 +216,7 @@ export function RolePermissionsEditor() {
                         return (
                           <tr key={module} className="hover:bg-background/50">
                             <td className="px-4 py-3 text-sm font-medium text-text-main capitalize">
-                              {module === 'settings' ? 'configuración' : module}
+                              {module === 'settings' ? 'configuración' : module === 'deliveries' ? 'Entregables (deliveries)' : module}
                             </td>
                             {ALL_ACTIONS.map(action => {
                               const isChecked = modulePerms.includes(action);
@@ -169,11 +247,12 @@ export function RolePermissionsEditor() {
           </div>
         ))}
       </div>
+      )}
       
       <div className="mt-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md flex items-start">
         <AlertCircle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700">
-          Nota: Los cambios realizados aquí se almacenan localmente y aplican inmediatamente. Para implementar estos permisos a nivel global y persistente (para todos los usuarios), requerirá configurar una tabla de permisos en Supabase a futuro.
+          Nota: Los permisos asignados aquí se guardan de forma centralizada en la base de datos (Supabase) bajo la tabla <strong>role_permissions</strong>.
         </p>
       </div>
     </div>
