@@ -134,14 +134,20 @@ export function RolePermissionsEditor() {
         const permObj = policies[role];
         
         // Revisar si existe
-        const { data: existingRow } = await supabase.from('role_permissions').select('id').eq('role', role).maybeSingle();
+        const { data: existingRow, error: selectError } = await supabase.from('role_permissions').select('id').eq('role', role).maybeSingle();
+        
+        if (selectError) {
+          throw selectError;
+        }
         
         if (existingRow?.id) {
           // Update
-          await supabase.from('role_permissions').update({ permissions: permObj }).eq('id', existingRow.id);
+          const { error: updateError } = await supabase.from('role_permissions').update({ permissions: permObj }).eq('id', existingRow.id);
+          if (updateError) throw updateError;
         } else {
           // Insert
-          await supabase.from('role_permissions').insert([{ role, permissions: permObj }]);
+          const { error: insertError } = await supabase.from('role_permissions').insert([{ role, permissions: permObj }]);
+          if (insertError) throw insertError;
         }
       }
       
