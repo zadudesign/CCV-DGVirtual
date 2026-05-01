@@ -181,16 +181,7 @@ export function RolePermissionsEditor() {
 
   return (
     <div className="mt-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-medium text-text-main flex items-center">
-            <Shield className="h-5 w-5 mr-2 text-primary" />
-            Gestión de Permisos por Rol
-          </h3>
-          <p className="text-sm text-secondary">
-            Configura qué acciones (ver, crear, editar, eliminar) tiene permitidas cada rol en los distintos módulos del sistema.
-          </p>
-        </div>
+      <div className="flex items-center justify-end mb-4">
         <button
           onClick={handleSave}
           disabled={saving}

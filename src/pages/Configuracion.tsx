@@ -147,7 +147,6 @@ export default function Configuracion() {
           
           {/* Información del Usuario (Solo lectura) */}
           <div>
-            <h3 className="text-lg font-medium text-text-main mb-4">Información Personal</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-text-main">Nombre Completo</label>
