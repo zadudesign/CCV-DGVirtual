@@ -1,7 +1,11 @@
 import { Role, User } from '../types';
 
 export type AppModule = 
+  | 'dashboard'
+  | 'malla'
   | 'courses'
+  | 'calendar'
+  | 'educacion_continua'
   | 'documents'
   | 'users'
   | 'reports'
@@ -9,7 +13,27 @@ export type AppModule =
   | 'deliveries'
   | 'notifications';
 
-export type Action = 'view' | 'edit' | 'create' | 'delete';
+export type Action = 
+  | 'view' 
+  | 'edit' 
+  | 'create' 
+  | 'delete'
+  | 'tab_solicitudes'
+  | 'tab_lista'
+  | 'tab_finalizados'
+  | 'tab_registrados'
+  | 'tab_inscribir'
+  | 'tab_facultades'
+  | 'tab_perfil'
+  | 'tab_ui'
+  | 'tab_parametros'
+  | 'tab_reportes'
+  | 'tab_logs'
+  | 'tab_modulos'
+  | 'tab_permisos'
+  | 'tab_equipo'
+  | 'tab_tareas'
+  | 'tab_stats';
 
 // Un mapa de módulos y las acciones permitidas en ellos
 export type PermissionsMap = {
@@ -25,61 +49,108 @@ const STORAGE_KEY = 'app_role_permissions';
 
 export const DEFAULT_ROLE_PERMISSIONS: RolePolicies = {
   admin: {
-    courses: ['view', 'create', 'edit', 'delete'],
-    users: ['view', 'create', 'edit', 'delete'],
-    settings: ['view', 'edit'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'create', 'edit', 'delete', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    users: ['view', 'create', 'edit', 'delete', 'tab_registrados', 'tab_inscribir', 'tab_facultades'],
+    settings: ['view', 'edit', 'tab_perfil', 'tab_ui', 'tab_parametros', 'tab_reportes', 'tab_logs', 'tab_modulos', 'tab_permisos'],
     reports: ['view'],
     documents: ['view', 'create', 'edit', 'delete'],
     deliveries: ['view', 'create', 'edit', 'delete'],
     notifications: ['view', 'create', 'edit', 'delete'],
   },
   team: {
-    courses: ['view', 'create', 'edit'],
-    users: ['view'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'create', 'edit', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    users: ['view', 'tab_registrados', 'tab_facultades'],
+    settings: ['view', 'tab_perfil'],
     reports: ['view'],
     documents: ['view', 'create', 'edit', 'delete'],
     deliveries: ['view', 'create', 'edit'],
     notifications: ['view', 'create'],
   },
   decano: {
-    courses: ['view'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    users: ['view', 'tab_registrados', 'tab_facultades'],
+    settings: ['view', 'tab_perfil'],
     reports: ['view'],
     documents: ['view'],
     deliveries: ['view'],
   },
   coordinador: {
-    courses: ['view'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    users: ['view', 'tab_registrados', 'tab_facultades'],
+    settings: ['view', 'tab_perfil'],
     reports: ['view'],
     documents: ['view'],
     deliveries: ['view'],
   },
   docente: {
-    courses: ['view', 'edit'], 
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'edit', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view', 'create', 'edit'],
     deliveries: ['view', 'create'],
     notifications: ['view'],
   },
   evaluador: {
-    courses: ['view'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view'],
     deliveries: ['view'],
   },
   // Roles de soporte técnico y creadores de contenido
   Soporte: {
-    courses: ['view', 'edit'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'edit', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view', 'edit'],
     deliveries: ['view'],
   },
   Multimedia: {
-    courses: ['view', 'edit'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'edit', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view', 'create', 'edit'],
   },
   Diseño: {
-    courses: ['view', 'edit'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'edit', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view', 'create', 'edit'],
   },
   Pedagogía: {
-    courses: ['view', 'edit'],
+    dashboard: ['view'],
+    malla: ['view'],
+    courses: ['view', 'edit', 'tab_solicitudes', 'tab_lista', 'tab_finalizados'],
+    calendar: ['view'],
+    educacion_continua: ['view', 'tab_equipo', 'tab_tareas', 'tab_stats'],
+    settings: ['view', 'tab_perfil'],
     documents: ['view', 'create', 'edit'],
   }
 };
@@ -137,6 +208,13 @@ export function getRolePermissions(): RolePolicies {
 export function hasPermission(user: User | null | undefined, module: AppModule, action: Action): boolean {
   if (!user || !user.role) return false;
   
+  // Hardcoded safety net for admin
+  if (user.role === 'admin') {
+    if (module === 'settings' && ['view', 'tab_perfil', 'tab_permisos'].includes(action)) {
+      return true;
+    }
+  }
+
   const policies = getStoredRolePermissions();
   const userPermissions = policies[user.role] || DEFAULT_ROLE_PERMISSIONS[user.role];
   if (!userPermissions) return false;

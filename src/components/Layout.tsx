@@ -14,6 +14,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { hasPermission } from '../lib/permissions';
 import logoCCV from '../assets/logo_pccv.svg';
 
 export default function Layout() {
@@ -21,6 +22,15 @@ export default function Layout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
+
+  useEffect(() => {
+    const handlePermissionsUpdated = () => {
+      setPermissionsVersion(v => v + 1);
+    };
+    window.addEventListener('permissionsUpdated', handlePermissionsUpdated);
+    return () => window.removeEventListener('permissionsUpdated', handlePermissionsUpdated);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -34,18 +44,12 @@ export default function Layout() {
   const isTeamRole = ['team', 'Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role || '');
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Cursos', href: '/cursos', icon: BookOpen },
-    { name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays },
-    // Educación Continua is for Team roles and admin
-    ...(isTeamRole || user.role === 'admin'
-      ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] 
-      : []),
-    // Usuarios is for admin, decano, and coordinador
-    ...(user.role === 'admin' || user.role === 'decano' || user.role === 'coordinador' 
-      ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] 
-      : []),
-    { name: 'Configuración', href: '/configuracion', icon: Settings },
+    ...(hasPermission(user, 'dashboard', 'view') ? [{ name: 'Dashboard', href: '/', icon: LayoutDashboard }] : []),
+    ...(hasPermission(user, 'courses', 'view') ? [{ name: 'Cursos', href: '/cursos', icon: BookOpen }] : []),
+    ...(hasPermission(user, 'calendar', 'view') ? [{ name: 'Calendario de Trabajo', href: '/calendario', icon: CalendarDays }] : []),
+    ...(hasPermission(user, 'educacion_continua', 'view') ? [{ name: 'Educación Continua', href: '/educacion-continua', icon: GraduationCap }] : []),
+    ...(hasPermission(user, 'users', 'view') ? [{ name: 'Usuarios', href: '/usuarios', icon: Users }] : []),
+    ...(hasPermission(user, 'settings', 'view') ? [{ name: 'Configuración', href: '/configuracion', icon: Settings }] : []),
   ];
 
   // Map paths to titles and icons

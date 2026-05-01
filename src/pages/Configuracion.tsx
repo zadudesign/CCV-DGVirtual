@@ -3,16 +3,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { FileSignature, Loader2, Save, CheckCircle2, UserCircle, Shield } from 'lucide-react';
 import { RolePermissionsEditor } from '../components/RolePermissionsEditor';
+import { hasPermission } from '../lib/permissions';
 
 export default function Configuracion() {
   const { user, refreshSession } = useAuth();
+  
+  const canViewPerfil = hasPermission(user, 'settings', 'tab_perfil');
+  const canViewPermisos = hasPermission(user, 'settings', 'tab_permisos');
+  const defaultTab = canViewPerfil ? 'personal' : canViewPermisos ? 'permisos' : 'personal';
+
   const [firmaDigital, setFirmaDigital] = useState<string>('');
   const [photoURL, setPhotoURL] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'personal' | 'permisos'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'permisos'>(defaultTab);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -107,18 +113,20 @@ export default function Configuracion() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex border-b border-muted/30 -mb-px relative top-[1px] mb-6">
-        <button
-          onClick={() => setActiveTab('personal')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'personal'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <UserCircle className={`mr-2 h-4 w-4 ${activeTab === 'personal' ? 'text-primary' : 'text-slate-400'}`} />
-          Información Personal
-        </button>
-        {user?.role === 'admin' && (
+        {canViewPerfil && (
+          <button
+            onClick={() => setActiveTab('personal')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'personal'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <UserCircle className={`mr-2 h-4 w-4 ${activeTab === 'personal' ? 'text-primary' : 'text-slate-400'}`} />
+            Información Personal
+          </button>
+        )}
+        {canViewPermisos && (
           <button
             onClick={() => setActiveTab('permisos')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
@@ -133,7 +141,7 @@ export default function Configuracion() {
         )}
       </div>
 
-      {activeTab === 'personal' && (
+      {activeTab === 'personal' && canViewPerfil && (
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="p-6 space-y-6">
           
@@ -276,8 +284,8 @@ export default function Configuracion() {
       </div>
       )}
 
-      {/* Editor de permisos de roles (Solo Admin) */}
-      {activeTab === 'permisos' && user?.role === 'admin' && (
+      {/* Editor de permisos de roles */}
+      {activeTab === 'permisos' && canViewPermisos && (
         <div className="bg-white shadow rounded-lg overflow-hidden p-6">
           <RolePermissionsEditor />
         </div>

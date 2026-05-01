@@ -3,17 +3,31 @@ import { Shield, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { getStoredRolePermissions, saveLocalPermissions, RolePolicies, Action, AppModule, DEFAULT_ROLE_PERMISSIONS } from '../lib/permissions';
 import { supabase } from '../lib/supabase';
 
-const ALL_MODULES: AppModule[] = [
-  'courses',
-  'documents',
-  'users',
-  'reports',
-  'settings',
-  'deliveries',
-  'notifications'
-];
-
-const ALL_ACTIONS: Action[] = ['view', 'create', 'edit', 'delete'];
+const MODULE_CONFIG: Record<AppModule, { label: string, actions: { id: Action, label: string }[] }> = {
+  dashboard: { label: 'Inicio', actions: [{ id: 'view', label: 'Ver Módulo' }] },
+  malla: { label: 'Malla Curricular', actions: [{ id: 'view', label: 'Ver Módulo' }] },
+  courses: { label: 'Oferta Formativa', actions: [
+    { id: 'view', label: 'Ver Módulo' }, { id: 'create', label: 'Crear' }, { id: 'edit', label: 'Editar' }, { id: 'delete', label: 'Eliminar' },
+    { id: 'tab_solicitudes', label: 'Tab Solicitudes' }, { id: 'tab_lista', label: 'Tab Cursos' }, { id: 'tab_finalizados', label: 'Tab Finalizados' }
+  ] },
+  calendar: { label: 'Calendario de Trabajo', actions: [{ id: 'view', label: 'Ver Módulo' }] },
+  educacion_continua: { label: 'Educación Continua', actions: [
+    { id: 'view', label: 'Ver Módulo' }, { id: 'tab_equipo', label: 'Tab Equipo' }, { id: 'tab_tareas', label: 'Tab Tareas' }, { id: 'tab_stats', label: 'Tab Stats' }
+  ] },
+  users: { label: 'Usuarios', actions: [
+    { id: 'view', label: 'Ver Módulo' }, { id: 'create', label: 'Crear' }, { id: 'edit', label: 'Editar' }, { id: 'delete', label: 'Eliminar' },
+    { id: 'tab_registrados', label: 'Tab Registrados' }, { id: 'tab_inscribir', label: 'Tab Inscribir' }, { id: 'tab_facultades', label: 'Tab Facultades' }
+  ] },
+  settings: { label: 'Configuración', actions: [
+    { id: 'view', label: 'Ver Módulo' }, { id: 'edit', label: 'Editar' },
+    { id: 'tab_perfil', label: 'Tab Perfil' }, { id: 'tab_ui', label: 'Tab UI' }, { id: 'tab_parametros', label: 'Tab Parámetros' }, { id: 'tab_reportes', label: 'Tab Reportes' }, { id: 'tab_logs', label: 'Tab Logs' }, { id: 'tab_modulos', label: 'Tab Módulos' }, { id: 'tab_permisos', label: 'Tab Permisos' }
+  ] },
+  reports: { label: 'Reportes (Interno)', actions: [{ id: 'view', label: 'Ver' }] },
+  documents: { label: 'Documentos', actions: [{ id: 'view', label: 'Ver' }, { id: 'create', label: 'Crear' }, { id: 'edit', label: 'Editar' }, { id: 'delete', label: 'Eliminar' }] },
+  deliveries: { label: 'Entregables', actions: [{ id: 'view', label: 'Ver' }, { id: 'create', label: 'Crear' }, { id: 'edit', label: 'Editar' }, { id: 'delete', label: 'Eliminar' }] },
+  notifications: { label: 'Notificaciones', actions: [{ id: 'view', label: 'Ver' }, { id: 'create', label: 'Crear' }, { id: 'edit', label: 'Editar' }, { id: 'delete', label: 'Eliminar' }] }
+};
+const ALL_MODULES = Object.keys(MODULE_CONFIG) as AppModule[];
 
 export function RolePermissionsEditor() {
   const [policies, setPolicies] = useState<RolePolicies>({});
@@ -34,18 +48,17 @@ export function RolePermissionsEditor() {
       return;
     }
 
-    setPolicies(prev => ({
-      [trimmed]: {
-        courses: [],
-        documents: [],
-        users: [],
-        reports: [],
-        settings: [],
-        deliveries: [],
-        notifications: []
-      },
-      ...prev
-    }));
+    setPolicies(prev => {
+      const newRolePerms = ALL_MODULES.reduce((acc, module) => {
+        acc[module] = [];
+        return acc;
+      }, {} as any);
+
+      return {
+        [trimmed]: newRolePerms,
+        ...prev
+      };
+    });
     setNewRoleName('');
     setExpandedRole(trimmed);
   };
@@ -245,53 +258,38 @@ export function RolePermissionsEditor() {
             
             {expandedRole === role && (
               <div className="p-4 border-t border-muted/30">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-muted/30 border border-muted/30 rounded-md">
-                    <thead className="bg-background">
-                      <tr>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
-                          Módulo
-                        </th>
-                        {ALL_ACTIONS.map(action => (
-                          <th key={action} scope="col" className="px-4 py-3 text-center text-xs font-medium text-secondary uppercase tracking-wider">
-                            {action === 'view' ? 'Ver' : 
-                             action === 'create' ? 'Crear' : 
-                             action === 'edit' ? 'Editar' : 'Eliminar'}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-muted/30">
-                      {ALL_MODULES.map(module => {
-                        const modulePerms = policies[role][module] || [];
-                        return (
-                          <tr key={module} className="hover:bg-background/50">
-                            <td className="px-4 py-3 text-sm font-medium text-text-main capitalize">
-                              {module === 'settings' ? 'configuración' : module === 'deliveries' ? 'Entregables (deliveries)' : module}
-                            </td>
-                            {ALL_ACTIONS.map(action => {
-                              const isChecked = modulePerms.includes(action);
-                              // Regla especial: Admin siempre debería tener acceso a Settings, se podría bloquear el checkbox
-                              const isDisabled = role === 'admin' && module === 'settings' && action === 'view';
+                <div className="flex flex-col gap-4">
+                  {ALL_MODULES.map(module => {
+                    const modulePerms = policies[role]?.[module] || [];
+                    const config = MODULE_CONFIG[module];
+                    if (!config) return null;
+                    
+                    return (
+                      <div key={module} className="border border-muted/20 rounded-md p-4 bg-slate-50/50">
+                        <div className="font-medium text-text-main mb-3">{config.label}</div>
+                        <div className="flex flex-wrap gap-4">
+                          {config.actions.map(({ id: actionId, label: actionLabel }) => {
+                            const isChecked = modulePerms.includes(actionId);
+                            // Regla especial: Admin siempre debería tener acceso a Settings, se podría bloquear el checkbox
+                            const isDisabled = role === 'admin' && module === 'settings' && actionId === 'view';
 
-                              return (
-                                <td key={action} className="px-4 py-3 text-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    disabled={isDisabled}
-                                    onChange={() => handleTogglePermission(role, module, action)}
-                                    className="h-4 w-4 text-primary focus:ring-primary border-muted rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title={isDisabled ? 'Permiso obligatorio para admin' : `Permitir ${action} en ${module}`}
-                                  />
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                            return (
+                              <label key={actionId} className="flex items-center space-x-2 text-sm text-secondary cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  disabled={isDisabled}
+                                  onChange={() => handleTogglePermission(role, module, actionId)}
+                                  className="h-4 w-4 text-primary focus:ring-primary border-muted rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                <span>{actionLabel}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

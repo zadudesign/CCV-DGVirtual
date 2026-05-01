@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
+import { hasPermission } from '../lib/permissions';
 
 import { Link, useLocation } from 'react-router-dom';
 
@@ -51,8 +52,11 @@ export default function Cursos() {
   // Filters
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
+  const canViewActivos = hasPermission(user, 'courses', 'tab_lista');
+  const canViewSolicitudes = hasPermission(user, 'courses', 'tab_solicitudes');
   const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>(() => {
-    return (location.state as any)?.tab === 'solicitudes' ? 'solicitudes' : 'activos';
+    if ((location.state as any)?.tab === 'solicitudes' && canViewSolicitudes) return 'solicitudes';
+    return canViewActivos ? 'activos' : canViewSolicitudes ? 'solicitudes' : 'activos';
   });
 
   // Options
@@ -429,8 +433,9 @@ export default function Cursos() {
         )}
       </div>
 
-      {isTeamOrAdmin && (
-        <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
+      {/* Tabs */}
+      <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
+        {hasPermission(user, 'courses', 'tab_lista') && (
           <button
             onClick={() => setActiveTab('activos')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
@@ -442,6 +447,8 @@ export default function Cursos() {
             <MonitorPlay className={`mr-2 h-4 w-4 ${activeTab === 'activos' ? 'text-primary' : 'text-slate-400'}`} />
             Activos
           </button>
+        )}
+        {hasPermission(user, 'courses', 'tab_solicitudes') && (
           <button
             onClick={() => setActiveTab('solicitudes')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
@@ -453,8 +460,8 @@ export default function Cursos() {
             <ClipboardList className={`mr-2 h-4 w-4 ${activeTab === 'solicitudes' ? 'text-primary' : 'text-slate-400'}`} />
             Solicitudes
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-xl border border-muted/20 shadow-sm flex flex-wrap gap-4 mb-6 mt-4">

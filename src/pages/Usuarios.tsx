@@ -21,12 +21,22 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Role } from '../types';
-import { getStoredRolePermissions } from '../lib/permissions';
+import { getStoredRolePermissions, hasPermission } from '../lib/permissions';
 
 export default function Usuarios() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [activeTab, setActiveTab] = useState<'registrados' | 'inscribir' | 'facultades'>('registrados');
+  
+  const canViewRegistrados = hasPermission(user, 'users', 'tab_registrados');
+  const canViewInscribir = hasPermission(user, 'users', 'tab_inscribir');
+  const canViewFacultades = hasPermission(user, 'users', 'tab_facultades');
+  
+  const defaultTab = canViewRegistrados ? 'registrados' 
+                   : canViewInscribir ? 'inscribir'
+                   : canViewFacultades ? 'facultades'
+                   : 'registrados';
+
+  const [activeTab, setActiveTab] = useState<'registrados' | 'inscribir' | 'facultades'>(defaultTab);
   
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [facultades, setFacultades] = useState<any[]>([]);
@@ -233,39 +243,45 @@ export default function Usuarios() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
-        <button
-          onClick={() => setActiveTab('registrados')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'registrados'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <UsersIcon className={`mr-2 h-4 w-4 ${activeTab === 'registrados' ? 'text-primary' : 'text-slate-400'}`} />
-          Usuarios Registrados
-        </button>
-        <button
-          onClick={() => setActiveTab('inscribir')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'inscribir'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <UserPlus className={`mr-2 h-4 w-4 ${activeTab === 'inscribir' ? 'text-primary' : 'text-slate-400'}`} />
-          Inscribir Usuarios
-        </button>
-        <button
-          onClick={() => setActiveTab('facultades')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'facultades'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <Library className={`mr-2 h-4 w-4 ${activeTab === 'facultades' ? 'text-primary' : 'text-slate-400'}`} />
-          Facultades y Programas
-        </button>
+        {canViewRegistrados && (
+          <button
+            onClick={() => setActiveTab('registrados')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'registrados'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <UsersIcon className={`mr-2 h-4 w-4 ${activeTab === 'registrados' ? 'text-primary' : 'text-slate-400'}`} />
+            Usuarios Registrados
+          </button>
+        )}
+        {canViewInscribir && (
+          <button
+            onClick={() => setActiveTab('inscribir')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'inscribir'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <UserPlus className={`mr-2 h-4 w-4 ${activeTab === 'inscribir' ? 'text-primary' : 'text-slate-400'}`} />
+            Inscribir Usuarios
+          </button>
+        )}
+        {canViewFacultades && (
+          <button
+            onClick={() => setActiveTab('facultades')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'facultades'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <Library className={`mr-2 h-4 w-4 ${activeTab === 'facultades' ? 'text-primary' : 'text-slate-400'}`} />
+            Facultades y Programas
+          </button>
+        )}
       </div>
       
       {/* Espaciador explícito solicitado por el usuario */}
