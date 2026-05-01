@@ -22,6 +22,33 @@ export function RolePermissionsEditor() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
+  const [newRoleName, setNewRoleName] = useState('');
+
+  const handleAddRole = () => {
+    const trimmed = newRoleName.trim();
+    if (!trimmed) return;
+    const normalizedRole = trimmed.toLowerCase();
+    
+    if (policies[normalizedRole] || policies[trimmed]) {
+      setErrorMessage(`El rol "${trimmed}" ya existe.`);
+      return;
+    }
+
+    setPolicies(prev => ({
+      [trimmed]: {
+        courses: [],
+        documents: [],
+        users: [],
+        reports: [],
+        settings: [],
+        deliveries: [],
+        notifications: []
+      },
+      ...prev
+    }));
+    setNewRoleName('');
+    setExpandedRole(trimmed);
+  };
 
   useEffect(() => {
     // Inicialmente cargar de caché local para evitar pantalla en blanco si hay conexión lenta
@@ -178,7 +205,25 @@ export function RolePermissionsEditor() {
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
         </div>
       ) : (
-      /* Lista de roles como acordeón para no saturar la vista */
+      <>
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="text"
+            className="block w-full max-w-xs px-3 py-2 border border-muted rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+            placeholder="Nombre del nuevo rol..."
+            value={newRoleName}
+            onChange={e => setNewRoleName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddRole()}
+          />
+          <button
+            onClick={handleAddRole}
+            className="inline-flex items-center px-4 py-2 border border-muted text-sm font-medium rounded-md shadow-sm text-text-main bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            disabled={!newRoleName.trim()}
+          >
+            Agregar Rol
+          </button>
+        </div>
+      {/* Lista de roles como acordeón para no saturar la vista */}
       <div className="space-y-4">
         {Object.keys(policies).map((role) => (
           <div key={role} className="border border-muted/30 rounded-lg overflow-hidden bg-white">
@@ -247,6 +292,7 @@ export function RolePermissionsEditor() {
           </div>
         ))}
       </div>
+      </>
       )}
       
       <div className="mt-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md flex items-start">
