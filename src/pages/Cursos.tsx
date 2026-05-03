@@ -12,9 +12,10 @@ import { Link, useLocation } from 'react-router-dom';
 const ESTADOS_SOLICITUD = [
   'Solicitud Recibida',
   'En Preparación',
+  'Acceso a Google Drive',
+  'En Construcción',
   'Pendiente de Aprobación',
-  'Información Incompleta',
-  'En Construcción'
+  'Información Incompleta'
 ];
 
 export default function Cursos() {
@@ -564,6 +565,7 @@ export default function Cursos() {
                         case 'Información Incompleta':
                           return 'bg-red-100/90 text-red-900 border-red-300 border-l-red-600';
                         case 'En Preparación':
+                        case 'Acceso a Google Drive':
                           return 'bg-blue-100/90 text-blue-900 border-blue-300 border-l-blue-600';
                         default:
                           return 'bg-slate-100/90 text-slate-900 border-slate-200 border-l-slate-600';
@@ -579,6 +581,7 @@ export default function Cursos() {
                         case 'Información Incompleta':
                           return 'bg-red-600 text-white';
                         case 'En Preparación':
+                        case 'Acceso a Google Drive':
                           return 'bg-blue-600 text-white';
                         default:
                           return 'bg-slate-600 text-white';
@@ -610,7 +613,7 @@ export default function Cursos() {
                                   className={`text-[10px] font-bold uppercase tracking-wider border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none py-1.5 px-3 transition-all shadow-sm ${
                                     (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                                     (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-50 border-red-200 text-red-700' :
-                                    (curso.estado === 'En Preparación') ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                    (curso.estado === 'En Preparación' || curso.estado === 'Acceso a Google Drive') ? 'bg-blue-50 border-blue-200 text-blue-700' :
                                     'bg-slate-50 border-slate-200 text-slate-700'
                                   }`}
                                 >
@@ -622,7 +625,7 @@ export default function Cursos() {
                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
                                   (curso.estado === 'Solicitud Recibida' || curso.estado === 'En Construcción') ? 'bg-emerald-100 text-emerald-800' :
                                   (curso.estado === 'Pendiente de Aprobación' || curso.estado === 'Información Incompleta') ? 'bg-red-100 text-red-800' :
-                                  (curso.estado === 'En Preparación') ? 'bg-blue-100 text-blue-800' :
+                                  (curso.estado === 'En Preparación' || curso.estado === 'Acceso a Google Drive') ? 'bg-blue-100 text-blue-800' :
                                   'bg-slate-100 text-slate-800'
                                 }`}>
                                   {curso.estado || 'Solicitud Recibida'}
