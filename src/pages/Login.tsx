@@ -45,7 +45,11 @@ export default function Login() {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        if (signInError.message === 'Failed to fetch') {
+          setError('Error de conexión con la base de datos (Supabase). No se pudo realizar la petición fetch.');
+        } else {
+          setError(signInError.message);
+        }
         setLoading(false);
       } else {
         // En lugar de recargar la página (lo cual falla en algunos iframes),
@@ -54,7 +58,11 @@ export default function Login() {
         setLoading(false); // Detener el spinner local para que se muestren los errores si falla el perfil
       }
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      if (err.message === 'Failed to fetch') {
+        setError('Error de conexión con la base de datos (Supabase). No se pudo realizar la petición fetch.');
+      } else {
+        setError(err.message || 'Error al iniciar sesión');
+      }
       setLoading(false);
     }
   };

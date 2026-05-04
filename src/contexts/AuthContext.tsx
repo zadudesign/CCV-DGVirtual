@@ -38,6 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem(key);
           }
         });
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('sb-')) {
+            sessionStorage.removeItem(key);
+          }
+        });
         await supabase.auth.signOut().catch(() => {});
         setAuthError(null);
       } else {
@@ -132,19 +137,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (isMounted) setLoading(false);
         }
       } catch (err: any) {
-        console.error('Error fetching session:', err);
+        if (err?.message !== 'Failed to fetch') {
+          console.error('Error fetching session:', err);
+        }
         if (isMounted) {
           const errorMessage = err?.message?.toLowerCase() || '';
-          if (errorMessage.includes('refresh token') || errorMessage.includes('session')) {
-            // Force clear local storage just in case
+          if (errorMessage.includes('refresh token') || errorMessage.includes('session') || errorMessage.includes('failed to fetch')) {
+            // Force clear storage just in case
             Object.keys(localStorage).forEach(key => {
               if (key.startsWith('sb-')) {
                 localStorage.removeItem(key);
               }
             });
+            Object.keys(sessionStorage).forEach(key => {
+              if (key.startsWith('sb-')) {
+                sessionStorage.removeItem(key);
+              }
+            });
             await supabase.auth.signOut().catch(() => {});
             setUser(null);
             setAuthError(null);
+            // Don't show confusing error for Failed to fetch
           } else {
             setAuthError('Error de conexión. Verifica la configuración de Supabase.');
           }
@@ -178,6 +191,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-')) {
           localStorage.removeItem(key);
+        }
+      });
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          sessionStorage.removeItem(key);
         }
       });
       await supabase.auth.signOut();

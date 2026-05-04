@@ -83,7 +83,10 @@ export default function WelcomeModal({ user, onClose }: WelcomeModalProps) {
     }
   };
 
-  const getTaskStatus = (fecha: string) => {
+  const getTaskStatus = (fecha?: string) => {
+    if (!fecha) {
+      return { label: 'Sin fecha', color: 'text-slate-600 bg-slate-50 border-slate-200' };
+    }
     const today = startOfDay(new Date());
     const dueDate = startOfDay(parseISO(fecha));
     const diffDays = differenceInDays(dueDate, today);
