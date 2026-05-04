@@ -1,11 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { toast, Toaster } from 'react-hot-toast';
 import { Bell, Newspaper } from 'lucide-react';
+import WelcomeModal from './WelcomeModal';
 
 export function RealtimeNotifications() {
   const { user } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (user && !sessionStorage.getItem('welcome_shown')) {
+      setShowWelcome(true);
+      sessionStorage.setItem('welcome_shown', 'true');
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -26,6 +35,7 @@ export function RealtimeNotifications() {
             nuevaTarea.usuario_id === user.id ||
             nuevaTarea.rol_destino === userArea
           ) {
+            setShowWelcome(true);
             toast.custom((t) => (
               <div
                 className={`${
@@ -78,6 +88,7 @@ export function RealtimeNotifications() {
         (payload) => {
           const nuevaNovedad = payload.new as any;
           
+          setShowWelcome(true);
           // Let's show to everyone or maybe just if we want to limit
           toast.custom((t) => (
             <div
@@ -129,5 +140,10 @@ export function RealtimeNotifications() {
     };
   }, [user]);
 
-  return <Toaster position="top-right" />;
+  return (
+    <>
+      <Toaster position="top-right" />
+      {showWelcome && user && <WelcomeModal user={user} onClose={() => setShowWelcome(false)} />}
+    </>
+  );
 }
