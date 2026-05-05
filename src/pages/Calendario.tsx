@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell, Plus, X } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell, Plus, X, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EntregaCalendario } from '../types';
@@ -23,6 +23,19 @@ import {
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
+
 import { HOURLY_RATES } from '../lib/constants';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +49,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tareas' | 'productividad'>('tareas');
+  const [productivityPeriod, setProductivityPeriod] = useState<'diaria' | 'semanal' | 'mensual'>('diaria');
   
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
@@ -106,34 +121,32 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       
       const events: any[] = [];
       filteredData.forEach((row: any) => {
-        if (row.estado === 'Completada' || row.estado === 'Completado') return;
-
-        if (row.fecha_vencimiento) {
-          events.push({
-            id: row.id,
-            curso_id: row.curso_id,
-            titulo: row.titulo,
-            fecha_inicial: row.fecha_inicial,
-            fecha_entrega: row.fecha_vencimiento,
-            fecha_completada: row.fecha_completada,
-            fecha_inicio: row.fecha_inicio,
-            estado: row.estado,
-            detalle: row.descripcion || '',
-            tipo_tarifa: row.tipo_tarifa,
-            descripcion: row.descripcion || '',
-            curso: row.curso,
-            proyecto: row.proyecto,
-            tiempo_invertido: row.tiempo_invertido || 0,
-            rol_destino: row.rol_destino || '',
-            isNotificacion: true
-          });
-        }
+        events.push({
+          id: row.id,
+          curso_id: row.curso_id,
+          titulo: row.titulo,
+          fecha_inicial: row.fecha_inicial,
+          fecha_entrega: row.fecha_vencimiento,
+          fecha_completada: row.fecha_completada,
+          fecha_inicio: row.fecha_inicio,
+          estado: row.estado,
+          detalle: row.descripcion || '',
+          tipo_tarifa: row.tipo_tarifa,
+          descripcion: row.descripcion || '',
+          curso: row.curso,
+          proyecto: row.proyecto,
+          tiempo_invertido: row.tiempo_invertido || 0,
+          tiempo_estimado: row.tiempo_estimado || 0,
+          rol_destino: row.rol_destino || '',
+          isNotificacion: true
+        });
       });
       return events;
     },
     enabled: !!user
   });
   const entregas = entregasData || [];
+  const tareasActivas = entregas.filter(e => e.estado !== 'Completado' && e.estado !== 'Completada' && e.fecha_entrega);
 
   useEffect(() => {
     if (user) {
@@ -314,7 +327,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         const cloneDay = day;
         
         // Find events that span across this day
-        const dayEvents = entregas.filter(entrega => {
+        const dayEvents = tareasActivas.filter(entrega => {
           const isCompleted = entrega.estado === 'Completado' || entrega.estado === 'Completada';
           let eventStart, eventEnd;
           
@@ -418,6 +431,151 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     );
   };
 
+  const renderProductivity = () => {
+    const completedTasks = entregas.filter(
+      (e) => (e.estado === 'Completado' || e.estado === 'Completada') && e.fecha_completada
+    );
+
+    // Group tasks by the selected period
+    const chartDataMap: Record<string, { name: string; tiempo_estimado: number; tiempo_invertido: number }> = {};
+
+    completedTasks.forEach((task) => {
+      const date = parseISO(task.fecha_completada);
+      let key = '';
+      let name = '';
+
+      if (productivityPeriod === 'diaria') {
+        key = format(date, 'yyyy-MM-dd');
+        name = format(date, 'MMM dd', { locale: es });
+      } else if (productivityPeriod === 'semanal') {
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+        key = format(weekStart, 'yyyy-MM-dd');
+        name = `Semana ${format(weekStart, 'MMM dd', { locale: es })}`;
+      } else if (productivityPeriod === 'mensual') {
+        const monthStart = startOfMonth(date);
+        key = format(monthStart, 'yyyy-MM');
+        name = format(monthStart, 'MMMM yyyy', { locale: es });
+      }
+
+      if (!chartDataMap[key]) {
+        chartDataMap[key] = { name, tiempo_estimado: 0, tiempo_invertido: 0 };
+      }
+
+      chartDataMap[key].tiempo_estimado += Number(task.tiempo_estimado) || 0;
+      chartDataMap[key].tiempo_invertido += Number(task.tiempo_invertido) || 0;
+    });
+
+    const chartData = Object.keys(chartDataMap)
+      .sort()
+      .map((key) => chartDataMap[key]);
+
+    return (
+      <div className="bg-white p-6 md:p-8 rounded-3xl border border-muted/30 shadow-sm mt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-text-main flex items-center">
+              <Activity className="w-6 h-6 mr-2 text-primary" />
+              Métricas de Productividad
+            </h2>
+            <p className="text-sm text-secondary mt-1">
+              Visualiza el tiempo estimado frente al tiempo invertido
+            </p>
+          </div>
+          
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <button
+              onClick={() => setProductivityPeriod('diaria')}
+              className={`px-4 py-2 text-xs font-bold rounded-md transition-all ${
+                productivityPeriod === 'diaria'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-secondary hover:text-text-main'
+              }`}
+            >
+              Diaria
+            </button>
+            <button
+              onClick={() => setProductivityPeriod('semanal')}
+              className={`px-4 py-2 text-xs font-bold rounded-md transition-all ${
+                productivityPeriod === 'semanal'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-secondary hover:text-text-main'
+              }`}
+            >
+              Semanal
+            </button>
+            <button
+              onClick={() => setProductivityPeriod('mensual')}
+              className={`px-4 py-2 text-xs font-bold rounded-md transition-all ${
+                productivityPeriod === 'mensual'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-secondary hover:text-text-main'
+              }`}
+            >
+              Mensual
+            </button>
+          </div>
+        </div>
+
+        {chartData.length > 0 ? (
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                  dx={-10}
+                  tickFormatter={(val) => `${val}h`}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value: number) => [`${value} horas`, '']}
+                />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="circle"
+                />
+                <Bar 
+                  dataKey="tiempo_estimado" 
+                  name="Tiempo Estimado" 
+                  fill="#94a3b8" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={maybeWidth(chartData.length)}
+                />
+                <Bar 
+                  dataKey="tiempo_invertido" 
+                  name="Tiempo Invertido" 
+                  fill="#0ea5e9" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={maybeWidth(chartData.length)}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+            <Activity className="w-12 h-12 mb-4 opacity-50" />
+            <p className="font-medium">No hay tareas completadas en este periodo</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const maybeWidth = (len: number) => len > 20 ? 10 : len > 10 ? 20 : 30;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -426,9 +584,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     );
   }
 
-  const vencidas = entregas.filter(e => {
-    if (e.estado === 'Completado' || e.estado === 'Completada') return false;
-    
+  const vencidas = tareasActivas.filter(e => {
     // Aplicar Filtros
     if (filtroEncargado && e.rol_destino !== filtroEncargado) return false;
     
@@ -444,9 +600,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     return differenceInDays(dueDate, today) < 0;
   });
 
-  const enProgreso = entregas.filter(e => {
-    if (e.estado === 'Completado' || e.estado === 'Completada') return false;
-
+  const enProgreso = tareasActivas.filter(e => {
     // Aplicar Filtros
     if (filtroEncargado && e.rol_destino !== filtroEncargado) return false;
     
@@ -462,24 +616,61 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     return differenceInDays(dueDate, today) >= 0;
   });
 
-  const rolesDisponibles = Array.from(new Set(entregas.map(e => e.rol_destino).filter(Boolean))).sort();
-  const origenesDisponibles = Array.from(new Set(entregas.map(e => e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual').filter(Boolean))).sort();
+  const rolesDisponibles = Array.from(new Set(tareasActivas.map(e => e.rol_destino).filter(Boolean))).sort();
+  const origenesDisponibles = Array.from(new Set(tareasActivas.map(e => e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual').filter(Boolean))).sort();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
-        {!cursoId && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary whitespace-nowrap self-start"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Agregar Tarea
-          </button>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center -mb-2">
+        <div></div>
+        {!cursoId && activeTab === 'tareas' && (
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium shadow-sm"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Agregar Tarea
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Barra de Filtros */}
+      <div className="flex border-b border-muted/30 -mb-px relative top-[1px]">
+        <button
+          onClick={() => setActiveTab('tareas')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'tareas'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <CalendarDays className={`mr-2 h-4 w-4 ${activeTab === 'tareas' ? 'text-primary' : 'text-slate-400'}`} />
+          Tareas
+        </button>
+        <button
+          onClick={() => setActiveTab('productividad')}
+          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+            activeTab === 'productividad'
+              ? 'border-primary text-primary bg-primary/5'
+              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+          }`}
+        >
+          <Activity className={`mr-2 h-4 w-4 ${activeTab === 'productividad' ? 'text-primary' : 'text-slate-400'}`} />
+          Productividad
+        </button>
+      </div>
+
+      {/* Espaciador explícito solicitado por el usuario */}
+      <div className="h-4"></div>
+
+      {activeTab === 'productividad' && (
+        renderProductivity()
+      )}
+
+      {activeTab === 'tareas' && (
+        <>
+          {/* Barra de Filtros */}
       <div className="bg-white p-4 rounded-xl border border-muted/20 shadow-sm flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
           <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">Filtrar por Encargado:</label>
@@ -674,6 +865,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           {renderTaskList('Tareas En Progreso', enProgreso, 'text-yellow-700', 'bg-yellow-500')}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
