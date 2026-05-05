@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
  * Monitor de inactividad que cierra la sesión del usuario si no se detecta
  * actividad durante el tiempo especificado.
  */
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos en milisegundos
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutos en milisegundos
 
 export default function InactivityMonitor() {
   const { user, signOut } = useAuth();
@@ -19,7 +19,7 @@ export default function InactivityMonitor() {
     // Solo activamos el temporizador si el usuario está autenticado
     if (user) {
       timeoutRef.current = setTimeout(() => {
-        console.log('Cerrando sesión por inactividad (30 minutos)');
+        console.log('Cerrando sesión por inactividad (60 minutos)');
         signOut();
       }, INACTIVITY_TIMEOUT);
     }
