@@ -57,8 +57,10 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
   const [filtroOrigen, setFiltroOrigen] = useState<string>(''); // Para Curso/Proyecto
-  const [filtroOrigenProductividad, setFiltroOrigenProductividad] = useState<string[]>([]); // Para filtro en tab de productividad
-  const [isProductivityFilterOpen, setIsProductivityFilterOpen] = useState(false);
+  const [filtroProyectosProductividad, setFiltroProyectosProductividad] = useState<string[]>([]);
+  const [filtroRolesProductividad, setFiltroRolesProductividad] = useState<string[]>([]);
+  const [isProyectosFilterOpen, setIsProyectosFilterOpen] = useState(false);
+  const [isRolesFilterOpen, setIsRolesFilterOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
@@ -440,12 +442,20 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       (e) => (e.estado === 'Completado' || e.estado === 'Completada') && e.fecha_completada
     );
 
-    const origenesDisponiblesProductividad = Array.from(new Set(completedTasks.map(e => String(e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual')).filter(Boolean))).sort();
+    const proyectosDisponibles = Array.from(new Set(completedTasks.map(e => String(e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual')).filter(Boolean))).sort();
+    const rolesDisponibles = Array.from(new Set(completedTasks.map(e => String(e.rol_destino || 'Sin Rol')).filter(Boolean))).sort();
 
-    if (filtroOrigenProductividad.length > 0) {
+    if (filtroProyectosProductividad.length > 0) {
       completedTasks = completedTasks.filter(e => {
         const origen = String(e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual');
-        return filtroOrigenProductividad.includes(origen);
+        return filtroProyectosProductividad.includes(origen);
+      });
+    }
+
+    if (filtroRolesProductividad.length > 0) {
+      completedTasks = completedTasks.filter(e => {
+        const origen = String(e.rol_destino || 'Sin Rol');
+        return filtroRolesProductividad.includes(origen);
       });
     }
 
@@ -477,12 +487,37 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       const tiempo_tarea = (Number(task.tiempo_estimado) || 0) + (Number(task.tiempo_invertido) || 0);
       chartDataMap[key].tiempo_total += tiempo_tarea;
       
-      const origen = String(task.proyecto || (task.curso && task.curso.nombre) || 'Diseño Virtual');
-      if (!chartDataMap[key][origen]) {
-        chartDataMap[key][origen] = 0;
+      const projName = String(task.proyecto || (task.curso && task.curso.nombre) || 'Diseño Virtual');
+      const rolName = String(task.rol_destino || 'Sin Rol');
+      
+      let originForChart = projName;
+      if (filtroProyectosProductividad.length > 0 && filtroRolesProductividad.length > 0) {
+        originForChart = `${projName} (${rolName})`;
+      } else if (filtroRolesProductividad.length > 0) {
+        originForChart = rolName;
+      } else {
+        originForChart = projName;
       }
-      (chartDataMap[key][origen] as number) += tiempo_tarea;
+        
+      if (!chartDataMap[key][originForChart]) {
+        chartDataMap[key][originForChart] = 0;
+      }
+      (chartDataMap[key][originForChart] as number) += tiempo_tarea;
     });
+
+    const areFiltersActive = filtroProyectosProductividad.length > 0 || filtroRolesProductividad.length > 0;
+    const activeGroups = new Set<string>();
+    
+    if (areFiltersActive) {
+      Object.values(chartDataMap).forEach(data => {
+        Object.keys(data).forEach(k => {
+          if (k !== 'name' && k !== 'tiempo_total') {
+            activeGroups.add(k);
+          }
+        });
+      });
+    }
+    const activeGroupsArray = Array.from(activeGroups);
 
     const chartData = Object.keys(chartDataMap)
       .sort()
@@ -493,11 +528,9 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           tiempo_total: Number((data.tiempo_total / 3600).toFixed(2)),
         };
         
-        if (filtroOrigenProductividad.length > 0) {
-          filtroOrigenProductividad.forEach(proj => {
-            formattedData[proj] = Number((((data[proj] as number) || 0) / 3600).toFixed(2));
-          });
-        }
+        activeGroupsArray.forEach(group => {
+          formattedData[group] = Number((((data[group] as number) || 0) / 3600).toFixed(2));
+        });
         
         return formattedData;
       });
@@ -518,58 +551,124 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             <p className="text-sm text-secondary mt-1 mb-4">
               Visualiza el tiempo total registrado en tareas completadas
             </p>
-            <div className="flex flex-col gap-2 relative">
-              <button
-                type="button"
-                onClick={() => setIsProductivityFilterOpen(!isProductivityFilterOpen)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium min-w-[200px] flex items-center justify-between"
-              >
-                <span className="truncate max-w-[180px]">
-                  {filtroOrigenProductividad.length === 0 
-                    ? 'Todos los Proyectos / Cursos' 
-                    : `${filtroOrigenProductividad.length} seleccionado${filtroOrigenProductividad.length > 1 ? 's' : ''}`}
-                </span>
-                <ChevronDown className="w-4 h-4 text-slate-400 ml-2" />
-              </button>
+            <div className="flex flex-col gap-3 relative">
+              <div className="flex items-center gap-3">
+                {/* Proyectos Filter */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProyectosFilterOpen(!isProyectosFilterOpen);
+                      setIsRolesFilterOpen(false);
+                    }}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium min-w-[200px] flex items-center justify-between"
+                  >
+                    <span className="truncate max-w-[150px]">
+                      {filtroProyectosProductividad.length === 0 
+                        ? 'Todos los Proyectos' 
+                        : `${filtroProyectosProductividad.length} Proyectos`}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400 ml-2" />
+                  </button>
 
-              {isProductivityFilterOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsProductivityFilterOpen(false)}
-                  ></div>
-                  <div className="absolute top-full left-0 mt-1 w-full sm:w-[240px] bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2 max-h-60 overflow-y-auto">
-                  <div className="px-3 pb-2 mb-2 border-b border-slate-100 flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proyectos</span>
-                    {(filtroOrigenProductividad.length > 0) && (
-                      <button 
-                        onClick={() => setFiltroOrigenProductividad([])}
-                        className="text-[10px] text-primary hover:text-primary-hover font-medium underline"
-                      >
-                        Limpiar todos
-                      </button>
-                    )}
-                  </div>
-                  {origenesDisponiblesProductividad.map(origen => (
-                    <label key={origen} className="flex items-center px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        className="mr-3 rounded border-slate-300 text-primary focus:ring-primary"
-                        checked={filtroOrigenProductividad.includes(origen)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFiltroOrigenProductividad(prev => [...prev, origen]);
-                          } else {
-                            setFiltroOrigenProductividad(prev => prev.filter(p => p !== origen));
-                          }
-                        }}
-                      />
-                      <span className="text-sm text-slate-700 truncate">{origen}</span>
-                    </label>
-                  ))}
-                  </div>
-                </>
-              )}
+                  {isProyectosFilterOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsProyectosFilterOpen(false)}
+                      ></div>
+                      <div className="absolute top-full left-0 mt-1 w-[240px] bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2 max-h-60 overflow-y-auto">
+                        <div className="px-3 pb-2 mb-2 border-b border-slate-100 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proyectos</span>
+                          {(filtroProyectosProductividad.length > 0) && (
+                            <button 
+                              onClick={() => setFiltroProyectosProductividad([])}
+                              className="text-[10px] text-primary hover:text-primary-hover font-medium underline"
+                            >
+                              Limpiar
+                            </button>
+                          )}
+                        </div>
+                        {proyectosDisponibles.map(origen => (
+                          <label key={origen} className="flex items-center px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors">
+                            <input
+                              type="checkbox"
+                              className="mr-3 rounded border-slate-300 text-primary focus:ring-primary"
+                              checked={filtroProyectosProductividad.includes(origen)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFiltroProyectosProductividad(prev => [...prev, origen]);
+                                } else {
+                                  setFiltroProyectosProductividad(prev => prev.filter(p => p !== origen));
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-slate-700 truncate" title={origen}>{origen}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Roles Filter */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRolesFilterOpen(!isRolesFilterOpen);
+                      setIsProyectosFilterOpen(false);
+                    }}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium min-w-[200px] flex items-center justify-between"
+                  >
+                    <span className="truncate max-w-[150px]">
+                      {filtroRolesProductividad.length === 0 
+                        ? 'Todos los Roles' 
+                        : `${filtroRolesProductividad.length} Roles`}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400 ml-2" />
+                  </button>
+
+                  {isRolesFilterOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsRolesFilterOpen(false)}
+                      ></div>
+                      <div className="absolute top-full left-0 mt-1 w-[240px] bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2 max-h-60 overflow-y-auto">
+                        <div className="px-3 pb-2 mb-2 border-b border-slate-100 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Roles</span>
+                          {(filtroRolesProductividad.length > 0) && (
+                            <button 
+                              onClick={() => setFiltroRolesProductividad([])}
+                              className="text-[10px] text-primary hover:text-primary-hover font-medium underline"
+                            >
+                              Limpiar
+                            </button>
+                          )}
+                        </div>
+                        {rolesDisponibles.map(origen => (
+                          <label key={origen} className="flex items-center px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors">
+                            <input
+                              type="checkbox"
+                              className="mr-3 rounded border-slate-300 text-primary focus:ring-primary"
+                              checked={filtroRolesProductividad.includes(origen)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFiltroRolesProductividad(prev => [...prev, origen]);
+                                } else {
+                                  setFiltroRolesProductividad(prev => prev.filter(p => p !== origen));
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-slate-700 truncate" title={origen}>{origen}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
@@ -638,15 +737,15 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                   wrapperStyle={{ paddingTop: '20px' }}
                   iconType="circle"
                 />
-                {filtroOrigenProductividad.length > 0 ? (
-                  filtroOrigenProductividad.map((origen, idx) => (
+                {activeGroupsArray.length > 0 ? (
+                  activeGroupsArray.map((origen, idx) => (
                     <Bar 
                       key={origen}
                       dataKey={origen} 
                       name={origen} 
                       fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'][idx % 8]} 
                       radius={[4, 4, 0, 0]} 
-                      barSize={maybeWidth(chartData.length * filtroOrigenProductividad.length)}
+                      barSize={maybeWidth(chartData.length * activeGroupsArray.length)}
                     />
                   ))
                 ) : (
