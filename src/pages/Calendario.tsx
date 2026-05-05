@@ -450,7 +450,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     }
 
     // Group tasks by the selected period
-    const chartDataMap: Record<string, { name: string; tiempo_total: number }> = {};
+    const chartDataMap: Record<string, { name: string; tiempo_total: number; [proyecto: string]: string | number }> = {};
 
     completedTasks.forEach((task) => {
       const date = parseISO(task.fecha_completada);
@@ -474,18 +474,35 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         chartDataMap[key] = { name, tiempo_total: 0 };
       }
 
-      chartDataMap[key].tiempo_total += (Number(task.tiempo_estimado) || 0) + (Number(task.tiempo_invertido) || 0);
+      const tiempo_tarea = (Number(task.tiempo_estimado) || 0) + (Number(task.tiempo_invertido) || 0);
+      chartDataMap[key].tiempo_total += tiempo_tarea;
+      
+      const origen = String(task.proyecto || (task.curso && task.curso.nombre) || 'Diseño Virtual');
+      if (!chartDataMap[key][origen]) {
+        chartDataMap[key][origen] = 0;
+      }
+      (chartDataMap[key][origen] as number) += tiempo_tarea;
     });
 
     const chartData = Object.keys(chartDataMap)
       .sort()
       .map((key) => {
         const data = chartDataMap[key];
-        return {
-          ...data,
+        const formattedData: any = {
+          name: data.name,
           tiempo_total: Number((data.tiempo_total / 3600).toFixed(2)),
         };
+        
+        if (filtroOrigenProductividad.length > 0) {
+          filtroOrigenProductividad.forEach(proj => {
+            formattedData[proj] = Number((((data[proj] as number) || 0) / 3600).toFixed(2));
+          });
+        }
+        
+        return formattedData;
       });
+
+    const totalHorasGeneral = chartData.reduce((acc, curr) => acc + curr.tiempo_total, 0);
 
     return (
       <div className="bg-white p-6 md:p-8 rounded-3xl border border-muted/30 shadow-sm mt-6">
@@ -494,6 +511,9 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             <h2 className="text-xl font-bold text-text-main flex items-center">
               <Activity className="w-6 h-6 mr-2 text-primary" />
               Métricas de Productividad
+              <span className="ml-3 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                {totalHorasGeneral.toFixed(2)} hrs total
+              </span>
             </h2>
             <p className="text-sm text-secondary mt-1 mb-4">
               Visualiza el tiempo total registrado en tareas completadas
@@ -618,13 +638,26 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                   wrapperStyle={{ paddingTop: '20px' }}
                   iconType="circle"
                 />
-                <Bar 
-                  dataKey="tiempo_total" 
-                  name="Tiempo Total" 
-                  fill="#0ea5e9" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={maybeWidth(chartData.length)}
-                />
+                {filtroOrigenProductividad.length > 0 ? (
+                  filtroOrigenProductividad.map((origen, idx) => (
+                    <Bar 
+                      key={origen}
+                      dataKey={origen} 
+                      name={origen} 
+                      fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'][idx % 8]} 
+                      radius={[4, 4, 0, 0]} 
+                      barSize={maybeWidth(chartData.length * filtroOrigenProductividad.length)}
+                    />
+                  ))
+                ) : (
+                  <Bar 
+                    dataKey="tiempo_total" 
+                    name="Tiempo Total" 
+                    fill="#0ea5e9" 
+                    radius={[4, 4, 0, 0]} 
+                    barSize={maybeWidth(chartData.length)}
+                  />
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>

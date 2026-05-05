@@ -261,7 +261,7 @@ export default function EducacionContinua() {
         ) : (
           events.map((tarea, idx) => (
             <TareaTimerItem 
-              key={tarea.id || idx} 
+              key={`tarea-${tarea.id || 'new'}-${idx}`} 
               tarea={tarea} 
               onUpdate={() => queryClient.invalidateQueries({ queryKey: ['tareas-ec'] })} 
               hideType={true}
@@ -400,11 +400,11 @@ export default function EducacionContinua() {
               <p className="text-sm text-secondary text-center py-4">No hay proyectos registrados.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
-                 {proyectos.map(proyecto => {
+                 {proyectos.map((proyecto, idx) => {
                    const projectCost = getProjectCost(proyecto.nombre);
                    return (
                      <li 
-                       key={proyecto.id} 
+                       key={`proj-${proyecto.id || 'new'}-${idx}`} 
                        onClick={() => setSelectedProyecto(proyecto.nombre)}
                        className={`py-3 flex justify-between items-center px-3 rounded-md transition-colors cursor-pointer ${
                          selectedProyecto === proyecto.nombre ? 'bg-primary/10 border border-primary/20' : 'hover:bg-slate-50 border border-transparent'
@@ -478,9 +478,9 @@ export default function EducacionContinua() {
               </div>
             ) : (
               <div className="space-y-3">
-                {tareasDelProyecto.map(tarea => (
+                {tareasDelProyecto.map((tarea, idx) => (
                   <TareaTimerItem 
-                    key={tarea.id} 
+                    key={`proj-tarea-${tarea.id || 'new'}-${idx}`} 
                     tarea={tarea} 
                     onUpdate={() => queryClient.invalidateQueries({ queryKey: ['tareas-ec'] })}
                     customRates={hourlyRates}
@@ -525,8 +525,8 @@ export default function EducacionContinua() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.keys(HOURLY_RATES).map((tipo) => (
-                <div key={tipo} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-3">
+              {Object.keys(HOURLY_RATES).map((tipo, idx) => (
+                <div key={`rate-${tipo}-${idx}`} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-slate-700">{tipo}</span>
                     <span className="text-[10px] uppercase font-bold text-primary bg-primary/5 px-2 py-1 rounded">Valor / Hora</span>
