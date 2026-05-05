@@ -52,6 +52,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   const [activeTab, setActiveTab] = useState<'tareas' | 'productividad'>('tareas');
   const [productivityPeriod, setProductivityPeriod] = useState<'diaria' | 'semanal' | 'mensual'>('diaria');
   
+  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
+
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
   const [filtroOrigen, setFiltroOrigen] = useState<string>(''); // Para Curso/Proyecto
@@ -467,7 +469,14 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
 
     const chartData = Object.keys(chartDataMap)
       .sort()
-      .map((key) => chartDataMap[key]);
+      .map((key) => {
+        const data = chartDataMap[key];
+        return {
+          ...data,
+          tiempo_estimado: Number((data.tiempo_estimado / 3600).toFixed(2)),
+          tiempo_invertido: Number((data.tiempo_invertido / 3600).toFixed(2)),
+        };
+      });
 
     return (
       <div className="bg-white p-6 md:p-8 rounded-3xl border border-muted/30 shadow-sm mt-6">
@@ -648,17 +657,19 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           <CalendarDays className={`mr-2 h-4 w-4 ${activeTab === 'tareas' ? 'text-primary' : 'text-slate-400'}`} />
           Tareas
         </button>
-        <button
-          onClick={() => setActiveTab('productividad')}
-          className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
-            activeTab === 'productividad'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
-          }`}
-        >
-          <Activity className={`mr-2 h-4 w-4 ${activeTab === 'productividad' ? 'text-primary' : 'text-slate-400'}`} />
-          Productividad
-        </button>
+        {isTeamOrAdmin && (
+          <button
+            onClick={() => setActiveTab('productividad')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'productividad'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <Activity className={`mr-2 h-4 w-4 ${activeTab === 'productividad' ? 'text-primary' : 'text-slate-400'}`} />
+            Productividad
+          </button>
+        )}
       </div>
 
       {/* Espaciador explícito solicitado por el usuario */}
