@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell, Plus, X, Activity } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, AlertCircle, Loader2, ChevronLeft, ChevronRight, Bell, Plus, X, Activity, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EntregaCalendario } from '../types';
@@ -57,6 +57,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
   const [filtroOrigen, setFiltroOrigen] = useState<string>(''); // Para Curso/Proyecto
+  const [filtroOrigenProductividad, setFiltroOrigenProductividad] = useState<string[]>([]); // Para filtro en tab de productividad
+  const [isProductivityFilterOpen, setIsProductivityFilterOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     proyecto: 'Diseño Virtual',
@@ -434,9 +436,18 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
   };
 
   const renderProductivity = () => {
-    const completedTasks = entregas.filter(
+    let completedTasks = entregas.filter(
       (e) => (e.estado === 'Completado' || e.estado === 'Completada') && e.fecha_completada
     );
+
+    const origenesDisponiblesProductividad = Array.from(new Set(completedTasks.map(e => String(e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual')).filter(Boolean))).sort();
+
+    if (filtroOrigenProductividad.length > 0) {
+      completedTasks = completedTasks.filter(e => {
+        const origen = String(e.proyecto || (e.curso && e.curso.nombre) || 'Diseño Virtual');
+        return filtroOrigenProductividad.includes(origen);
+      });
+    }
 
     // Group tasks by the selected period
     const chartDataMap: Record<string, { name: string; tiempo_total: number }> = {};
@@ -484,9 +495,62 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
               <Activity className="w-6 h-6 mr-2 text-primary" />
               Métricas de Productividad
             </h2>
-            <p className="text-sm text-secondary mt-1">
+            <p className="text-sm text-secondary mt-1 mb-4">
               Visualiza el tiempo total registrado en tareas completadas
             </p>
+            <div className="flex flex-col gap-2 relative">
+              <button
+                type="button"
+                onClick={() => setIsProductivityFilterOpen(!isProductivityFilterOpen)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium min-w-[200px] flex items-center justify-between"
+              >
+                <span className="truncate max-w-[180px]">
+                  {filtroOrigenProductividad.length === 0 
+                    ? 'Todos los Proyectos / Cursos' 
+                    : `${filtroOrigenProductividad.length} seleccionado${filtroOrigenProductividad.length > 1 ? 's' : ''}`}
+                </span>
+                <ChevronDown className="w-4 h-4 text-slate-400 ml-2" />
+              </button>
+
+              {isProductivityFilterOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsProductivityFilterOpen(false)}
+                  ></div>
+                  <div className="absolute top-full left-0 mt-1 w-full sm:w-[240px] bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-2 max-h-60 overflow-y-auto">
+                  <div className="px-3 pb-2 mb-2 border-b border-slate-100 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proyectos</span>
+                    {(filtroOrigenProductividad.length > 0) && (
+                      <button 
+                        onClick={() => setFiltroOrigenProductividad([])}
+                        className="text-[10px] text-primary hover:text-primary-hover font-medium underline"
+                      >
+                        Limpiar todos
+                      </button>
+                    )}
+                  </div>
+                  {origenesDisponiblesProductividad.map(origen => (
+                    <label key={origen} className="flex items-center px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        className="mr-3 rounded border-slate-300 text-primary focus:ring-primary"
+                        checked={filtroOrigenProductividad.includes(origen)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFiltroOrigenProductividad(prev => [...prev, origen]);
+                          } else {
+                            setFiltroOrigenProductividad(prev => prev.filter(p => p !== origen));
+                          }
+                        }}
+                      />
+                      <span className="text-sm text-slate-700 truncate">{origen}</span>
+                    </label>
+                  ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           
           <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
