@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -54,7 +54,7 @@ export default function Cursos() {
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
   const canViewActivos = hasPermission(user, 'courses', 'tab_lista');
   const canViewSolicitudes = hasPermission(user, 'courses', 'tab_solicitudes');
-  const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes'>(() => {
+  const [activeTab, setActiveTab] = useState<'activos' | 'solicitudes' | 'preparacion'>(() => {
     if ((location.state as any)?.tab === 'solicitudes' && canViewSolicitudes) return 'solicitudes';
     return canViewActivos ? 'activos' : canViewSolicitudes ? 'solicitudes' : 'activos';
   });
@@ -80,7 +80,7 @@ export default function Cursos() {
   const { data: cursosData, isLoading: loading } = useQuery({
     queryKey: ['cursos', activeTab, user?.id, user?.role, user?.facultad, user?.programa],
     queryFn: async () => {
-      const isSolicitudesTab = activeTab === 'solicitudes' && isTeamOrAdmin;
+      const isSolicitudesTab = (activeTab === 'solicitudes' || activeTab === 'preparacion') && isTeamOrAdmin;
       const table = isSolicitudesTab ? 'solicitudes_cursos' : 'cursos';
       
       const selectFields = isSolicitudesTab 
@@ -364,6 +364,9 @@ export default function Cursos() {
   };
 
   const cursosFiltrados = cursos.filter(curso => {
+    if (activeTab === 'preparacion') {
+      if ((curso.estado || 'Solicitud Recibida') !== 'En Preparación') return false;
+    }
     const matchPeriodo = (activeTab === 'activos' && filtroPeriodo) ? curso.periodo === filtroPeriodo : true;
     const matchPrograma = filtroPrograma ? curso.programa === filtroPrograma : true;
     return matchPeriodo && matchPrograma;
@@ -412,6 +415,19 @@ export default function Cursos() {
         )}
         {hasPermission(user, 'courses', 'tab_solicitudes') && (
           <button
+            onClick={() => setActiveTab('preparacion')}
+            className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
+              activeTab === 'preparacion'
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-secondary hover:text-text-main hover:bg-slate-50'
+            }`}
+          >
+            <Clock className={`mr-2 h-4 w-4 ${activeTab === 'preparacion' ? 'text-primary' : 'text-slate-400'}`} />
+            En Preparación
+          </button>
+        )}
+        {hasPermission(user, 'courses', 'tab_solicitudes') && (
+          <button
             onClick={() => setActiveTab('solicitudes')}
             className={`px-6 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center ${
               activeTab === 'solicitudes'
@@ -443,7 +459,7 @@ export default function Cursos() {
             ))}
           </select>
         </div>
-        {activeTab !== 'solicitudes' && (
+        {activeTab === 'activos' && (
           <div className="flex-1 min-w-[200px]">
             <label className="block text-[10px] font-bold text-secondary uppercase tracking-widest mb-1.5 ml-1">
               Filtrar por Periodo:
@@ -479,7 +495,7 @@ export default function Cursos() {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-background">
               <tr>
-                {activeTab === 'solicitudes' ? (
+                {activeTab === 'solicitudes' || activeTab === 'preparacion' ? (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Curso / Tipo</th>
@@ -501,19 +517,19 @@ export default function Cursos() {
             <tbody className="bg-white divide-y divide-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={activeTab === 'solicitudes' ? 4 : 6} className="px-6 py-4 text-center">
+                  <td colSpan={activeTab === 'solicitudes' || activeTab === 'preparacion' ? 4 : 6} className="px-6 py-4 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                   </td>
                 </tr>
               ) : (
                 cursosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab === 'solicitudes' ? 4 : 6} className="px-6 py-4 text-center text-sm text-secondary">
+                    <td colSpan={activeTab === 'solicitudes' || activeTab === 'preparacion' ? 4 : 6} className="px-6 py-4 text-center text-sm text-secondary">
                       No hay solicitudes o cursos registrados.
                     </td>
                   </tr>
-                ) : activeTab === 'solicitudes' ? (
-                  ESTADOS_SOLICITUD.map(estado => {
+                ) : activeTab === 'solicitudes' || activeTab === 'preparacion' ? (
+                  (activeTab === 'preparacion' ? ['En Preparación'] : ESTADOS_SOLICITUD.filter(e => e !== 'En Preparación')).map(estado => {
                     const solicitudesEnEstado = cursosFiltrados.filter(c => (c.estado || 'Solicitud Recibida') === estado);
                     if (solicitudesEnEstado.length === 0) return null;
                     
