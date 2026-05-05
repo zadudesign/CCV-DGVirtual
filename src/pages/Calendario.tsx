@@ -439,7 +439,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     );
 
     // Group tasks by the selected period
-    const chartDataMap: Record<string, { name: string; tiempo_estimado: number; tiempo_invertido: number }> = {};
+    const chartDataMap: Record<string, { name: string; tiempo_total: number }> = {};
 
     completedTasks.forEach((task) => {
       const date = parseISO(task.fecha_completada);
@@ -460,11 +460,10 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       }
 
       if (!chartDataMap[key]) {
-        chartDataMap[key] = { name, tiempo_estimado: 0, tiempo_invertido: 0 };
+        chartDataMap[key] = { name, tiempo_total: 0 };
       }
 
-      chartDataMap[key].tiempo_estimado += Number(task.tiempo_estimado) || 0;
-      chartDataMap[key].tiempo_invertido += Number(task.tiempo_invertido) || 0;
+      chartDataMap[key].tiempo_total += (Number(task.tiempo_estimado) || 0) + (Number(task.tiempo_invertido) || 0);
     });
 
     const chartData = Object.keys(chartDataMap)
@@ -473,8 +472,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         const data = chartDataMap[key];
         return {
           ...data,
-          tiempo_estimado: Number((data.tiempo_estimado / 3600).toFixed(2)),
-          tiempo_invertido: Number((data.tiempo_invertido / 3600).toFixed(2)),
+          tiempo_total: Number((data.tiempo_total / 3600).toFixed(2)),
         };
       });
 
@@ -487,7 +485,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
               Métricas de Productividad
             </h2>
             <p className="text-sm text-secondary mt-1">
-              Visualiza el tiempo estimado frente al tiempo invertido
+              Visualiza el tiempo total registrado en tareas completadas
             </p>
           </div>
           
@@ -557,15 +555,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
                   iconType="circle"
                 />
                 <Bar 
-                  dataKey="tiempo_estimado" 
-                  name="Tiempo Estimado" 
-                  fill="#94a3b8" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={maybeWidth(chartData.length)}
-                />
-                <Bar 
-                  dataKey="tiempo_invertido" 
-                  name="Tiempo Invertido" 
+                  dataKey="tiempo_total" 
+                  name="Tiempo Total" 
                   fill="#0ea5e9" 
                   radius={[4, 4, 0, 0]} 
                   barSize={maybeWidth(chartData.length)}
