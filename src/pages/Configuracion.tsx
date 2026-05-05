@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabase';
 import { FileSignature, Loader2, Save, CheckCircle2, UserCircle, Shield } from 'lucide-react';
 import { RolePermissionsEditor } from '../components/RolePermissionsEditor';
 import { hasPermission } from '../lib/permissions';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function Configuracion() {
   const { user, refreshSession } = useAuth();
+  const queryClient = useQueryClient();
   
   const canViewPerfil = hasPermission(user, 'settings', 'tab_perfil');
   const canViewPermisos = hasPermission(user, 'settings', 'tab_permisos');
@@ -14,36 +16,29 @@ export default function Configuracion() {
 
   const [firmaDigital, setFirmaDigital] = useState<string>('');
   const [photoURL, setPhotoURL] = useState<string>('');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'personal' | 'permisos'>(defaultTab);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('firma_digital, photoURL')
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        if (data) {
-          if (data.firma_digital) setFirmaDigital(data.firma_digital);
-          if (data.photoURL) setPhotoURL(data.photoURL);
-        }
-      } catch (err: any) {
-        console.error('Error fetching profile:', err);
-      } finally {
-        setLoading(false);
+  const { isLoading: loading } = useQuery({
+    queryKey: ['profile-config', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('firma_digital, photoURL')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      if (data) {
+        if (data.firma_digital) setFirmaDigital(data.firma_digital);
+        if (data.photoURL) setPhotoURL(data.photoURL);
       }
-    };
-
-    fetchProfile();
-  }, [user]);
+      return data;
+    },
+    enabled: !!user
+  });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,11 +87,12 @@ export default function Configuracion() {
       if (error) throw error;
 
       await refreshSession();
+      queryClient.invalidateQueries({ queryKey: ['profile-config', user.id] });
       setSuccessMessage('Perfil actualizado correctamente.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err: any) {
       console.error('Error updating signature:', err);
-      setError('Hubo un error al guardar la firma digital.');
+      setError('Hubo un error al guardar la firma digital o foto de perfil.');
     } finally {
       setSaving(false);
     }

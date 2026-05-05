@@ -13,8 +13,6 @@ import {
   Shield,
   Plus,
   Trash2,
-  Edit,
-  Save,
   X,
   ChevronRight
 } from 'lucide-react';
@@ -22,10 +20,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Role } from '../types';
 import { getStoredRolePermissions, hasPermission } from '../lib/permissions';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function Usuarios() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const queryClient = useQueryClient();
   
   const canViewRegistrados = hasPermission(user, 'users', 'tab_registrados');
   const canViewInscribir = hasPermission(user, 'users', 'tab_inscribir');
@@ -38,12 +38,6 @@ export default function Usuarios() {
 
   const [activeTab, setActiveTab] = useState<'registrados' | 'inscribir' | 'facultades'>(defaultTab);
   
-  const [usuarios, setUsuarios] = useState<User[]>([]);
-  const [facultades, setFacultades] = useState<any[]>([]);
-  const [programas, setProgramas] = useState<any[]>([]);
-  const [cursos, setCursos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Filtros de la lista
   const [filtroFacultad, setFiltroFacultad] = useState<string>('');
   const [filtroPrograma, setFiltroPrograma] = useState<string>('');
@@ -69,14 +63,10 @@ export default function Usuarios() {
   const [newFacultad, setNewFacultad] = useState('');
   const [newPrograma, setNewPrograma] = useState('');
   const [selectedFacultadId, setSelectedFacultadId] = useState('');
-  const [editingFacultadId, setEditingFacultadId] = useState<string | null>(null);
-  const [editingFacultadNombre, setEditingFacultadNombre] = useState('');
-  const [editingProgramaId, setEditingProgramaId] = useState<string | null>(null);
-  const [editingProgramaNombre, setEditingProgramaNombre] = useState('');
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const { data: mainData, isLoading } = useQuery({
+    queryKey: ['usuarios', user?.role, user?.facultad, user?.programa],
+    queryFn: async () => {
       let query = supabase.from('profiles').select('*').order('name');
       
       if (user?.role === 'decano' && user.facultad) {
@@ -93,32 +83,34 @@ export default function Usuarios() {
         .select('id, nombre, docente_id, evaluador_id');
       if (cursosError) throw cursosError;
       
-      setUsuarios((usersData as User[]) || []);
-      setCursos(cursosData || []);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        usuarios: (usersData as User[]) || [],
+        cursos: cursosData || []
+      };
+    },
+    enabled: !!user
+  });
 
-  const fetchFacultadesYProgramas = async () => {
-    try {
-      const { data: fData } = await supabase.from('facultades').select('*').order('nombre');
-      const { data: pData } = await supabase.from('programas').select('*, facultades(nombre)').order('nombre');
-      setFacultades(fData || []);
-      setProgramas(pData || []);
-    } catch (err) {
-      console.error('Error fetching facultades/programas:', err);
+  const { data: metaData } = useQuery({
+    queryKey: ['facultades_programas'],
+    queryFn: async () => {
+      const { data: fData, error: fError } = await supabase.from('facultades').select('*').order('nombre');
+      if (fError) throw fError;
+      const { data: pData, error: pError } = await supabase.from('programas').select('*, facultades(nombre)').order('nombre');
+      if (pError) throw pError;
+      
+      return {
+        facultades: fData || [],
+        programas: pData || []
+      };
     }
-  };
+  });
 
-  useEffect(() => {
-    if (user) {
-      fetchData();
-      fetchFacultadesYProgramas();
-    }
-  }, [user]);
+  const usuarios = mainData?.usuarios || [];
+  const cursos = mainData?.cursos || [];
+  const facultades = metaData?.facultades || [];
+  const programas = metaData?.programas || [];
+  const loading = isLoading;
 
   const handleSort = (key: keyof User | 'last_access') => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -171,7 +163,7 @@ export default function Usuarios() {
         nombre: '', email: '', role: 'docente', documento: '',
         telefono: '', facultad: '', programa: ''
       });
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       setActiveTab('registrados');
     } catch (err: any) {
       alert('Error al inscribir usuario: ' + err.message);
@@ -183,25 +175,31 @@ export default function Usuarios() {
   const handleAddFacultad = async () => {
     if (!newFacultad.trim()) return;
     const { error } = await supabase.from('facultades').insert([{ nombre: newFacultad }]);
-    if (!error) { setNewFacultad(''); fetchFacultadesYProgramas(); }
+    if (!error) { 
+      setNewFacultad(''); 
+      queryClient.invalidateQueries({ queryKey: ['facultades_programas'] });
+    }
   };
 
   const handleDeleteFacultad = async (id: string, nombre: string) => {
     if (!window.confirm(`¿Seguro que quieres eliminar la facultad "${nombre}"?`)) return;
     const { error } = await supabase.from('facultades').delete().eq('id', id);
-    if (!error) fetchFacultadesYProgramas();
+    if (!error) queryClient.invalidateQueries({ queryKey: ['facultades_programas'] });
   };
 
   const handleAddPrograma = async () => {
     if (!newPrograma.trim() || !selectedFacultadId) return;
     const { error } = await supabase.from('programas').insert([{ nombre: newPrograma, facultad_id: selectedFacultadId }]);
-    if (!error) { setNewPrograma(''); fetchFacultadesYProgramas(); }
+    if (!error) { 
+      setNewPrograma(''); 
+      queryClient.invalidateQueries({ queryKey: ['facultades_programas'] });
+    }
   };
 
   const handleDeletePrograma = async (id: string, nombre: string) => {
     if (!window.confirm(`¿Seguro que quieres eliminar el programa "${nombre}"?`)) return;
     const { error } = await supabase.from('programas').delete().eq('id', id);
-    if (!error) fetchFacultadesYProgramas();
+    if (!error) queryClient.invalidateQueries({ queryKey: ['facultades_programas'] });
   };
 
   const getFilteredOptions = (field: 'facultad' | 'programa' | 'role') => {

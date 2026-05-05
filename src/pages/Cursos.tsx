@@ -8,6 +8,7 @@ import { DynamicIcon } from '../components/DynamicIcon';
 import { hasPermission } from '../lib/permissions';
 
 import { Link, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ESTADOS_SOLICITUD = [
   'Solicitud Recibida',
@@ -21,8 +22,7 @@ const ESTADOS_SOLICITUD = [
 export default function Cursos() {
   const { user } = useAuth();
   const location = useLocation();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
@@ -48,7 +48,6 @@ export default function Cursos() {
   
   // Solicitud Form State
   const [solicitanteId, setSolicitanteId] = useState('');
-  const [solicitantes, setSolicitantes] = useState<User[]>([]);
 
   // Filters
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>('');
@@ -60,39 +59,27 @@ export default function Cursos() {
     return canViewActivos ? 'activos' : canViewSolicitudes ? 'solicitudes' : 'activos';
   });
 
-  // Options
-  const [docentes, setDocentes] = useState<User[]>([]);
-  const [evaluadores, setEvaluadores] = useState<User[]>([]);
-  const [programas, setProgramas] = useState<{id: string, nombre: string, facultad?: string}[]>([]);
+  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
 
-  useEffect(() => {
-    fetchCursos();
-    if (user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador') {
-      fetchOptions();
-    }
-    if (user?.role === 'admin') {
-      fetchSolicitantes();
-    }
-  }, [user, activeTab]);
-
-  const fetchSolicitantes = async () => {
-    try {
+  const { data: solicitantesData } = useQuery({
+    queryKey: ['solicitantes'],
+    queryFn: async () => {
+      if (user?.role !== 'admin') return [];
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .in('role', ['coordinador', 'decano'])
         .order('name');
-      
       if (error) throw error;
-      setSolicitantes(data || []);
-    } catch (err) {
-      console.error('Error fetching solicitantes:', err);
-    }
-  };
+      return data || [];
+    },
+    enabled: user?.role === 'admin'
+  });
+  const solicitantes = solicitantesData || [];
 
-  const fetchCursos = async () => {
-    try {
-      setLoading(true);
+  const { data: cursosData, isLoading: loading } = useQuery({
+    queryKey: ['cursos', activeTab, user?.id, user?.role, user?.facultad, user?.programa],
+    queryFn: async () => {
       const isSolicitudesTab = activeTab === 'solicitudes' && isTeamOrAdmin;
       const table = isSolicitudesTab ? 'solicitudes_cursos' : 'cursos';
       
@@ -113,89 +100,65 @@ export default function Cursos() {
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
-      
       if (error) throw error;
-      setCursos(data as any[]);
-    } catch (err) {
-      console.error('Error fetching cursos:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data as any[];
+    },
+    enabled: !!user
+  });
+  const cursos = cursosData || [];
 
-  const fetchOptions = async () => {
-    try {
+  const { data: optionsData } = useQuery({
+    queryKey: ['cursos-options', user?.id, user?.role, user?.facultad, user?.programa],
+    queryFn: async () => {
+      const options = { docentes: [] as User[], evaluadores: [] as User[], programas: [] as any[] };
+      if (!['admin', 'decano', 'coordinador'].includes(user?.role || '')) return options;
+
       // Fetch posibles docentes
-      let dQuery = supabase
-        .from('profiles')
-        .select('*')
-        .in('role', ['docente', 'coordinador', 'decano']);
-      
-      if (user?.role === 'decano' && user.facultad) {
-        dQuery = dQuery.eq('facultad', user.facultad);
-      } else if (user?.role === 'coordinador' && user.programa) {
-        dQuery = dQuery.eq('programa', user.programa);
-      }
-      
+      let dQuery = supabase.from('profiles').select('*').in('role', ['docente', 'coordinador', 'decano']);
+      if (user?.role === 'decano' && user.facultad) dQuery = dQuery.eq('facultad', user.facultad);
+      else if (user?.role === 'coordinador' && user.programa) dQuery = dQuery.eq('programa', user.programa);
       const { data: dData } = await dQuery.order('name');
-      if (dData) setDocentes(dData as User[]);
+      options.docentes = (dData || []) as User[];
 
       // Fetch posibles evaluadores
-      let eQuery = supabase
-        .from('profiles')
-        .select('*')
-        .in('role', ['evaluador', 'docente', 'coordinador', 'decano']);
-      
-      if (user?.role === 'decano' && user.facultad) {
-        eQuery = eQuery.eq('facultad', user.facultad);
-      } else if (user?.role === 'coordinador' && user.programa) {
-        eQuery = eQuery.eq('programa', user.programa);
-      }
-      
+      let eQuery = supabase.from('profiles').select('*').in('role', ['evaluador', 'docente', 'coordinador', 'decano']);
+      if (user?.role === 'decano' && user.facultad) eQuery = eQuery.eq('facultad', user.facultad);
+      else if (user?.role === 'coordinador' && user.programa) eQuery = eQuery.eq('programa', user.programa);
       const { data: eData } = await eQuery.order('name');
-      if (eData) setEvaluadores(eData as User[]);
+      options.evaluadores = (eData || []) as User[];
 
       // Fetch programas
-      let pData = [];
       if (user?.role === 'decano' && user.facultad) {
-        // Fetch the facultad ID first
-        const { data: fData } = await supabase
-          .from('facultades')
-          .select('id')
-          .eq('nombre', user.facultad)
-          .single();
-          
+        const { data: fData } = await supabase.from('facultades').select('id').eq('nombre', user.facultad).single();
         if (fData) {
-          const { data } = await supabase
-            .from('programas')
-            .select('id, nombre')
-            .eq('facultad_id', fData.id);
-          pData = data || [];
+          const { data } = await supabase.from('programas').select('id, nombre').eq('facultad_id', fData.id);
+          options.programas = data || [];
         }
       } else if (user?.role === 'coordinador' && user.programa) {
-        const { data } = await supabase
-          .from('programas')
-          .select('id, nombre')
-          .eq('nombre', user.programa);
-        pData = data || [];
+        const { data } = await supabase.from('programas').select('id, nombre').eq('nombre', user.programa);
+        options.programas = data || [];
       } else {
         const { data } = await supabase.from('programas').select('id, nombre, facultades(nombre)');
-        pData = data?.map((p: any) => ({
+        options.programas = data?.map((p: any) => ({
           id: p.id,
           nombre: p.nombre,
           facultad: p.facultades?.nombre
         })) || [];
       }
-      
-      setProgramas(pData);
-      
-      if (user?.role === 'coordinador' && user.programa) {
-        setPrograma(user.programa);
-      }
-    } catch (err) {
-      console.error('Error fetching options:', err);
+      return options;
+    },
+    enabled: !!user
+  });
+  
+  const docentes = optionsData?.docentes || [];
+  const evaluadores = optionsData?.evaluadores || [];
+  const programas = optionsData?.programas || [];
+
+  useEffect(() => {
+    if (user?.role === 'coordinador' && user.programa) {
+      setPrograma(user.programa);
     }
-  };
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -253,7 +216,7 @@ export default function Cursos() {
       setDriveUrl('');
       setMoodleUrl('');
       setIcon('BookOpen');
-      fetchCursos();
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
     } catch (err) {
       console.error('Error creating curso:', err);
       alert('Error al crear el curso');
@@ -275,7 +238,7 @@ export default function Cursos() {
       if (error) throw error;
 
       alert('Solicitud eliminada correctamente.');
-      fetchCursos();
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
     } catch (err) {
       console.error('Error deleting request:', err);
       alert('Error al eliminar la solicitud.');
@@ -293,7 +256,7 @@ export default function Cursos() {
         .eq('id', id);
 
       if (error) throw error;
-      fetchCursos();
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
     } catch (err) {
       console.error('Error updating request status:', err);
       alert('Error al actualizar el estado de la solicitud.');
@@ -332,7 +295,7 @@ export default function Cursos() {
       setSolicitanteId('');
       setPrograma('');
       setTipoSolicitud('Creación Completa');
-      fetchCursos();
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
       alert('Solicitud cargada correctamente');
     } catch (err) {
       console.error('Error loading request:', err);
@@ -361,7 +324,7 @@ export default function Cursos() {
 
       const data = await response.json();
       alert(`Sincronización exitosa: ${data.progreso}% completado (${data.completadas}/${data.total} tareas)`);
-      fetchCursos();
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
     } catch (error) {
       console.error('Error syncing:', error);
       alert('Error al sincronizar con ClickUp. Verifica que el ID de la lista sea correcto y que la API Key esté configurada.');
@@ -399,8 +362,6 @@ export default function Cursos() {
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
-
-  const isTeamOrAdmin = user?.role === 'admin' || ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
 
   const cursosFiltrados = cursos.filter(curso => {
     const matchPeriodo = (activeTab === 'activos' && filtroPeriodo) ? curso.periodo === filtroPeriodo : true;

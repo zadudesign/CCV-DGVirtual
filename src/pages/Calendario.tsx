@@ -24,20 +24,18 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 
 import { HOURLY_RATES } from '../lib/constants';
+import { TareaTimerItem } from '../components/TareaTimerItem';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const COLOMBIA_TZ = 'America/Bogota';
-import { TareaTimerItem } from '../components/TareaTimerItem';
 
 export default function Calendario({ cursoId }: { cursoId?: string }) {
   const { user } = useAuth();
-  const [entregas, setEntregas] = useState<EntregaCalendario[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [proyectos, setProyectos] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [hourlyRates, setHourlyRates] = useState<Record<string, number>>(HOURLY_RATES);
   
   // Filtros
   const [filtroEncargado, setFiltroEncargado] = useState<string>('');
@@ -52,65 +50,32 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     rol_destino: 'Diseño'
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchEntregas();
-      fetchProyectos();
-      fetchRates();
-
-      const taskSubscription = supabase
-        .channel('calendario_tasks')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'notificaciones_tareas'
-        }, () => {
-          fetchEntregas();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(taskSubscription);
-      };
-    }
-  }, [user, cursoId]);
-
-  const fetchRates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('configuracion_tarifas')
-        .select('*');
-      
-      if (!error && data && data.length > 0) {
-        const ratesMap: Record<string, number> = { ...HOURLY_RATES };
-        data.forEach((r: any) => {
-          ratesMap[r.nombre_tipo] = r.tarifa_hora;
-        });
-        setHourlyRates(ratesMap);
-      }
-    } catch (e) {
-      console.error('Error fetching rates:', e);
-    }
-  };
-
-  const fetchProyectos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('proyectos_ec')
-        .select('nombre')
-        .order('nombre');
+  const { data: ratesData } = useQuery({
+    queryKey: ['tarifas-ec'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('configuracion_tarifas').select('*');
+      const ratesMap: Record<string, number> = { ...HOURLY_RATES };
       if (!error && data) {
-        setProyectos(data);
+        data.forEach((r: any) => { ratesMap[r.nombre_tipo] = r.tarifa_hora; });
       }
-    } catch (e) {
-      console.error('Error fetching proyectos:', e);
+      return ratesMap;
     }
-  };
+  });
+  const hourlyRates = ratesData || HOURLY_RATES;
 
-  const fetchEntregas = async () => {
-    try {
-      setLoading(true);
-      
+  const { data: proyectosData } = useQuery({
+    queryKey: ['proyectos'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('proyectos_ec').select('nombre').order('nombre');
+      if (error && error.code !== '42P01') throw error;
+      return data || [];
+    }
+  });
+  const proyectos = proyectosData || [];
+
+  const { data: entregasData, isLoading } = useQuery({
+    queryKey: ['calendario-tareas', user?.id, cursoId],
+    queryFn: async () => {
       let notificacionesQuery = supabase
         .from('notificaciones_tareas')
         .select('*, curso:cursos(nombre, facultad, programa)');
@@ -127,30 +92,21 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
       
       let filteredData = notificacionesData || [];
 
-      // Manual filtering for non-admins to handle complex role-based access
       if (!cursoId && user?.role !== 'admin') {
         const area = user?.team_area || user?.role;
         filteredData = filteredData.filter(row => {
-          // 1. Assigned directly to user or their role/area
           if (row.usuario_id === user?.id || row.rol_destino === area) return true;
-          
-          // 2. Course-related tasks for Decanos/Coordinadores
           if (row.curso) {
             if (user?.role === 'decano' && row.curso.facultad === user.facultad) return true;
             if (user?.role === 'coordinador' && row.curso.programa === user.programa) return true;
           }
-          
           return false;
         });
       }
       
       const events: any[] = [];
-      
       filteredData.forEach((row: any) => {
-        // Ocultar tareas completadas según requerimiento
-        if (row.estado === 'Completada' || row.estado === 'Completado') {
-          return;
-        }
+        if (row.estado === 'Completada' || row.estado === 'Completado') return;
 
         if (row.fecha_vencimiento) {
           events.push({
@@ -160,7 +116,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
             fecha_inicial: row.fecha_inicial,
             fecha_entrega: row.fecha_vencimiento,
             fecha_completada: row.fecha_completada,
-            fecha_inicio: row.fecha_inicio, // If it exists in the future
+            fecha_inicio: row.fecha_inicio,
             estado: row.estado,
             detalle: row.descripcion || '',
             tipo_tarifa: row.tipo_tarifa,
@@ -173,56 +129,42 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
           });
         }
       });
+      return events;
+    },
+    enabled: !!user
+  });
+  const entregas = entregasData || [];
 
-      setEntregas(events);
-    } catch (error) {
-      console.error('Error fetching entregas:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (user) {
+      const taskSubscription = supabase
+        .channel('calendario_tasks')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'notificaciones_tareas'
+        }, () => {
+          queryClient.invalidateQueries({ queryKey: ['calendario-tareas'] });
+          queryClient.invalidateQueries({ queryKey: ['tareas-ec'] });
+          queryClient.invalidateQueries({ queryKey: ['tasks-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(taskSubscription);
+      };
     }
-  };
+  }, [user, queryClient]);
 
   const handleStatusChange = async (event: EntregaCalendario, newStatus: string) => {
-    // Optimistic update
-    setEntregas(prev => prev.map(e => {
-      if (e.id === event.id) {
-        return { 
-          ...e, 
-          estado: newStatus as any,
-          fecha_completada: newStatus === 'Completado' ? formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX") : null
-        };
-      }
-      return e;
-    }));
-
-    try {
-      if (event.isNotificacion) {
-        const payload: any = { estado: newStatus === 'Completado' ? 'Completada' : 'Pendiente' };
-        if (newStatus === 'Completado') {
-          payload.fecha_completada = formatInTimeZone(new Date(), COLOMBIA_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
-        } else {
-          payload.fecha_completada = null;
-        }
-
-        const { error } = await supabase
-          .from('notificaciones_tareas')
-          .update(payload)
-          .eq('id', event.id);
-          
-        if (error) throw error;
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      fetchEntregas();
-    }
+    // Keep this just in case, but TareaTimerItem manages its own state for status update mostly
   };
 
   const handleAddTarea = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Ensure date is stored with Colombia timezone offset
-      // If user picks 2023-10-27, we store it as 2023-10-27T00:00:00-05:00
       const fechaVencimientoColombia = `${formData.fecha_vencimiento}T00:00:00-05:00`;
 
       const payload: any = {
@@ -252,7 +194,8 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
         fecha_vencimiento: '',
         rol_destino: 'Diseño'
       });
-      fetchEntregas();
+      queryClient.invalidateQueries({ queryKey: ['calendario-tareas'] });
+      queryClient.invalidateQueries({ queryKey: ['tareas-ec'] });
     } catch (error: any) {
       console.error('Error adding tarea:', error);
       alert(`Error al agregar tarea: ${error.message || JSON.stringify(error)}`);
@@ -458,7 +401,12 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
               <TareaTimerItem 
                 key={event.id || idx} 
                 tarea={event} 
-                onUpdate={fetchEntregas} 
+                onUpdate={() => {
+                  queryClient.invalidateQueries({ queryKey: ['calendario-tareas'] });
+                  queryClient.invalidateQueries({ queryKey: ['tareas-ec'] });
+                  queryClient.invalidateQueries({ queryKey: ['tasks-stats'] });
+                  queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+                }} 
                 customRates={hourlyRates}
                 hideType={true}
                 hideRole={false}
@@ -470,7 +418,7 @@ export default function Calendario({ cursoId }: { cursoId?: string }) {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

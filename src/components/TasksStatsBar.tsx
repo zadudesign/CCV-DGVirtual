@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User, NotificacionTarea } from '../types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface TasksStatsBarProps {
   user: User;
 }
 
 export default function TasksStatsBar({ user }: TasksStatsBarProps) {
-  const [allTasks, setAllTasks] = useState<NotificacionTarea[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    fetchTasks();
-
     const taskSubscription = supabase
       .channel('tasks_stats_changes')
       .on('postgres_changes', { 
@@ -22,17 +21,18 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
         schema: 'public', 
         table: 'notificaciones_tareas'
       }, () => {
-        fetchTasks();
+        queryClient.invalidateQueries({ queryKey: ['tasks-stats', user.id] });
       })
       .subscribe();
 
     return () => {
       taskSubscription.unsubscribe();
     };
-  }, [user.id]);
+  }, [queryClient, user.id]);
 
-  const fetchTasks = async () => {
-    try {
+  const { data: allTasks = [], isLoading: loading } = useQuery({
+    queryKey: ['tasks-stats', user.id],
+    queryFn: async () => {
       let query = supabase
         .from('notificaciones_tareas')
         .select('*, curso:cursos(nombre)')
@@ -50,17 +50,11 @@ export default function TasksStatsBar({ user }: TasksStatsBarProps) {
       const { data, error } = await query;
 
       if (error) throw error;
-      setAllTasks(data || []);
-    } catch (error) {
-      console.error('Error fetching tasks for stats:', error);
-    } finally {
-      setLoading(false);
+      return (data || []) as NotificacionTarea[];
     }
-  };
+  });
 
   const pendingTasks = allTasks.filter(t => t.estado !== 'Completada' && t.estado !== 'Completado');
-
-  const navigate = useNavigate();
 
   return (
     <div 

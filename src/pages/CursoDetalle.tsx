@@ -9,19 +9,17 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, Radi
 import Calendario from './Calendario';
 import RendimientoProductividad from '../components/RendimientoProductividad';
 import { DocumentoCurso, NovedadCurso } from '../types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [curso, setCurso] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'documentacion' | 'construccion' | 'novedades' | 'calendario' | 'rendimiento'>('construccion');
   const [copiedId, setCopiedId] = useState(false);
   
   // Novedades state
-  const [novedades, setNovedades] = useState<NovedadCurso[]>([]);
-  const [loadingNovedades, setLoadingNovedades] = useState(false);
   const [showNovedadModal, setShowNovedadModal] = useState(false);
   const [submittingNovedad, setSubmittingNovedad] = useState(false);
   const [novedadForm, setNovedadForm] = useState({
@@ -33,8 +31,6 @@ export default function CursoDetalle() {
   const [ordenNovedades, setOrdenNovedades] = useState<'asc' | 'desc'>('desc');
   
   // Documentación state
-  const [documentos, setDocumentos] = useState<DocumentoCurso[]>([]);
-  const [loadingDocs, setLoadingDocs] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
   const [editingDoc, setEditingDoc] = useState<DocumentoCurso | null>(null);
   const [selectedDocForPreview, setSelectedDocForPreview] = useState<DocumentoCurso | null>(null);
@@ -45,12 +41,72 @@ export default function CursoDetalle() {
     estado: 'Pendiente' as 'Pendiente' | 'En Revisión' | 'Completo',
     fecha: ''
   });
+
+  const { data: curso, isLoading: loading } = useQuery({
+    queryKey: ['curso', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cursos')
+        .select(`
+          *,
+          docente:profiles!docente_id(name, email),
+          evaluador:profiles!evaluador_id(name, email),
+          creador:profiles!creador_id(name, email)
+        `)
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      
+      if (user?.role !== 'admin') {
+        let hasAccess = false;
+        if (user?.role === 'decano' && data.facultad === user.facultad) hasAccess = true;
+        else if (user?.role === 'coordinador' && data.programa === user.programa) hasAccess = true;
+        else if (user?.role === 'docente' && data.docente_id === user.id) hasAccess = true;
+        else if (user?.role === 'evaluador' && data.evaluador_id === user.id) hasAccess = true;
+        else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) hasAccess = true;
+        
+        if (!hasAccess) {
+          navigate('/cursos');
+          return null;
+        }
+      }
+      return data;
+    },
+    enabled: !!id
+  });
+
+  const { data: documentosData, isLoading: loadingDocs } = useQuery({
+    queryKey: ['documentos-curso', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('documentos_cursos')
+        .select('*')
+        .eq('curso_id', id)
+        .order('created_at', { ascending: true });
+      if (error && error.code !== 'PGRST116') throw error;
+      return data || [];
+    },
+    enabled: !!id
+  });
+  const documentos = documentosData || [];
+
+  const { data: novedadesData, isLoading: loadingNovedades } = useQuery({
+    queryKey: ['novedades-curso', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('novedades_curso')
+        .select('*')
+        .eq('curso_id', id)
+        .order('created_at', { ascending: false });
+      if (error && error.code !== '42P01') throw error;
+      return data || [];
+    },
+    enabled: !!id
+  });
+  const novedades = novedadesData || [];
   
   useEffect(() => {
     if (id) {
-      fetchCurso();
-      fetchDocumentos();
-      fetchNovedades();
 
       // Suscribirse a cambios en tiempo real en la tabla cursos para este curso específico
       const channel = supabase
@@ -65,7 +121,7 @@ export default function CursoDetalle() {
           },
           (payload) => {
             console.log('Cambio detectado en Supabase (Make actualizó los datos):', payload);
-            fetchCurso(false); // Actualizar sin mostrar el loader
+            queryClient.invalidateQueries({ queryKey: ['curso', id] });
           }
         )
         .subscribe();
@@ -74,91 +130,7 @@ export default function CursoDetalle() {
         supabase.removeChannel(channel);
       };
     }
-  }, [id]);
-
-  const fetchCurso = async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const { data, error } = await supabase
-        .from('cursos')
-        .select(`
-          *,
-          docente:profiles!docente_id(name, email),
-          evaluador:profiles!evaluador_id(name, email)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      // Role-based access check
-      if (user?.role !== 'admin') {
-        let hasAccess = false;
-        if (user?.role === 'decano' && data.facultad === user.facultad) hasAccess = true;
-        else if (user?.role === 'coordinador' && data.programa === user.programa) hasAccess = true;
-        else if (user?.role === 'docente' && data.docente_id === user.id) hasAccess = true;
-        else if (user?.role === 'evaluador' && data.evaluador_id === user.id) hasAccess = true;
-        else if (['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '')) hasAccess = true;
-
-        if (!hasAccess) {
-          navigate('/cursos');
-          return;
-        }
-      }
-
-      setCurso(data);
-    } catch (err) {
-      console.error('Error fetching curso:', err);
-      navigate('/cursos');
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
-
-  const fetchDocumentos = async () => {
-    if (!id) return;
-    try {
-      setLoadingDocs(true);
-      const { data, error } = await supabase
-        .from('documentos_cursos')
-        .select('*')
-        .eq('curso_id', id)
-        .order('created_at', { ascending: true });
-      
-      if (error) {
-        if (error.code === 'PGRST116' || error.message.includes('not found')) {
-          setDocumentos([]);
-        } else {
-          throw error;
-        }
-      } else {
-        setDocumentos(data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching documentos:', err);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
-
-  const fetchNovedades = async () => {
-    if (!id) return;
-    try {
-      setLoadingNovedades(true);
-      const { data, error } = await supabase
-        .from('novedades_curso')
-        .select('*')
-        .eq('curso_id', id)
-        .order('created_at', { ascending: false });
-      
-      if (error && error.code !== '42P01') throw error;
-      setNovedades(data || []);
-    } catch (err) {
-      console.error('Error fetching novedades:', err);
-    } finally {
-      setLoadingNovedades(false);
-    }
-  };
+  }, [id, queryClient]);
 
   const handleSaveNovedad = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,12 +150,11 @@ export default function CursoDetalle() {
       if (error) throw error;
       
       setNovedadForm({
-        titulo: '',
-        comentario: '',
+        observacion: '',
         estado: 'Normal'
       });
       setShowNovedadModal(false);
-      fetchNovedades();
+      queryClient.invalidateQueries({ queryKey: ['novedades-curso', id] });
     } catch (err: any) {
       console.error('Error saving novedad:', err);
       alert('Error al guardar la novedad: ' + (err.message || 'Error desconocido'));
@@ -222,7 +193,7 @@ export default function CursoDetalle() {
       setShowDocModal(false);
       setEditingDoc(null);
       setDocForm({ documento: '', link: '', estado: 'Pendiente', fecha: '' });
-      fetchDocumentos();
+      queryClient.invalidateQueries({ queryKey: ['documentos-curso', id] });
     } catch (err) {
       console.error('Error saving document:', err);
       alert('Error al guardar el documento. Asegúrate de que la tabla "documentos_cursos" haya sido creada en Supabase.');
@@ -241,7 +212,7 @@ export default function CursoDetalle() {
         .eq('id', docId);
       
       if (error) throw error;
-      fetchDocumentos();
+      queryClient.invalidateQueries({ queryKey: ['documentos-curso', id] });
     } catch (err) {
       console.error('Error deleting document:', err);
       alert('Error al eliminar el documento');
@@ -259,7 +230,7 @@ export default function CursoDetalle() {
         
       if (error) throw error;
       
-      setCurso({ ...curso, fecha_inicio: newDate });
+      queryClient.invalidateQueries({ queryKey: ['curso', id] });
     } catch (err) {
       console.error('Error updating fecha_inicio:', err);
       alert('Error al actualizar la fecha de inicio');
@@ -277,7 +248,7 @@ export default function CursoDetalle() {
         
       if (error) throw error;
       
-      setCurso({ ...curso, moodle_url: newUrl });
+      queryClient.invalidateQueries({ queryKey: ['curso', id] });
     } catch (err) {
       console.error('Error updating moodle_url:', err);
       alert('Error al actualizar la URL de Moodle');
@@ -297,7 +268,7 @@ export default function CursoDetalle() {
         .eq('id', docId);
       
       if (error) throw error;
-      fetchDocumentos();
+      queryClient.invalidateQueries({ queryKey: ['documentos-curso', id] });
     } catch (err) {
       console.error('Error updating document status:', err);
       alert('Error al actualizar el estado');

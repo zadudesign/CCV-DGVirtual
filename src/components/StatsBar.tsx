@@ -1,30 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { Building2, BookOpen, Users, UserCheck, GraduationCap, Loader2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Building2, BookOpen, Users, UserCheck, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface StatsBarProps {
   user: User;
 }
 
 export default function StatsBar({ user }: StatsBarProps) {
-  const [stats, setStats] = useState({
-    programasVirtuales: 0,
-    totalCursos: 0,
-    docentesActivos: 0,
-    paresEvaluadores: 0,
-    extraStat: 0 // Facultades / Usuarios Totales
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
+  // Invalidate queries when related tables change
   useEffect(() => {
-    fetchStats();
-  }, [user.id, user.facultad, user.programa]);
+    const unsubscribe = supabase.channel('stats_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cursos' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats', user.id] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats', user.id] });
+      })
+      .subscribe();
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      
+    return () => {
+      supabase.removeChannel(unsubscribe);
+    };
+  }, [queryClient, user.id]);
+
+  const { data: stats, isLoading: loading } = useQuery({
+    queryKey: ['dashboard-stats', user.id, user.facultad, user.programa],
+    queryFn: async () => {
       const isAdmin = user.role === 'admin' || user.role === 'team' || 
                       ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
       
@@ -80,20 +85,15 @@ export default function StatsBar({ user }: StatsBarProps) {
         extraQuery
       ]);
 
-      setStats({
+      return {
         programasVirtuales: uniqueProgramasVirtuales,
         totalCursos: coursesRes.count || 0,
         docentesActivos: docentesRes.count || 0,
         paresEvaluadores: evaluadoresRes.count || 0,
         extraStat: extraRes.count || 0
-      });
-
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
+      };
     }
-  };
+  });
 
   const StatBox = ({ title, value, icon: Icon, color, bg }: { title: string, value: number, icon: any, color: string, bg: string }) => (
     <div className="bg-white overflow-hidden shadow-md rounded-xl border border-muted/20 hover:shadow-lg transition-all duration-300 group">
@@ -128,28 +128,28 @@ export default function StatsBar({ user }: StatsBarProps) {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
       <StatBox 
         title="Programas Virtuales" 
-        value={stats.programasVirtuales} 
+        value={stats?.programasVirtuales || 0} 
         icon={Building2} 
         color="text-slate-600" 
         bg="bg-slate-100"
       />
       <StatBox 
         title="Cursos" 
-        value={stats.totalCursos} 
+        value={stats?.totalCursos || 0} 
         icon={BookOpen} 
         color="text-amber-600" 
         bg="bg-amber-50"
       />
       <StatBox 
         title="Docentes Activos" 
-        value={stats.docentesActivos} 
+        value={stats?.docentesActivos || 0} 
         icon={Users} 
         color="text-blue-600" 
         bg="bg-blue-50"
       />
       <StatBox 
         title="Pares Evaluadores" 
-        value={stats.paresEvaluadores} 
+        value={stats?.paresEvaluadores || 0} 
         icon={UserCheck} 
         color="text-purple-600" 
         bg="bg-purple-50"

@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle, Bell, AlertCircle } from 'lucide-react';
+import { GraduationCap, FolderKanban, Plus, Loader2, CheckCircle2, ChevronRight, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TareaTimerItem } from '../components/TareaTimerItem';
 import { useAuth } from '../contexts/AuthContext';
 import { HOURLY_RATES } from '../lib/constants';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function EducacionContinua() {
   const { user } = useAuth();
-  const [proyectos, setProyectos] = useState<any[]>([]);
-  const [tareas, setTareas] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [selectedProyecto, setSelectedProyecto] = useState<string | null>(null);
   const [newProyectoName, setNewProyectoName] = useState('');
-  const [loadingData, setLoadingData] = useState(true);
-  const [loadingTareas, setLoadingTareas] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [hourlyRates, setHourlyRates] = useState<Record<string, number>>(HOURLY_RATES);
   const [loadingRates, setLoadingRates] = useState(false);
+  
   const isAdmin = user?.role === 'admin';
   const isTeam = ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía', 'team'].includes(user?.role || '');
   const canSeeTareas = isAdmin || isTeam;
@@ -35,29 +33,61 @@ export default function EducacionContinua() {
     }
   }, [user, isAdmin, isTeam, activeTab]);
 
-  useEffect(() => {
-    fetchProyectos();
-    fetchAllTasks();
-    fetchRates();
-  }, [user]);
+  const { data: proyectosData, isLoading: loadingData } = useQuery({
+    queryKey: ['proyectos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('proyectos_ec')
+        .select('*')
+        .order('nombre', { ascending: true });
+      if (error && error.code !== '42P01') throw error;
+      return data || [];
+    }
+  });
+  const proyectos = proyectosData || [];
 
-  const fetchRates = async () => {
-    try {
+  const { data: tareasData, isLoading: loadingTareas } = useQuery({
+    queryKey: ['tareas-ec', user?.id, user?.role, user?.team_area],
+    queryFn: async () => {
+      const { data: pData } = await supabase.from('proyectos_ec').select('nombre');
+      const pNames = pData?.map(p => p.nombre) || [];
+      if (pNames.length === 0) return [];
+
+      let query = supabase
+        .from('notificaciones_tareas')
+        .select('*')
+        .in('proyecto', pNames);
+
+      if (user?.role !== 'admin') {
+        const area = user?.team_area || user?.role;
+        query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
+      }
+
+      const { data, error } = await query.order('fecha_vencimiento', { ascending: true });
+      if (error && error.code !== '42P01') throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+  const tareas = tareasData || [];
+
+  const { data: ratesData } = useQuery({
+    queryKey: ['tarifas-ec'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('configuracion_tarifas')
         .select('*');
       
+      const ratesMap: Record<string, number> = { ...HOURLY_RATES };
       if (!error && data && data.length > 0) {
-        const ratesMap: Record<string, number> = { ...HOURLY_RATES };
         data.forEach((r: any) => {
           ratesMap[r.nombre_tipo] = r.tarifa_hora;
         });
-        setHourlyRates(ratesMap);
       }
-    } catch (e) {
-      console.error('Error fetching rates:', e);
+      return ratesMap;
     }
-  };
+  });
+  const hourlyRates = ratesData || HOURLY_RATES;
 
   const handleUpdateRoleRate = async (tipo: string, value: string) => {
     const numValue = parseInt(value.replace(/\D/g, '')) || 0;
@@ -71,12 +101,12 @@ export default function EducacionContinua() {
         }, { onConflict: 'nombre_tipo' });
       
       if (error) throw error;
-      setHourlyRates(prev => ({ ...prev, [tipo]: numValue }));
+      
+      queryClient.invalidateQueries({ queryKey: ['tarifas-ec'] });
       setSuccess(`Tarifa de ${tipo} actualizada correctamente`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       console.error('Error updating rate:', err);
-      // If table doesn't exist yet, we inform the user
       if (err.code === '42P01') {
         setError('La tabla "configuracion_tarifas" no existe en Supabase.');
       } else {
@@ -84,63 +114,6 @@ export default function EducacionContinua() {
       }
     } finally {
       setLoadingRates(false);
-    }
-  };
-
-  const fetchProyectos = async () => {
-    try {
-      setLoadingData(true);
-      const { data, error } = await supabase
-        .from('proyectos_ec')
-        .select('*')
-        .order('nombre', { ascending: true });
-
-      if (error) {
-        if (error.code !== '42P01') throw error;
-      } else {
-        setProyectos(data || []);
-      }
-    } catch (err: any) {
-      console.error('Error fetching proyectos:', err);
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  const fetchAllTasks = async () => {
-    try {
-      setLoadingTareas(true);
-      
-      // Obtenemos los nombres de todos los proyectos de EC para filtrar
-      const { data: pData } = await supabase.from('proyectos_ec').select('nombre');
-      const pNames = pData?.map(p => p.nombre) || [];
-      
-      if (pNames.length === 0) {
-        setTareas([]);
-        return;
-      }
-
-      let query = supabase
-        .from('notificaciones_tareas')
-        .select('*')
-        .in('proyecto', pNames);
-
-      if (user?.role !== 'admin') {
-        const area = user?.team_area || user?.role;
-        query = query.or(`usuario_id.eq.${user?.id},rol_destino.eq.${area}`);
-      }
-
-      const { data, error } = await query.order('fecha_vencimiento', { ascending: true });
-
-      if (error) {
-        if (error.code !== '42P01') throw error;
-      } else {
-        setTareas(data || []);
-      }
-    } catch (err: any) {
-      console.error('Error fetching all tasks:', err);
-    } finally {
-      setLoadingTareas(false);
     }
   };
 
@@ -153,7 +126,7 @@ export default function EducacionContinua() {
     setSubmitting(true);
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('proyectos_ec')
         .insert([{ nombre: newProyectoName.trim() }])
         .select()
@@ -161,11 +134,10 @@ export default function EducacionContinua() {
 
       if (error) throw error;
 
-      await fetchProyectos();
-      await fetchAllTasks();
+      await queryClient.invalidateQueries({ queryKey: ['proyectos'] });
+      await queryClient.invalidateQueries({ queryKey: ['tareas-ec'] });
       setNewProyectoName('');
       setSuccess('Proyecto agregado con éxito');
-      
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message || 'Error al agregar proyecto. Asegúrate de haber creado la tabla en Supabase.');
@@ -291,7 +263,7 @@ export default function EducacionContinua() {
             <TareaTimerItem 
               key={tarea.id || idx} 
               tarea={tarea} 
-              onUpdate={fetchAllTasks} 
+              onUpdate={() => queryClient.invalidateQueries({ queryKey: ['tareas-ec'] })} 
               hideType={true}
               hideRole={true}
             />
@@ -510,7 +482,7 @@ export default function EducacionContinua() {
                   <TareaTimerItem 
                     key={tarea.id} 
                     tarea={tarea} 
-                    onUpdate={fetchAllTasks}
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ['tareas-ec'] })}
                     customRates={hourlyRates}
                     hideType={true}
                     hideRole={true}

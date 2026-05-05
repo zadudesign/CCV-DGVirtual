@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Curso } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   ResponsiveContainer, 
   RadialBarChart, 
@@ -26,40 +27,40 @@ interface DashboardChartsProps {
 
 export default function DashboardCharts({ user }: DashboardChartsProps) {
   const navigate = useNavigate();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [novedades, setNovedades] = useState<any[]>([]);
-  const [solicitudes, setSolicitudes] = useState<any[]>([]);
-  const [solicitudesCount, setSolicitudesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
+  // Suscribirse a cambios en tiempo real
   useEffect(() => {
-    fetchData();
-
-    // Subscribe to realtime updates for updates in dashboard data
     const unsubscribe = supabase.channel('dashboard_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'novedades_curso' }, () => {
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['dashboard-charts', user.id] });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_cursos' }, () => {
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['dashboard-charts', user.id] });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cursos' }, () => {
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['dashboard-charts', user.id] });
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(unsubscribe);
     };
-  }, [user.id, user.facultad, user.programa]);
+  }, [queryClient, user.id]);
 
   const isAdmin = user.role === 'admin' || user.role === 'team' || 
                   ['Soporte', 'Multimedia', 'Diseño', 'Pedagogía'].includes(user.role);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['dashboard-charts', user.id, user.facultad, user.programa],
+    queryFn: async () => {
+      let result = {
+        cursos: [] as Curso[],
+        novedades: [] as any[],
+        solicitudes: [] as any[],
+        solicitudesCount: 0
+      };
+
       // 1. Fetch Cursos Activos
       let cursosQuery = supabase.from('cursos').select('*').neq('estado', 'Publicado');
 
@@ -78,8 +79,8 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
       const { data: cursosData, error: cursosError } = await cursosQuery.order('progreso_general', { ascending: false });
       if (cursosError) throw cursosError;
       
-      const activeCursos = cursosData as Curso[] || [];
-      setCursos(activeCursos);
+      const activeCursos = (cursosData as Curso[]) || [];
+      result.cursos = activeCursos;
 
       // 2. Fetch Novedades de esos cursos
       if (activeCursos.length > 0) {
@@ -95,9 +96,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
           .limit(10);
           
         if (novedadesError && novedadesError.code !== '42P01') throw novedadesError;
-        setNovedades(novedadesData || []);
-      } else {
-        setNovedades([]);
+        result.novedades = novedadesData || [];
       }
 
       // 3. Fetch Solicitudes si es admin o team
@@ -109,7 +108,7 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
           .or('estado.eq.Solicitud Recibida,estado.is.null');
         
         if (!countError) {
-          setSolicitudesCount(count || 0);
+          result.solicitudesCount = count || 0;
         }
 
         const { data: solData, error: solError } = await supabase
@@ -119,16 +118,18 @@ export default function DashboardCharts({ user }: DashboardChartsProps) {
           .limit(10);
         
         if (!solError) {
-          setSolicitudes(solData || []);
+          result.solicitudes = solData || [];
         }
       }
 
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
+      return result;
     }
-  };
+  });
+
+  const cursos = data?.cursos || [];
+  const novedades = data?.novedades || [];
+  const solicitudes = data?.solicitudes || [];
+  const solicitudesCount = data?.solicitudesCount || 0;
 
   const promedioGlobal = cursos.length > 0 
     ? cursos.reduce((acc, c) => acc + (c.progreso_general || 0), 0) / cursos.length 
