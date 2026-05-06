@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList, Clock } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList, Clock, ClipboardCheck, Circle, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -45,6 +45,9 @@ export default function Cursos() {
   const [moodleUrl, setMoodleUrl] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [showSolicitudModal, setShowSolicitudModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [selectedCursoForChecklist, setSelectedCursoForChecklist] = useState<any>(null);
+  const [currentChecklist, setCurrentChecklist] = useState<any[]>([]);
   
   // Solicitud Form State
   const [solicitanteId, setSolicitanteId] = useState('');
@@ -306,6 +309,64 @@ export default function Cursos() {
   };
 
   const canCreate = user?.role === 'admin' || user?.role === 'decano' || user?.role === 'coordinador';
+
+  const defaultChecklistItems = [
+    "Contenidos iniciales validados",
+    "Docente asignado verificado",
+    "Carpeta Google Drive creada y vinculada",
+    "Cronograma de trabajo definido",
+    "Permisos de acceso otorgados"
+  ];
+
+  const handleOpenChecklist = (curso: any) => {
+    setSelectedCursoForChecklist(curso);
+    let items = curso.checklist;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      items = defaultChecklistItems.map((text, i) => ({
+        id: `item-${Date.now()}-${i}`,
+        text,
+        completed: false
+      }));
+    }
+    setCurrentChecklist(items);
+    setShowChecklistModal(true);
+  };
+
+  const handleToggleChecklistItem = async (itemId: string) => {
+    if (!selectedCursoForChecklist) return;
+
+    const newChecklist = currentChecklist.map(item => 
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+    
+    setCurrentChecklist(newChecklist);
+
+    // Check if all are completed
+    const allCompleted = newChecklist.length > 0 && newChecklist.every(item => item.completed);
+    
+    try {
+      const updateData: any = { checklist: newChecklist };
+      if (allCompleted) {
+        updateData.estado = 'En Construcción';
+      }
+
+      const { error } = await supabase
+        .from('solicitudes_cursos')
+        .update(updateData)
+        .eq('id', selectedCursoForChecklist.id);
+
+      if (error) throw error;
+
+      if (allCompleted) {
+        alert(`¡Felicidades! Todas las tareas se han completado. El curso "${selectedCursoForChecklist.nombre}" ha pasado a estado "En Construcción".`);
+        setShowChecklistModal(false);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+    } catch (err) {
+      console.error('Error updating checklist:', err);
+    }
+  };
 
   const handleSyncClickUp = async (cursoId: string, listId: string) => {
     try {
@@ -615,10 +676,19 @@ export default function Cursos() {
                                   <DynamicIcon name={curso.icon || 'BookOpen'} className="h-4 w-4 mr-2" />
                                   {curso.nombre}
                                 </div>
-                                <div className="mt-1.5">
+                                <div className="mt-1.5 flex items-center space-x-2">
                                   <span className="px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                     {curso.tipo_solicitud}
                                   </span>
+                                  {curso.estado === 'En Preparación' && (
+                                    <button
+                                      onClick={() => handleOpenChecklist(curso)}
+                                      className="flex items-center px-2 py-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors"
+                                    >
+                                      <ClipboardCheck className="h-3 w-3 mr-1" />
+                                      Ver Check-list
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -1083,6 +1153,76 @@ export default function Cursos() {
                   ></iframe>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checklist Modal */}
+      {showChecklistModal && selectedCursoForChecklist && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowChecklistModal(false)} />
+
+            <div className="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <div className="flex justify-between items-center mb-5">
+                <div>
+                  <h3 className="text-lg font-bold leading-6 text-text-main flex items-center">
+                    <ClipboardCheck className="h-5 w-5 mr-2 text-emerald-600" />
+                    Check-list de Preparación
+                  </h3>
+                  <p className="text-xs text-secondary mt-1">{selectedCursoForChecklist.nombre}</p>
+                </div>
+                <button onClick={() => setShowChecklistModal(false)} className="text-slate-400 hover:text-secondary">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <p className="text-sm text-secondary leading-relaxed">
+                  Completa todas las tareas para que el curso pase automáticamente a estado <span className="font-bold text-emerald-600">"En Construcción"</span>.
+                </p>
+                
+                <div className="bg-slate-50 rounded-xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+                  {currentChecklist.map((item) => (
+                    <div 
+                      key={item.id}
+                      onClick={() => handleToggleChecklistItem(item.id)}
+                      className="flex items-center p-4 hover:bg-slate-100/50 cursor-pointer transition-colors group"
+                    >
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        item.completed 
+                          ? 'bg-emerald-500 border-emerald-500' 
+                          : 'border-slate-300 group-hover:border-emerald-400'
+                      }`}>
+                        {item.completed && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
+                      </div>
+                      <span className={`ml-3 text-sm transition-all ${
+                        item.completed 
+                          ? 'text-slate-400 line-through' 
+                          : 'text-slate-700 font-medium'
+                      }`}>
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <div className="flex justify-between items-center">
+                  <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Progreso</div>
+                  <div className="text-xs font-bold text-emerald-800">
+                    {currentChecklist.filter((i: any) => i.completed).length} / {currentChecklist.length}
+                  </div>
+                </div>
+                <div className="mt-2 w-full bg-emerald-200 rounded-full h-2">
+                  <div 
+                    className="bg-emerald-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${(currentChecklist.filter((i: any) => i.completed).length / currentChecklist.length) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
