@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Clock, CheckCircle, Bell, AlertCircle, AlertTriangle, CheckCircle2, Calendar, Eye } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Bell, AlertCircle, AlertTriangle, CheckCircle2, Calendar, Eye, Edit2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -22,6 +22,12 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState({
+    titulo: tarea.titulo,
+    descripcion: tarea.descripcion || '',
+    fecha_vencimiento: tarea.fecha_vencimiento ? tarea.fecha_vencimiento.split('T')[0] : ''
+  });
 
   const totalSeconds = tarea.tiempo_invertido || 0;
   const [localEstado, setLocalEstado] = useState(tarea.estado);
@@ -109,6 +115,30 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
     } catch (err: any) {
       console.error('Error saving time:', err);
       alert(`Error al guardar el tiempo: ${err.message || JSON.stringify(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('notificaciones_tareas')
+        .update({ 
+          titulo: editData.titulo,
+          descripcion: editData.descripcion,
+          fecha_vencimiento: `${editData.fecha_vencimiento}T00:00:00-05:00`
+        })
+        .eq('id', tarea.id);
+      
+      if (error) throw error;
+      onUpdate();
+      setShowEditModal(false);
+    } catch (err: any) {
+      console.error('Error updating task:', err);
+      alert(`Error al actualizar la tarea: ${err.message || JSON.stringify(err)}`);
     } finally {
       setSaving(false);
     }
@@ -202,22 +232,31 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
             </p>
           )}
         </div>
-        {isTimeTrackingEnabled && !isCompleted && (
-          <div className="flex-shrink-0">
-            <button
-              onClick={handleReviewTask}
-              disabled={saving}
-              title={localEstado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
-              className={`p-1.5 transition-all ${
-                localEstado === 'En Revisión' 
-                  ? 'bg-slate-800 text-white shadow-sm border border-slate-700/50 rounded-full' 
-                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg'
-              }`}
-            >
-              <AlertCircle className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2">
+            {!isCompleted && (
+                <button
+                    onClick={() => setShowEditModal(true)}
+                    className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg"
+                    title="Editar Tarea"
+                >
+                    <Edit2 className="w-4 h-4" />
+                </button>
+            )}
+            {isTimeTrackingEnabled && !isCompleted && (
+              <button
+                onClick={handleReviewTask}
+                disabled={saving}
+                title={localEstado === 'En Revisión' ? 'Quitar de revisión' : 'Poner en revisión'}
+                className={`p-1.5 transition-all ${
+                  localEstado === 'En Revisión' 
+                    ? 'bg-slate-800 text-white shadow-sm border border-slate-700/50 rounded-full' 
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg'
+                }`}
+              >
+                <AlertCircle className="w-4 h-4" />
+              </button>
+            )}
+        </div>
       </div>
 
       {tarea.descripcion && (
@@ -297,6 +336,50 @@ export const TareaTimerItem: React.FC<TareaTimerItemProps> = ({ tarea, onUpdate,
               </button>
             </form>
           )}
+        </div>
+      )}
+
+      
+      {showEditModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+          <form onSubmit={handleUpdateTask} className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm relative z-10">
+            <h3 className="text-lg font-bold mb-4">Editar Tarea</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Título</label>
+                <input 
+                  type="text" 
+                  value={editData.titulo} 
+                  onChange={(e) => setEditData({...editData, titulo: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Descripción</label>
+                <textarea 
+                  value={editData.descripcion} 
+                  onChange={(e) => setEditData({...editData, descripcion: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Fecha de vencimiento</label>
+                <input 
+                  type="date" 
+                  value={editData.fecha_vencimiento} 
+                  onChange={(e) => setEditData({...editData, fecha_vencimiento: e.target.value})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-100">Cancelar</button>
+              <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-primary-hover disabled:opacity-50">Guardar</button>
+            </div>
+          </form>
         </div>
       )}
 
