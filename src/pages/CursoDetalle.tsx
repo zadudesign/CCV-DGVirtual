@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getClickupUrlForRole } from '../lib/utils';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare, Filter, ArrowUpDown, BarChart2 } from 'lucide-react';
+import { ArrowLeft, FileText, PenTool, Bell, Loader2, Lightbulb, Copy, Check, CalendarDays, LayoutDashboard, HardDrive, Plus, Trash2, Edit2, ExternalLink, X, Eye, AlertCircle, AlertTriangle, CheckCircle2, History, MessageSquare, Filter, ArrowUpDown, BarChart2, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, RadialBarChart, RadialBar, PolarAngleAxis, Legend } from 'recharts';
 import Calendario from './Calendario';
 import RendimientoProductividad from '../components/RendimientoProductividad';
@@ -234,6 +234,26 @@ export default function CursoDetalle() {
     } catch (err) {
       console.error('Error updating fecha_inicio:', err);
       alert('Error al actualizar la fecha de inicio');
+    }
+  };
+
+  const handleUpdateDuracion = async (newDuracion: string) => {
+    if (!id || user?.role !== 'admin') return;
+    
+    try {
+      const parsedDuracion = parseInt(newDuracion, 10) || null;
+      const { error } = await supabase
+        .from('cursos')
+        .update({ duracion: parsedDuracion })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['curso', id] });
+    } catch (err: any) {
+      console.error('Error updating duracion:', err);
+      // We alert so the user knows if the column is missing
+      alert('Error al actualizar la duración. ' + (err.message || ''));
     }
   };
 
@@ -1155,24 +1175,55 @@ export default function CursoDetalle() {
 
         {activeTab === 'calendario' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center space-x-3">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                <span className="text-sm font-bold text-text-main uppercase tracking-wider">Fecha de Inicio de Construcción</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl shadow-sm border border-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-bold text-text-main uppercase tracking-wider">Fecha de Inicio de Construcción</span>
+                </div>
+                <div>
+                  {user?.role === 'admin' ? (
+                    <input 
+                      type="date"
+                      value={curso.fecha_inicio || ''}
+                      onChange={(e) => handleUpdateFechaInicio(e.target.value)}
+                      className="text-sm font-bold bg-slate-50 border border-muted rounded-lg px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-all"
+                    />
+                  ) : (
+                    <div className="text-sm font-bold text-text-main bg-slate-50 border border-slate-100 rounded-lg px-4 py-2">
+                      {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                {user?.role === 'admin' ? (
-                  <input 
-                    type="date"
-                    value={curso.fecha_inicio || ''}
-                    onChange={(e) => handleUpdateFechaInicio(e.target.value)}
-                    className="text-sm font-bold bg-slate-50 border border-muted rounded-lg px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-all"
-                  />
-                ) : (
-                  <div className="text-sm font-bold text-text-main bg-slate-50 border border-slate-100 rounded-lg px-4 py-2">
-                    {curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString() : 'No definida'}
-                  </div>
-                )}
+
+              <div className="bg-white rounded-xl shadow-sm border border-muted/30 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-bold text-text-main uppercase tracking-wider">Duración (Días)</span>
+                </div>
+                <div>
+                  {user?.role === 'admin' ? (
+                    <select
+                      value={curso.duracion || ''}
+                      onChange={(e) => handleUpdateDuracion(e.target.value)}
+                      className="text-sm font-bold bg-slate-50 border border-muted rounded-lg px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-all"
+                    >
+                      <option value="">Seleccione</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                      <option value="60">60</option>
+                      <option value="75">75</option>
+                      <option value="90">90</option>
+                      <option value="105">105</option>
+                      <option value="120">120</option>
+                    </select>
+                  ) : (
+                    <div className="text-sm font-bold text-text-main bg-slate-50 border border-slate-100 rounded-lg px-4 py-2">
+                      {curso.duracion ? `${curso.duracion} días` : 'No definida'}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
