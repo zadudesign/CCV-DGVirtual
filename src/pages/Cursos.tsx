@@ -53,6 +53,33 @@ export default function Cursos() {
   const [newChecklistText, setNewChecklistText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemText, setEditingItemText] = useState('');
+
+  // Default checklist settings state
+  const [showDefaultChecklistModal, setShowDefaultChecklistModal] = useState(false);
+  const [defaultChecklist, setDefaultChecklist] = useState<any[]>([
+    { id: `item-1`, text: 'Crear espacio de Trabajo en Google Drive y ClickUp', completed: false },
+    { id: `item-2`, text: 'Actualizar Links de Enlaces Rápidos', completed: false },
+    { id: `item-3`, text: 'Enviar Correo al Docente con bienvenida y accesos', completed: false },
+  ]);
+  const [newDefaultChecklistText, setNewDefaultChecklistText] = useState('');
+  const [editingDefaultItemId, setEditingDefaultItemId] = useState<string | null>(null);
+  const [editingDefaultItemText, setEditingDefaultItemText] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('defaultCursoChecklist');
+    if (saved) {
+      try {
+        setDefaultChecklist(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error parsing default checklist", e);
+      }
+    }
+  }, []);
+
+  const saveDefaultChecklist = (newChecklist: any[]) => {
+    setDefaultChecklist(newChecklist);
+    localStorage.setItem('defaultCursoChecklist', JSON.stringify(newChecklist));
+  };
   
   // Solicitud Form State
   const [solicitanteId, setSolicitanteId] = useState('');
@@ -270,11 +297,11 @@ export default function Cursos() {
         if (!fetchError && cursoToUpdate) {
           const hasChecklist = cursoToUpdate.checklist && Array.isArray(cursoToUpdate.checklist) && cursoToUpdate.checklist.length > 0;
           if (!hasChecklist) {
-            updateData.checklist = [
-              { id: `item-${Date.now()}-1`, text: 'Crear espacio de Trabajo en Google Drive y ClickUp', completed: false },
-              { id: `item-${Date.now()}-2`, text: 'Actualizar Links de Enlaces Rápidos', completed: false },
-              { id: `item-${Date.now()}-3`, text: 'Enviar Correo al Docente con bienvenida y accesos', completed: false },
-            ];
+            updateData.checklist = defaultChecklist.map((item, index) => ({
+              id: `item-${Date.now()}-${index}`,
+              text: item.text,
+              completed: false
+            }));
           }
         }
       }
@@ -477,6 +504,35 @@ export default function Cursos() {
     saveChecklistModifications(newChecklist);
   };
 
+  const handleAddDefaultChecklistItem = () => {
+    if (!newDefaultChecklistText.trim()) return;
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newDefaultChecklistText.trim(),
+      completed: false
+    };
+    saveDefaultChecklist([...defaultChecklist, newItem]);
+    setNewDefaultChecklistText('');
+  };
+
+  const handleUpdateDefaultChecklistItemText = (id: string) => {
+    if (!editingDefaultItemText.trim()) {
+      setEditingDefaultItemId(null);
+      return;
+    }
+    const newChecklist = defaultChecklist.map(item =>
+      item.id === id ? { ...item, text: editingDefaultItemText.trim() } : item
+    );
+    saveDefaultChecklist(newChecklist);
+    setEditingDefaultItemId(null);
+    setEditingDefaultItemText('');
+  };
+
+  const handleDeleteDefaultChecklistItem = (id: string) => {
+    if (!window.confirm("¿Segur@ que deseas eliminar esta tarea predeterminada?")) return;
+    saveDefaultChecklist(defaultChecklist.filter(item => item.id !== id));
+  };
+
 
   const handleSyncClickUp = async (cursoId: string, listId: string) => {
     try {
@@ -549,6 +605,15 @@ export default function Cursos() {
         <div></div>
         {canCreate && (
           <div className="flex space-x-3">
+            {user?.role === 'admin' && activeTab === 'preparacion' && (
+              <button
+                onClick={() => setShowDefaultChecklistModal(true)}
+                className="flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
+              >
+                <ClipboardCheck className="h-5 w-5 mr-2" />
+                Configurar Check List Predeterminado
+              </button>
+            )}
             {user?.role === 'admin' && activeTab === 'solicitudes' && (
               <button
                 onClick={() => setShowSolicitudModal(true)}
@@ -1399,6 +1464,117 @@ export default function Cursos() {
                     className="bg-emerald-600 h-2 rounded-full transition-all duration-500" 
                     style={{ width: `${(currentChecklist.filter((i: any) => i.completed).length / currentChecklist.length) * 100}%` }}
                   ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Default Checklist Config Modal */}
+      {showDefaultChecklistModal && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-slate-900 bg-opacity-75" onClick={() => setShowDefaultChecklistModal(false)} />
+
+            <div className="relative inline-block w-full max-w-lg overflow-hidden text-left align-middle transition-all transform bg-white rounded-2xl shadow-xl">
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100 rounded-bl-full opacity-50 transform translate-x-8 -translate-y-8"></div>
+                <div className="relative flex items-center">
+                  <div className="h-10 w-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                    <ClipboardCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800 leading-tight">Configurar Check List Predeterminado</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Tareas asignadas al entrar a "En Preparación"</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDefaultChecklistModal(false)}
+                  className="relative text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="p-0">
+                <div className="max-h-[60vh] overflow-y-auto bg-slate-50/50">
+                  {defaultChecklist.map((item) => (
+                    <div 
+                      key={item.id}
+                      className="flex items-center justify-between p-4 hover:bg-slate-100/50 transition-colors group border-b border-slate-100/50"
+                    >
+                      {editingDefaultItemId === item.id ? (
+                        <div className="flex-1 flex items-center gap-2">
+                           <input
+                             type="text"
+                             className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                             value={editingDefaultItemText}
+                             onChange={(e) => setEditingDefaultItemText(e.target.value)}
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter') handleUpdateDefaultChecklistItemText(item.id);
+                               if (e.key === 'Escape') setEditingDefaultItemId(null);
+                             }}
+                             autoFocus
+                           />
+                           <button onClick={() => handleUpdateDefaultChecklistItemText(item.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                             <Check className="h-4 w-4" />
+                           </button>
+                           <button onClick={() => setEditingDefaultItemId(null)} className="p-1 text-slate-400 hover:bg-slate-200 rounded">
+                             <X className="h-4 w-4" />
+                           </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center flex-1">
+                            <div className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400 mr-3"></div>
+                            <span className="text-sm text-slate-700 font-medium">
+                              {item.text}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => {
+                                setEditingDefaultItemId(item.id);
+                                setEditingDefaultItemText(item.text);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDefaultChecklistItem(item.id)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  <div className="p-4 bg-white flex items-center gap-2 border-t border-slate-100">
+                    <input
+                      type="text"
+                      placeholder="Agregar tarea predeterminada..."
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      value={newDefaultChecklistText}
+                      onChange={(e) => setNewDefaultChecklistText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddDefaultChecklistItem();
+                      }}
+                    />
+                    <button
+                      onClick={handleAddDefaultChecklistItem}
+                      disabled={!newDefaultChecklistText.trim()}
+                      className="p-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Agregar tarea"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
