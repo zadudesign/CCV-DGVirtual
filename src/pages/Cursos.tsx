@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList, Clock, ClipboardCheck, Circle, Check } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Search, X, ExternalLink, LayoutDashboard, Calendar, CheckCircle, MonitorPlay, ClipboardList, Clock, ClipboardCheck, Circle, Check, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Curso, User } from '../types';
@@ -48,6 +48,11 @@ export default function Cursos() {
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [selectedCursoForChecklist, setSelectedCursoForChecklist] = useState<any>(null);
   const [currentChecklist, setCurrentChecklist] = useState<any[]>([]);
+
+  // Editing checklist state
+  const [newChecklistText, setNewChecklistText] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemText, setEditingItemText] = useState('');
   
   // Solicitud Form State
   const [solicitanteId, setSolicitanteId] = useState('');
@@ -253,9 +258,30 @@ export default function Cursos() {
   const handleUpdateEstadoSolicitud = async (id: string, nuevoEstado: string) => {
     if (user?.role !== 'admin') return;
     try {
+      const updateData: any = { estado: nuevoEstado };
+      
+      if (nuevoEstado === 'En Preparación') {
+        const { data: cursoToUpdate, error: fetchError } = await supabase
+          .from('solicitudes_cursos')
+          .select('checklist')
+          .eq('id', id)
+          .single();
+
+        if (!fetchError && cursoToUpdate) {
+          const hasChecklist = cursoToUpdate.checklist && Array.isArray(cursoToUpdate.checklist) && cursoToUpdate.checklist.length > 0;
+          if (!hasChecklist) {
+            updateData.checklist = [
+              { id: `item-${Date.now()}-1`, text: 'Crear espacio de Trabajo en Google Drive y ClickUp', completed: false },
+              { id: `item-${Date.now()}-2`, text: 'Actualizar Links de Enlaces Rápidos', completed: false },
+              { id: `item-${Date.now()}-3`, text: 'Enviar Correo al Docente con bienvenida y accesos', completed: false },
+            ];
+          }
+        }
+      }
+
       const { error } = await supabase
         .from('solicitudes_cursos')
-        .update({ estado: nuevoEstado })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -350,12 +376,30 @@ export default function Cursos() {
         updateData.estado = 'En Construcción';
       }
 
+      // 1. Actualizar en Supabase
       const { error } = await supabase
         .from('solicitudes_cursos')
         .update(updateData)
         .eq('id', selectedCursoForChecklist.id);
 
       if (error) throw error;
+
+      // 2. Enviar señal a Make (si la URL está configurada)
+      if (import.meta.env.VITE_MAKE_WEBHOOK_URL) {
+        const itemActualizado = newChecklist.find(i => i.id === itemId);
+        fetch(import.meta.env.VITE_MAKE_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            evento: 'checklist_updated',
+            curso_id: selectedCursoForChecklist.id,
+            nombre_curso: selectedCursoForChecklist.nombre,
+            item_actualizado: itemActualizado,
+            checklist_completa: newChecklist,
+            estado_final: allCompleted ? 'En Construcción' : selectedCursoForChecklist.estado
+          })
+        }).catch(err => console.error('Error enviando webhook a Make:', err));
+      }
 
       if (allCompleted) {
         alert(`¡Felicidades! Todas las tareas se han completado. El curso "${selectedCursoForChecklist.nombre}" ha pasado a estado "En Construcción".`);
@@ -367,6 +411,72 @@ export default function Cursos() {
       console.error('Error updating checklist:', err);
     }
   };
+
+  const saveChecklistModifications = async (newChecklist: any[]) => {
+    if (!selectedCursoForChecklist) return;
+    try {
+      const { error } = await supabase
+        .from('solicitudes_cursos')
+        .update({ checklist: newChecklist })
+        .eq('id', selectedCursoForChecklist.id);
+
+      if (error) throw error;
+      
+      // Update check if it triggered completion due to a deletion
+      const allCompleted = newChecklist.length > 0 && newChecklist.every(item => item.completed);
+      if (allCompleted && selectedCursoForChecklist.estado !== 'En Construcción') {
+        const { error: stateError } = await supabase
+            .from('solicitudes_cursos')
+            .update({ estado: 'En Construcción' })
+            .eq('id', selectedCursoForChecklist.id);
+        if(!stateError) {
+            alert(`¡Felicidades! Todas las tareas se han completado. El curso "${selectedCursoForChecklist.nombre}" ha pasado a estado "En Construcción".`);
+            setShowChecklistModal(false);
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+    } catch (err) {
+      console.error('Error saving checklist modifications:', err);
+      alert('Error al guardar los cambios del checklist');
+    }
+  };
+
+  const handleAddChecklistItem = () => {
+    if (!newChecklistText.trim()) return;
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newChecklistText.trim(),
+      completed: false
+    };
+    const newChecklist = [...currentChecklist, newItem];
+    setCurrentChecklist(newChecklist);
+    saveChecklistModifications(newChecklist);
+    setNewChecklistText('');
+  };
+
+  const handleUpdateChecklistItemText = (id: string) => {
+    if (!editingItemText.trim()) {
+      setEditingItemId(null);
+      return;
+    }
+    const newChecklist = currentChecklist.map(item =>
+      item.id === id ? { ...item, text: editingItemText.trim() } : item
+    );
+    setCurrentChecklist(newChecklist);
+    saveChecklistModifications(newChecklist);
+    setEditingItemId(null);
+    setEditingItemText('');
+  };
+
+  const handleDeleteChecklistItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("¿Segur@ que deseas eliminar este item del checklist?")) return;
+    const newChecklist = currentChecklist.filter(item => item.id !== id);
+    setCurrentChecklist(newChecklist);
+    saveChecklistModifications(newChecklist);
+  };
+
 
   const handleSyncClickUp = async (cursoId: string, listId: string) => {
     try {
@@ -1187,25 +1297,93 @@ export default function Cursos() {
                   {currentChecklist.map((item) => (
                     <div 
                       key={item.id}
-                      onClick={() => handleToggleChecklistItem(item.id)}
-                      className="flex items-center p-4 hover:bg-slate-100/50 cursor-pointer transition-colors group"
+                      className="flex items-center justify-between p-4 hover:bg-slate-100/50 transition-colors group"
                     >
-                      <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                        item.completed 
-                          ? 'bg-emerald-500 border-emerald-500' 
-                          : 'border-slate-300 group-hover:border-emerald-400'
-                      }`}>
-                        {item.completed && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
-                      </div>
-                      <span className={`ml-3 text-sm transition-all ${
-                        item.completed 
-                          ? 'text-slate-400 line-through' 
-                          : 'text-slate-700 font-medium'
-                      }`}>
-                        {item.text}
-                      </span>
+                      {editingItemId === item.id ? (
+                        <div className="flex-1 flex items-center gap-2">
+                           <input
+                             type="text"
+                             className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                             value={editingItemText}
+                             onChange={(e) => setEditingItemText(e.target.value)}
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter') handleUpdateChecklistItemText(item.id);
+                               if (e.key === 'Escape') setEditingItemId(null);
+                             }}
+                             autoFocus
+                           />
+                           <button onClick={() => handleUpdateChecklistItemText(item.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                             <Check className="h-4 w-4" />
+                           </button>
+                           <button onClick={() => setEditingItemId(null)} className="p-1 text-slate-400 hover:bg-slate-200 rounded">
+                             <X className="h-4 w-4" />
+                           </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div 
+                            className="flex items-center flex-1 cursor-pointer"
+                            onClick={() => handleToggleChecklistItem(item.id)}
+                          >
+                            <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                              item.completed 
+                                ? 'bg-emerald-500 border-emerald-500' 
+                                : 'border-slate-300 group-hover:border-emerald-400'
+                            }`}>
+                              {item.completed && <Check className="h-3.5 w-3.5 text-white stroke-[3]" />}
+                            </div>
+                            <span className={`ml-3 text-sm transition-all ${
+                              item.completed 
+                                ? 'text-slate-400 line-through' 
+                                : 'text-slate-700 font-medium'
+                            }`}>
+                              {item.text}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingItemId(item.id);
+                                setEditingItemText(item.text);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteChecklistItem(item.id, e)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
+                  <div className="p-4 bg-white flex items-center gap-2 border-t border-slate-100">
+                    <input
+                      type="text"
+                      placeholder="Agregar nueva tarea..."
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      value={newChecklistText}
+                      onChange={(e) => setNewChecklistText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddChecklistItem();
+                      }}
+                    />
+                    <button
+                      onClick={handleAddChecklistItem}
+                      disabled={!newChecklistText.trim()}
+                      className="p-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Agregar tarea"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
