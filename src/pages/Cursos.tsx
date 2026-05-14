@@ -410,10 +410,25 @@ export default function Cursos() {
         .eq('id', selectedCursoForChecklist.id);
 
       if (error) throw error;
+      
+      // Intentar actualizar un campo de texto en Supabase para Make (si la columna existe, no fallará; si no existe, lo ignoramos)
+      const itemActualizado = newChecklist.find(i => i.id === itemId);
+      const itemTexto = itemActualizado ? `Tarea: "${itemActualizado.text}" -> ${itemActualizado.completed ? 'COMPLETADA' : 'DESMARCADA'}` : '';
+      const checklistTextoCompleto = newChecklist.map(i => `${i.completed ? '✅' : '❌'} ${i.text}`).join('\n');
+      
+      supabase
+        .from('solicitudes_cursos')
+        .update({ 
+          ultima_tarea_actualizada: itemTexto,
+          checklist_texto: checklistTextoCompleto 
+        })
+        .eq('id', selectedCursoForChecklist.id)
+        .then(({ error: textErr }) => {
+          if (textErr) console.warn("Para ver el texto en DB, recuerda crear las columnas 'ultima_tarea_actualizada' y 'checklist_texto' como Tipo Texto en Supabase.");
+        });
 
-      // 2. Enviar señal a Make (si la URL está configurada)
+      // 2. Enviar señal directa a Make (si la URL está configurada)
       if (import.meta.env.VITE_MAKE_WEBHOOK_URL) {
-        const itemActualizado = newChecklist.find(i => i.id === itemId);
         fetch(import.meta.env.VITE_MAKE_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -421,6 +436,8 @@ export default function Cursos() {
             evento: 'checklist_updated',
             curso_id: selectedCursoForChecklist.id,
             nombre_curso: selectedCursoForChecklist.nombre,
+            item_actualizado_texto: itemTexto, // CAMPO DE TEXTO PARA MAKE
+            checklist_texto: checklistTextoCompleto, // CAMPO DE TEXTO PARA MAKE
             item_actualizado: itemActualizado,
             checklist_completa: newChecklist,
             estado_final: allCompleted ? 'En Construcción' : selectedCursoForChecklist.estado
