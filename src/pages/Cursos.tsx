@@ -403,16 +403,14 @@ export default function Cursos() {
       const checklistTextoCompleto = newChecklist.map(i => `${i.completed ? '✅' : '❌'} ${i.text}`).join('\n');
 
       const updateData: any = { 
-        checklist: newChecklist,
-        ultima_tarea_actualizada: itemTexto,
-        checklist_texto: checklistTextoCompleto
+        checklist: newChecklist
       };
       
       if (allCompleted) {
         updateData.estado = 'En Construcción';
       }
 
-      // 1. Actualizar en Supabase
+      // 1. Actualizar en Supabase (Solo el JSON y estado)
       const { error } = await supabase
         .from('solicitudes_cursos')
         .update(updateData)
@@ -420,6 +418,18 @@ export default function Cursos() {
 
       if (error) throw error;
       
+      // 1.5. Intentar actualizar las columnas de texto (Fallará silenciosamente si no existen)
+      supabase
+        .from('solicitudes_cursos')
+        .update({
+          ultima_tarea_actualizada: itemTexto,
+          checklist_texto: checklistTextoCompleto
+        })
+        .eq('id', selectedCursoForChecklist.id)
+        .then(({ error: textErr }) => {
+          if (textErr) console.warn("columnas de texto no encontradas. Crea 'ultima_tarea_actualizada' y 'checklist_texto' en Supabase.");
+        });
+
       // 2. Enviar señal directa a Make (si la URL está configurada)
       if (import.meta.env.VITE_MAKE_WEBHOOK_URL) {
         fetch(import.meta.env.VITE_MAKE_WEBHOOK_URL, {
@@ -457,12 +467,21 @@ export default function Cursos() {
       const { error } = await supabase
         .from('solicitudes_cursos')
         .update({ 
-          checklist: newChecklist,
-          checklist_texto: checklistTextoCompleto
+          checklist: newChecklist
         })
         .eq('id', selectedCursoForChecklist.id);
 
       if (error) throw error;
+
+      supabase
+        .from('solicitudes_cursos')
+        .update({ 
+          checklist_texto: checklistTextoCompleto
+        })
+        .eq('id', selectedCursoForChecklist.id)
+        .then(({ error: textErr }) => {
+          if (textErr) console.warn("columnas de texto no encontradas. Crea 'checklist_texto' en Supabase.");
+        });
       
       // Update check if it triggered completion due to a deletion
       const allCompleted = newChecklist.length > 0 && newChecklist.every(item => item.completed);
