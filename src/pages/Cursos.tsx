@@ -398,7 +398,16 @@ export default function Cursos() {
     const allCompleted = newChecklist.length > 0 && newChecklist.every(item => item.completed);
     
     try {
-      const updateData: any = { checklist: newChecklist };
+      const itemActualizado = newChecklist.find(i => i.id === itemId);
+      const itemTexto = itemActualizado ? `Tarea: "${itemActualizado.text}" -> ${itemActualizado.completed ? 'COMPLETADA' : 'DESMARCADA'}` : '';
+      const checklistTextoCompleto = newChecklist.map(i => `${i.completed ? '✅' : '❌'} ${i.text}`).join('\n');
+
+      const updateData: any = { 
+        checklist: newChecklist,
+        ultima_tarea_actualizada: itemTexto,
+        checklist_texto: checklistTextoCompleto
+      };
+      
       if (allCompleted) {
         updateData.estado = 'En Construcción';
       }
@@ -411,22 +420,6 @@ export default function Cursos() {
 
       if (error) throw error;
       
-      // Intentar actualizar un campo de texto en Supabase para Make (si la columna existe, no fallará; si no existe, lo ignoramos)
-      const itemActualizado = newChecklist.find(i => i.id === itemId);
-      const itemTexto = itemActualizado ? `Tarea: "${itemActualizado.text}" -> ${itemActualizado.completed ? 'COMPLETADA' : 'DESMARCADA'}` : '';
-      const checklistTextoCompleto = newChecklist.map(i => `${i.completed ? '✅' : '❌'} ${i.text}`).join('\n');
-      
-      supabase
-        .from('solicitudes_cursos')
-        .update({ 
-          ultima_tarea_actualizada: itemTexto,
-          checklist_texto: checklistTextoCompleto 
-        })
-        .eq('id', selectedCursoForChecklist.id)
-        .then(({ error: textErr }) => {
-          if (textErr) console.warn("Para ver el texto en DB, recuerda crear las columnas 'ultima_tarea_actualizada' y 'checklist_texto' como Tipo Texto en Supabase.");
-        });
-
       // 2. Enviar señal directa a Make (si la URL está configurada)
       if (import.meta.env.VITE_MAKE_WEBHOOK_URL) {
         fetch(import.meta.env.VITE_MAKE_WEBHOOK_URL, {
@@ -459,9 +452,14 @@ export default function Cursos() {
   const saveChecklistModifications = async (newChecklist: any[]) => {
     if (!selectedCursoForChecklist) return;
     try {
+      const checklistTextoCompleto = newChecklist.map(i => `${i.completed ? '✅' : '❌'} ${i.text}`).join('\n');
+      
       const { error } = await supabase
         .from('solicitudes_cursos')
-        .update({ checklist: newChecklist })
+        .update({ 
+          checklist: newChecklist,
+          checklist_texto: checklistTextoCompleto
+        })
         .eq('id', selectedCursoForChecklist.id);
 
       if (error) throw error;
